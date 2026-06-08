@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marcio Gold Firmo</title>
+<meta name="description" content="Marcio Gold Firmo — Adjunct Professor of Economics, UERJ.">
+<style>
+  :root{
+    --bg:#fdfdfc;
+    --fg:#222;
+    --muted:#666;
+    --rule:#e4e4e0;
+    --link:#1a4f7a;
+    --link-hover:#0e3552;
+    --maxw:740px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--fg);
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:18px;
+    line-height:1.6;
+  }
+  a{color:var(--link);text-decoration:none}
+  a:hover{color:var(--link-hover);text-decoration:underline}
+
+  /* ---- top nav ---- */
+  header.nav{
+    position:sticky;top:0;z-index:10;
+    background:rgba(253,253,252,.95);
+    backdrop-filter:saturate(180%) blur(6px);
+    border-bottom:1px solid var(--rule);
+  }
+  .nav-inner{
+    max-width:var(--maxw);margin:0 auto;padding:.7rem 1.25rem;
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+  .nav-name{font-weight:600;font-size:.95rem;letter-spacing:.01em;color:var(--fg)}
+  .nav-name:hover{text-decoration:none}
+  nav ul{list-style:none;display:flex;flex-wrap:wrap;gap:1.05rem;margin:0;padding:0;align-items:center}
+  nav a{font-size:.85rem;color:var(--muted)}
+  nav a:hover{color:var(--link)}
+  .lang-toggle{
+    border:1px solid var(--rule);background:transparent;color:var(--muted);
+    font:inherit;font-size:.78rem;cursor:pointer;border-radius:4px;
+    padding:.18rem .5rem;font-family:inherit;
+  }
+  .lang-toggle:hover{border-color:var(--link);color:var(--link)}
+
+  /* ---- layout ---- */
+  main{max-width:var(--maxw);margin:0 auto;padding:0 1.25rem 4rem}
+  section{padding-top:2.4rem}
+  h1{font-size:2rem;margin:2.2rem 0 .2rem;line-height:1.2}
+  .role{color:var(--muted);font-size:1.05rem;margin:0 0 .4rem;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  h2{font-size:1.3rem;margin:0 0 .8rem;font-weight:600;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  h3{font-size:1rem;margin:1.6rem 0 .6rem;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;font-weight:600;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  hr{border:0;border-top:1px solid var(--rule);margin:2.6rem 0 0}
+  p{margin:.6rem 0}
+
+  /* ---- bio header ---- */
+  .bio-head{display:flex;gap:1.6rem;align-items:flex-start;flex-wrap:wrap}
+  .bio-text{flex:1 1 340px;min-width:280px}
+  .photo{
+    flex:0 0 168px;width:168px;height:208px;border-radius:6px;
+    background:#ececea url('photo.jpg') center/cover no-repeat;
+    border:1px solid var(--rule);
+    display:flex;align-items:flex-end;justify-content:center;
+    color:#a8a8a4;font-size:.7rem;text-align:center;padding-bottom:.5rem;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  }
+
+  /* ---- research entries ---- */
+  .entry{margin:1.3rem 0}
+  .entry .title{font-weight:700}
+  .entry .authors{font-style:italic;color:#444}
+  .entry .summary{font-size:.95rem;color:#3a3a3a;margin:.3rem 0 .25rem}
+  .entry .meta{font-size:.9rem;color:var(--muted)}
+  .marks{font-size:.85rem;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  .marks a{color:var(--link)}
+
+  /* ---- teaching ---- */
+  .course{margin:1rem 0}
+  .course .cname{font-weight:700}
+  .course .cdesc{font-size:.95rem;color:#3a3a3a}
+
+  /* ---- contact / footer ---- */
+  .contact-links{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:.95rem;line-height:2}
+  footer{max-width:var(--maxw);margin:0 auto;padding:1.6rem 1.25rem 3rem;
+    border-top:1px solid var(--rule);color:var(--muted);font-size:.85rem;
+    display:flex;flex-wrap:wrap;gap:.4rem 1rem;align-items:center;justify-content:space-between;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;}
+  footer .flinks a{margin-right:.9rem;color:var(--muted)}
+  footer .flinks a:hover{color:var(--link)}
+
+  /* ---- bilingual visibility ---- */
+  .pt{display:none}
+  body.lang-pt .en{display:none}
+  body.lang-pt .pt{display:inline}
+  body.lang-pt .pt.block{display:block}
+  .en.block{display:block}
+
+  @media (max-width:560px){
+    body{font-size:17px}
+    h1{font-size:1.7rem}
+    .photo{flex-basis:140px;width:140px;height:174px}
+  }
+</style>
+</head>
+<body class="lang-en">
+
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-name">Marcio Gold Firmo</a>
+    <nav>
+      <ul>
+        <li><a href="#bio">Bio</a></li>
+        <li><a href="#teaching"><span class="en">Teaching</span><span class="pt">Ensino</span></a></li>
+        <li><a href="#research"><span class="en">Research</span><span class="pt">Pesquisa</span></a></li>
+        <li><a href="#cv">CV</a></li>
+        <li><a href="#contact"><span class="en">Contact</span><span class="pt">Contato</span></a></li>
+        <li><button class="lang-toggle" id="langBtn" type="button">Português</button></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= BIO ================= -->
+  <section id="bio">
+    <div class="bio-head">
+      <div class="bio-text">
+        <h1>Marcio Gold Firmo</h1>
+        <p class="role">
+          <span class="en">Assistant Professor of Economics · Faculty of Economic Sciences (FCE), UERJ</span>
+          <span class="pt">Professor Adjunto de Economia · Faculdade de Ciências Econômicas (FCE), UERJ</span>
+        </p>
+        <p>
+          <span class="en block">I am an Assistant Professor of Economics at the Faculty of Economic Sciences (FCE)
+          of the State University of Rio de Janeiro (UERJ). I hold a BA (2005), an MA (2008) and a
+          PhD (2021) in Economics, all from PUC-Rio. My research interests are in applied microeconomics —
+          the economics of education, labor economics, impact evaluation and public policy — drawing on
+          microeconometric methods and Brazilian data.</span>
+          <span class="pt block">Sou Professor Adjunto de Economia na Faculdade de Ciências Econômicas (FCE)
+          da Universidade do Estado do Rio de Janeiro (UERJ). Tenho graduação (2005), mestrado (2008) e
+          doutorado (2021) em Economia, todos pela PUC-Rio. Meus interesses de pesquisa estão em
+          microeconomia aplicada — economia da educação, economia do trabalho, avaliação de impacto e
+          políticas públicas — com uso de métodos de microeconometria e dados brasileiros.</span>
+        </p>
+        <p>
+          <span class="en block">Alongside my academic career, I have been a career economist at the
+          Brazilian Development Bank (BNDES) since 2008, and I previously worked as a consultant
+          at the World Bank.</span>
+          <span class="pt block">Paralelamente à carreira acadêmica, sou economista de carreira do
+          BNDES desde 2008, e atuei como consultor no Banco Mundial.</span>
+        </p>
+        <p style="font-size:.92rem">
+          <span class="en">You can find more detail in my
+            <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Lattes CV</a> or
+            <a href="https://scholar.google.com/citations?user=LIAH4HcAAAAJ" target="_blank" rel="noopener">Google Scholar</a> profile.</span>
+          <span class="pt">Mais detalhes no meu
+            <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Currículo Lattes</a> ou no perfil do
+            <a href="https://scholar.google.com/citations?user=LIAH4HcAAAAJ" target="_blank" rel="noopener">Google Scholar</a>.</span>
+        </p>
+      </div>
+      <div class="photo" aria-label="Photo">photo.jpg</div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ================= TEACHING ================= -->
+  <section id="teaching">
+    <h2><span class="en">Teaching</span><span class="pt">Ensino</span></h2>
+    <p style="font-size:.95rem;color:#3a3a3a">
+      <span class="en block">At UERJ I teach undergraduate courses in public economics, the economics
+      of education, and economic theory. I have previously taught at PUC-Rio and was a teaching
+      assistant in econometrics at IBMEC.</span>
+      <span class="pt block">Na UERJ leciono disciplinas de graduação em economia do setor público,
+      economia da educação e teoria econômica. Já lecionei na PUC-Rio e fui monitor (TA) de
+      econometria no IBMEC.</span>
+    </p>
+
+    <h3><span class="en">Courses at UERJ</span><span class="pt">Disciplinas na UERJ</span></h3>
+
+    <div class="course">
+      <span class="cname"><span class="en">Public Sector Economics</span><span class="pt">Economia do Setor Público</span></span>
+      <div class="cdesc"><span class="en">Required undergraduate course on taxation, public spending, social insurance and the role of government in the economy.</span><span class="pt">Disciplina obrigatória da graduação sobre tributação, gasto público, seguro social e o papel do Estado na economia.</span></div>
+    </div>
+    <div class="course">
+      <span class="cname"><span class="en">Economics of Education</span><span class="pt">Economia da Educação</span></span>
+      <div class="cdesc"><span class="en">Undergraduate elective on human capital, returns to schooling, education policy and impact evaluation.</span><span class="pt">Eletiva de graduação sobre capital humano, retornos da educação, políticas educacionais e avaliação de impacto.</span></div>
+    </div>
+    <div class="course">
+      <span class="cname"><span class="en">Topics in Economic Theory</span><span class="pt">Tópicos em Teoria Econômica</span></span>
+      <div class="cdesc"><span class="en">Selected advanced topics in applied and theoretical economics.</span><span class="pt">Tópicos avançados selecionados em economia aplicada e teórica.</span></div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ================= RESEARCH ================= -->
+  <section id="research">
+    <h2><span class="en">Research</span><span class="pt">Pesquisa</span></h2>
+
+    <!-- Working Papers -->
+    <h3><span class="en">Working Papers</span><span class="pt">Working Papers</span></h3>
+
+    <div class="entry">
+      <div class="title">
+        <a href="fake-diplomas.pdf" target="_blank" rel="noopener">Fake it till you (don't) make it: Fake diplomas and signaling in labor markets</a>
+      </div>
+      <div class="authors">with Eric Bettinger, Gustavo Gonzaga &amp; Vitor Pereira</div>
+      <div class="summary">
+        <span class="en">Does schooling create new skills or merely signal underlying ability? Exploiting the 2018 police shutdown of 21 high schools in Rio de Janeiro that sold diplomas without any instruction, we match student records to employment data and find that returns to fake and legitimate diplomas start out similar but diverge within a few years.</span>
+        <span class="pt">A escolaridade cria novas habilidades ou apenas sinaliza a capacidade do indivíduo? Explorando o fechamento, pela polícia, de 21 escolas no Rio de Janeiro em 2018 que vendiam diplomas sem qualquer instrução, cruzamos registros escolares com dados de emprego e mostramos que os retornos de diplomas falsos e legítimos começam semelhantes, mas divergem em poucos anos.</span>
+      </div>
+      <div class="marks">[<a href="fake-diplomas.pdf" target="_blank" rel="noopener">PDF</a>]</div>
+    </div>
+
+    <!-- Journal publications -->
+    <h3><span class="en">Journal Publications</span><span class="pt">Publicações em Periódicos</span></h3>
+
+    <div class="entry">
+      <div class="title">
+        <a href="http://www.accessecon.com/Pubs/EB/2023/Volume43/EB-23-V43-I4-P149.pdf" target="_blank" rel="noopener">How relevant is information? Some experimental evidence</a>
+      </div>
+      <div class="authors">with Pedro Hemsley &amp; Vitor Onuki</div>
+      <div class="summary">
+        <span class="en">We run online experiments on gun violence, global warming and Covid-19 to test whether objective information from expert sources shifts opinions. The effect is statistically insignificant across all topics, while political position strongly predicts opinion formation — raising doubts about fact-checking as a tool against fake news.</span>
+        <span class="pt">Conduzimos experimentos online sobre violência armada, aquecimento global e Covid-19 para testar se informação objetiva de fontes especializadas altera opiniões. O efeito é estatisticamente insignificante em todos os temas, enquanto a posição política prevê fortemente a formação de opinião — o que lança dúvidas sobre o fact-checking como instrumento contra fake news.</span>
+      </div>
+      <div class="meta">
+        <span class="en"><em>Economics Bulletin</em>, Vol. 43, Issue 4, pp. 1741–1748 (2023).</span>
+        <span class="pt"><em>Economics Bulletin</em>, Vol. 43, n. 4, p. 1741–1748 (2023).</span>
+      </div>
+      <div class="marks">[<a href="http://www.accessecon.com/Pubs/EB/2023/Volume43/EB-23-V43-I4-P149.pdf" target="_blank" rel="noopener">PDF</a>]</div>
+    </div>
+
+    <!-- Book chapters -->
+    <h3><span class="en">Book Chapters</span><span class="pt">Capítulos de Livro</span></h3>
+
+    <div class="entry">
+      <div class="title">Só se colhe o que se planta: o caminho para melhorar a educação no Estado do Rio de Janeiro</div>
+      <div class="authors">with Teresa Pontual &amp; Vitor Pereira</div>
+      <div class="summary">
+        <span class="en">Diagnoses the bottlenecks of basic education in the State of Rio de Janeiro and lays out a concrete policy path to improve learning outcomes.</span>
+        <span class="pt">Diagnostica os gargalos da educação básica no Estado do Rio de Janeiro e traça um caminho de políticas concretas para melhorar os resultados de aprendizagem.</span>
+      </div>
+      <div class="meta">
+        <span class="en">In F. Giambiagi, M. A. S. Cardoso &amp; G. Tinoco (orgs.), <em>Um Renascer para o Estado do Rio de Janeiro: Propostas para um Estado Próspero e Sustentável</em>. São Paulo: Editora Lux, 2025, pp. 289–319.</span>
+        <span class="pt">In F. Giambiagi, M. A. S. Cardoso &amp; G. Tinoco (orgs.), <em>Um Renascer para o Estado do Rio de Janeiro: Propostas para um Estado Próspero e Sustentável</em>. São Paulo: Editora Lux, 2025, pp. 289–319.</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="title">Desafios e Oportunidades para a Educação</div>
+      <div class="authors">with C. L. Matos</div>
+      <div class="summary">
+        <span class="en">Reviews the main bottlenecks of Brazilian education and the opportunities to raise its quality as part of the country's development agenda.</span>
+        <span class="pt">Revisa os principais gargalos da educação brasileira e as oportunidades para elevar sua qualidade como parte da agenda de desenvolvimento do país.</span>
+      </div>
+      <div class="meta">
+        <span class="en">In F. Giambiagi &amp; R. Barboza (orgs.), <em>O Labirinto Visto de Cima: Saídas para o Desenvolvimento do Brasil</em>. São Paulo: Editora Lux, 2022, pp. 337–351.</span>
+        <span class="pt">In F. Giambiagi &amp; R. Barboza (orgs.), <em>O Labirinto Visto de Cima: Saídas para o Desenvolvimento do Brasil</em>. São Paulo: Editora Lux, 2022, pp. 337–351.</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="title">Assistência Social</div>
+      <div class="authors">with R. Rocha, P. Hemsley et al.</div>
+      <div class="summary">
+        <span class="en">Proposes social-assistance policy for the city of Rio de Janeiro, aiming to make income support more effective and better targeted to those most in need.</span>
+        <span class="pt">Propõe políticas de assistência social para a cidade do Rio de Janeiro, buscando tornar o apoio de renda mais efetivo e mais bem focalizado em quem mais precisa.</span>
+      </div>
+      <div class="meta">
+        <span class="en">In <em>Maravilhosa para Todos: Políticas Públicas para o Rio de Janeiro</em>. São Paulo: Editora Lux, 2020, pp. 250–272.</span>
+        <span class="pt">In <em>Maravilhosa para Todos: Políticas Públicas para o Rio de Janeiro</em>. São Paulo: Editora Lux, 2020, pp. 250–272.</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="title">Uma Política Social para uma Economia Competitiva</div>
+      <div class="authors">with Francisco H. G. Ferreira</div>
+      <div class="summary">
+        <span class="en">Argues that Brazil's social-protection system, expanded organically since the 1988 Constitution, should be assessed for its joint effect on productivity and competitiveness, and offers concrete proposals to make it fairer and more efficient.</span>
+        <span class="pt">Defende que o sistema de proteção social brasileiro, expandido organicamente desde a Constituição de 1988, seja avaliado por seu efeito conjunto sobre a produtividade e a competitividade, e apresenta propostas concretas para torná-lo mais justo e eficiente.</span>
+      </div>
+      <div class="meta">
+        <span class="en">In F. Giambiagi &amp; C. Porto (orgs.), <em>Propostas para o Governo 2015/2018</em>, ch. 13, 2014.</span>
+        <span class="pt">In F. Giambiagi &amp; C. Porto (orgs.), <em>Propostas para o Governo 2015/2018</em>, cap. 13, 2014.</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="title">Educação: de Fusquinha no mundo da F1</div>
+      <div class="authors"><span class="en">sole author</span><span class="pt">autor único</span></div>
+      <div class="summary">
+        <span class="en">A chapter on the challenges of Brazilian education and its central role in long-run development, arguing that raising educational quality is decisive for the country's growth prospects.</span>
+        <span class="pt">Capítulo sobre os desafios da educação brasileira e seu papel central no desenvolvimento de longo prazo, defendendo que elevar a qualidade educacional é decisivo para as perspectivas de crescimento do país.</span>
+      </div>
+      <div class="meta">
+        <span class="en">In A. Castelar Pinheiro &amp; F. Giambiagi (orgs.), <em>Além da Euforia: Riscos e Lacunas do Modelo Brasileiro de Desenvolvimento</em>. Campus/Elsevier, 2012.</span>
+        <span class="pt">In A. Castelar Pinheiro &amp; F. Giambiagi (orgs.), <em>Além da Euforia: Riscos e Lacunas do Modelo Brasileiro de Desenvolvimento</em>. Campus/Elsevier, 2012.</span>
+      </div>
+    </div>
+
+    <div class="entry">
+      <div class="title">Regulação: errada, incompleta ou não aplicada?</div>
+      <div class="authors">with André Morandi</div>
+      <div class="summary">
+        <span class="en">Examines the 2007–2008 financial crisis through the lens of the Basel II regulatory framework, asking whether the crisis could have been anticipated or mitigated under existing prudential rules.</span>
+        <span class="pt">Analisa a crise financeira de 2007–2008 à luz do arcabouço regulatório de Basileia II, questionando se a crise poderia ter sido antecipada ou mitigada sob as regras prudenciais então existentes.</span>
+      </div>
+      <div class="meta">
+        <span class="en">Chapter 3, in <em>Regulação</em>, 2010.</span>
+        <span class="pt">Capítulo 3, in <em>Regulação</em>, 2010.</span>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ================= CV ================= -->
+  <section id="cv">
+    <h2>CV</h2>
+    <p>
+      <span class="en">For my full curriculum vitae, see my
+        <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Lattes CV</a>.</span>
+      <span class="pt">Para o currículo completo, consulte meu
+        <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Currículo Lattes</a>.</span>
+    </p>
+  </section>
+
+  <hr>
+
+  <!-- ================= CONTACT ================= -->
+  <section id="contact">
+    <h2><span class="en">Contact</span><span class="pt">Contato</span></h2>
+    <p class="contact-links">
+      <strong>marciogoldfirmo [at] gmail [dot] com</strong><br>
+      <span class="en">Faculty of Economic Sciences (FCE) · UERJ<br>Rio de Janeiro, Brazil</span>
+      <span class="pt">Faculdade de Ciências Econômicas (FCE) · UERJ<br>Rio de Janeiro, Brasil</span>
+    </p>
+    <p class="contact-links">
+      <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Lattes</a> ·
+      <a href="https://scholar.google.com/citations?user=LIAH4HcAAAAJ" target="_blank" rel="noopener">Google Scholar</a> ·
+      <a href="https://orcid.org/0009-0005-8418-4103" target="_blank" rel="noopener">ORCID</a> ·
+      <a href="https://github.com/marciofirmo" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://www.linkedin.com/in/marcio-gold-firmo/" target="_blank" rel="noopener">LinkedIn</a>
+    </p>
+  </section>
+
+</main>
+
+<footer>
+  <span>© <span id="yr"></span> Marcio Gold Firmo</span>
+  <span class="flinks">
+    <a href="http://lattes.cnpq.br/8864435098024762" target="_blank" rel="noopener">Lattes</a>
+    <a href="https://scholar.google.com/citations?user=LIAH4HcAAAAJ" target="_blank" rel="noopener">Scholar</a>
+    <a href="https://orcid.org/0009-0005-8418-4103" target="_blank" rel="noopener">ORCID</a>
+    <a href="https://github.com/marciofirmo" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/marcio-gold-firmo/" target="_blank" rel="noopener">LinkedIn</a>
+  </span>
+</footer>
+
+<script>
+  (function(){
+    var body=document.body, btn=document.getElementById('langBtn');
+    function set(lang){
+      if(lang==='pt'){body.classList.add('lang-pt');document.documentElement.lang='pt';btn.textContent='English';}
+      else{body.classList.remove('lang-pt');document.documentElement.lang='en';btn.textContent='Português';}
+      try{localStorage.setItem('site-lang',lang);}catch(e){}
+    }
+    var saved=null;
+    try{saved=localStorage.getItem('site-lang');}catch(e){}
+    if(saved!=='pt'&&saved!=='en'){
+      saved=((navigator.language||'').slice(0,2)==='pt')?'pt':'en';
+    }
+    set(saved);
+    btn.addEventListener('click',function(){set(body.classList.contains('lang-pt')?'en':'pt');});
+    document.getElementById('yr').textContent=new Date().getFullYear();
+  })();
+</script>
+</body>
+</html>
