@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Viés de Variável Omitida — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 760px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.35rem; color: var(--azul); margin-bottom: 4px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 14px 0; font-size: .92rem; }
+  #status { font-weight: 600; }
+  #status.pronto { color: #157347; }
+  #status.erro { color: #b02a37; }
+  textarea { width: 100%; min-height: 320px; font-family: ui-monospace, Menlo,
+             Consolas, monospace; font-size: .85rem; border: 1px solid var(--borda);
+             border-radius: 10px; padding: 10px; background: #fbfcfe;
+             white-space: pre; resize: vertical; }
+  .botoes { display: flex; gap: 10px; margin: 10px 0 18px; flex-wrap: wrap; }
+  button { border: 0; border-radius: 8px; padding: 12px 22px; font-size: 1rem;
+           font-weight: 600; cursor: pointer; }
+  #rodar { background: var(--azul); color: #fff; }
+  #rodar:disabled { background: #9fb3cb; cursor: wait; }
+  #restaurar { background: #e8ebef; color: #1c2430; }
+  #saida { background: #10151c; color: #d7e3f0; border-radius: 10px;
+           padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+           font-size: .82rem; white-space: pre-wrap; overflow-x: auto;
+           min-height: 40px; }
+  #saida .err { color: #ffb3b8; }
+  #graficos canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+                     border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Viés de Variável Omitida</h1>
+<p class="sub">Economia da Educação — UERJ. R rodando direto no seu navegador (webR), sem instalar nada.</p>
+
+<div class="box">
+  <b>A ideia:</b> simulamos um mundo onde o efeito verdadeiro da escolaridade (X) sobre o
+  salário (Y) é <b>0.5</b>, mas existe uma variável de habilidade (Z) que afeta o salário e
+  anda junto com a escolaridade. Quem roda a regressão <i>sem</i> controlar por Z encontra
+  ~<b>1.0</b> — o dobro do efeito real. Aperte <b>Rodar</b> e veja.
+</div>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<textarea id="codigo" spellcheck="false"></textarea>
+
+<div class="botoes">
+  <button id="rodar" disabled>&#9654; Rodar</button>
+  <button id="restaurar">Restaurar código</button>
+</div>
+
+<div id="saida">A saída do R aparecerá aqui.</div>
+<div id="graficos"></div>
+
+<footer>
+  Você pode editar o código acima e rodar de novo — experimente mudar o efeito da
+  habilidade (o <code>1 *</code> em <code>Z</code>) para <code>0</code> e ver o viés sumir.
+  Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a> (R compilado para
+  WebAssembly). Em computador, a versão completa do exemplo (com ggplot2 e avPlots) está no
+  classroom: <code>exemplo vies educacao v2.R</code>.
+</footer>
+
+<script type="module">
+const CODIGO_INICIAL = `# ----------------------------------------------------
+# Viés de Variável Omitida
+# X = escolaridade | Z = habilidade (não observada)
+# Y = salário
+# Modelo verdadeiro: Y = 2 + 0.5*X + 1*Z + erro
+# ----------------------------------------------------
+
+set.seed(123)
+n <- 1000
+
+X <- rnorm(n, mean = 10, sd = 4)        # escolaridade
+Z <- 0.5 * X + rnorm(n, mean = 0, sd = 2) # habilidade
+Y <- 2 + 0.5 * X + 1 * Z + rnorm(n, 0, 5) # salário
+
+cat("Correlação entre X e Z:", round(cor(X, Z), 2), "\\n\\n")
+
+# Modelo OMITIDO: o que o pesquisador sem dados de
+# habilidade consegue rodar
+m_omitido <- lm(Y ~ X)
+cat("Modelo OMITIDO  (Y ~ X):\\n")
+print(round(coef(m_omitido), 3))
+
+# Modelo CORRETO: inclui a habilidade
+m_correto <- lm(Y ~ X + Z)
+cat("\\nModelo CORRETO  (Y ~ X + Z):\\n")
+print(round(coef(m_correto), 3))
+
+# Conferindo com a fórmula do viés:
+# beta1_omitido = beta1 + beta2 * delta
+delta <- coef(lm(Z ~ X))[2]
+cat("\\nFórmula do viés: 0.5 + 1 x", round(delta, 3),
+    "=", round(0.5 + 1 * delta, 3), "\\n")
+
+# Gráfico: reta viesada (vermelha) vs. inclinação
+# verdadeira (azul)
+plot(X, Y, pch = 16, col = rgb(0, 0, 0, 0.25),
+     main = "Salário vs. Escolaridade",
+     xlab = "X (escolaridade)", ylab = "Y (salário)")
+abline(m_omitido, col = "red", lwd = 2, lty = 2)
+abline(a = mean(Y) - 0.5 * mean(X), b = 0.5,
+       col = "blue", lwd = 2)
+legend("topleft", bty = "n", lwd = 2,
+       col = c("red", "blue"), lty = c(2, 1),
+       legend = c("Modelo omitido (viesado, ~1.0)",
+                  "Inclinação verdadeira (0.5)"))
+`;
+
+const elCodigo = document.getElementById('codigo');
+const elStatus = document.getElementById('status');
+const elSaida  = document.getElementById('saida');
+const elGraf   = document.getElementById('graficos');
+const btnRodar = document.getElementById('rodar');
+const btnRest  = document.getElementById('restaurar');
+
+elCodigo.value = CODIGO_INICIAL;
+btnRest.addEventListener('click', () => { elCodigo.value = CODIGO_INICIAL; });
+
+let webR, shelter;
+
+async function iniciar() {
+  try {
+    const { WebR } = await import('https://webr.r-wasm.org/latest/webr.mjs');
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+    btnRodar.disabled = false;
+  } catch (e) {
+    elStatus.textContent = 'falha ao carregar o R: ' + e.message +
+      ' — verifique sua conexão e recarregue a página.';
+    elStatus.className = 'erro';
+  }
+}
+
+async function rodar() {
+  btnRodar.disabled = true;
+  elStatus.textContent = 'executando…';
+  elStatus.className = '';
+  elSaida.textContent = '';
+  elGraf.innerHTML = '';
+  try {
+    const captura = await shelter.captureR(elCodigo.value, {
+      withAutoprint: true,
+      captureStreams: true,
+      captureConditions: true,
+      captureGraphics: { width: 660, height: 460, bg: 'white', pointsize: 14 }
+    });
+    let texto = '';
+    for (const linha of captura.output) {
+      if (linha.type === 'stdout') texto += linha.data + '\n';
+      else if (linha.type === 'stderr') texto += linha.data + '\n';
+      else if (linha.type === 'error' || linha.type === 'warning' ||
+               linha.type === 'message') {
+        const msg = (linha.data && linha.data.message) ? linha.data.message : '';
+        if (msg) texto += '[' + linha.type + '] ' + msg + '\n';
+      }
+    }
+    elSaida.textContent = texto || '(sem saída de texto)';
+    for (const img of captura.images) {
+      const cv = document.createElement('canvas');
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      elGraf.appendChild(cv);
+    }
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+  } catch (e) {
+    elSaida.innerHTML = '<span class="err">Erro do R: ' +
+      String(e.message).replace(/</g, '&lt;') + '</span>';
+    elStatus.textContent = 'erro na execução — corrija o código e rode de novo.';
+    elStatus.className = 'erro';
+  } finally {
+    if (shelter) await shelter.purge();
+    btnRodar.disabled = false;
+  }
+}
+
+btnRodar.addEventListener('click', rodar);
+iniciar();
+</script>
+</body>
+</html>
