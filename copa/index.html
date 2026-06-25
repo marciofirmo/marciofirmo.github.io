@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copa Cultural 2026</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#f1f5f9; color:#1e293b; }
+  .wrap { max-width:820px; margin:0 auto; padding:16px; }
+  .head { text-align:center; margin-bottom:18px; }
+  .head h1 { font-size:24px; font-weight:800; margin:0; }
+  .head p { font-size:13px; color:#64748b; margin:4px 0 0; }
+  .lbl { font-size:13px; font-weight:600; color:#475569; margin-bottom:8px; }
+  .strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; -webkit-overflow-scrolling:touch; }
+  .chip { flex:0 0 auto; border:1px solid #e2e8f0; background:#fff; color:#475569; border-radius:16px; padding:8px 12px; text-align:center; cursor:pointer; font-family:inherit; }
+  .chip.on { border-color:#10b981; background:#10b981; color:#fff; }
+  .chip .fl { font-size:18px; line-height:1; }
+  .chip .nm { font-size:10px; margin-top:3px; white-space:nowrap; opacity:.9; }
+  .banner { background:#1e293b; border-radius:12px; padding:12px; margin-bottom:12px; text-align:center; }
+  .banner .when { color:#cbd5e1; font-size:12px; margin-bottom:4px; }
+  .banner .vs { color:#fff; font-weight:700; font-size:16px; }
+  .banner .vs .sc { color:#34d399; margin:0 8px; }
+  .panels { display:flex; flex-direction:column; gap:12px; }
+  @media(min-width:560px){ .panels{ flex-direction:row; } }
+  .panel { flex:1; min-width:0; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .pc { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
+  .pc .fl { font-size:30px; }
+  .pc h3 { font-size:18px; font-weight:700; margin:0; line-height:1.1; }
+  .pc .trad { font-size:12px; color:#94a3b8; margin:2px 0 0; }
+  .big { display:flex; align-items:center; gap:12px; border-radius:12px; padding:12px; text-decoration:none; margin-bottom:8px; }
+  .big.mus { background:#ecfdf5; }
+  .big.cin { background:#eef2ff; }
+  .big .ic { font-size:22px; }
+  .big .tag { font-size:10px; text-transform:uppercase; letter-spacing:.04em; font-weight:700; }
+  .big.mus .tag { color:#059669; }
+  .big.cin .tag { color:#4f46e5; }
+  .big .ti { font-size:14px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .big.mus .ti { color:#065f46; }
+  .big.cin .ti { color:#3730a3; }
+  .big .pl { margin-left:auto; font-size:20px; }
+  .big.mus .pl { color:#059669; }
+  .big.cin .pl { color:#4f46e5; }
+  .more { background:none; border:none; color:#94a3b8; font-size:12px; width:100%; padding:8px 0 0; cursor:pointer; font-family:inherit; }
+  .extra a { display:block; font-size:14px; margin-top:6px; text-decoration:none; }
+  .extra a.s { color:#047857; }
+  .extra a.f { color:#4338ca; }
+  .foot { text-align:center; font-size:11px; color:#94a3b8; margin-top:20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><h1>⚽ Copa Cultural 2026</h1><p>Música tradicional e cinema dos países, jogo a jogo</p></div>
+  <div class="lbl">📅 Deslize e escolha um jogo</div>
+  <div class="strip" id="strip"></div>
+  <div id="detail"></div>
+  <div class="foot">Seleções de música e cinema feitas a dedo — boas portas de entrada para cada cultura.</div>
+</div>
+<script>
+const C = {
+  SCO:{name:"Escócia",flag:"🏴",trad:"Folk celta, gaita de foles e canção gaélica",songs:["Auld Lang Syne — tradicional","Loch Lomond — tradicional","Flower of Scotland — The Corries","Caledonia — Dougie MacLean"],films:["Trainspotting (1996, D. Boyle)","Local Hero (1983, B. Forsyth)","Gregory's Girl (1981, B. Forsyth)"]},
+  MAR:{name:"Marrocos",flag:"🇲🇦",trad:"Gnawa, chaabi e música andaluza",songs:["Ya Sah — Nass El Ghiwane","Mahmouma — Hajja Hamdaouia","Música gnawa de Essaouira"],films:["Ali Zaoua (2000, N. Ayouch)","Os Cavalos de Deus (2012, N. Ayouch)","Adam (2019, M. Touzani)"]},
+  BRA:{name:"Brasil",flag:"🇧🇷",trad:"Samba, choro e bossa nova",songs:["Aquarela do Brasil — Ary Barroso","Carinhoso — Pixinguinha","Garota de Ipanema — Tom Jobim & Vinicius","Feitio de Oração — Noel Rosa"],films:["Central do Brasil (1998, W. Salles)","Cidade de Deus (2002, F. Meirelles)","Orfeu Negro (1959, M. Camus)"]},
+  HTI:{name:"Haiti",flag:"🇭🇹",trad:"Kompa, rara e tambores vodu",songs:["New York City — Tabou Combo","Kè-m Pa Sote — Boukman Eksperyans","Twoubadou tradicional"],films:["Moloch Tropical (2009, R. Peck)","L'Homme sur les quais (1993, R. Peck)"]},
+  TUR:{name:"Turquia",flag:"🇹🇷",trad:"Türkü folclórico, clássica otomana e rock anatólio",songs:["Dağlar Dağlar — Barış Manço","Uzun İnce Bir Yoldayım — Âşık Veysel","Música com bağlama (saz)"],films:["Sono de Inverno (2014, N. B. Ceylan)","Era Uma Vez na Anatólia (2011, N. B. Ceylan)","Yol (1982, Y. Güney)"]},
+  PAR:{name:"Paraguai",flag:"🇵🇾",trad:"Guarânia, polca paraguaia e harpa",songs:["Pájaro Campana — tradicional (arpa)","India — José Asunción Flores","Recuerdos de Ypacaraí — D. Ortiz"],films:["7 Cajas (2012, Maneglia & Schémbori)","Hamaca Paraguaya (2006, P. Encina)"]},
+  NED:{name:"Holanda",flag:"🇳🇱",trad:"Levenslied (canção popular) e folk",songs:["Tulpen uit Amsterdam — tradicional","Bloed, Zweet en Tranen — André Hazes"],films:["Caráter (1997, M. van Diem)","Delícia Turca (1973, P. Verhoeven)","A Linha de Antonia (1995, M. Gorris)"]},
+  SWE:{name:"Suécia",flag:"🇸🇪",trad:"Folk nórdico (nyckelharpa) e tradição da visa",songs:["Who Can Sail — tradicional nórdica","Visa sueca tradicional","Polska (dança folk)"],films:["O Sétimo Selo (1957, I. Bergman)","Morangos Silvestres (1957, I. Bergman)","Deixa Ela Entrar (2008, T. Alfredson)"]},
+  GER:{name:"Alemanha",flag:"🇩🇪",trad:"Volksmusik, clássica e krautrock",songs:["Der Mond ist aufgegangen — tradicional","Volkslied alemão tradicional","Autobahn — Kraftwerk"],films:["Das Boot (1981, W. Petersen)","Corra, Lola, Corra (1998, T. Tykwer)","A Vida dos Outros (2006, von Donnersmarck)"]},
+  CIV:{name:"Costa do Marfim",flag:"🇨🇮",trad:"Coupé-décalé, zouglou e reggae marfinense",songs:["1er Gaou — Magic System","Brigadier Sabari — Alpha Blondy"],films:["A Noite dos Reis (2020, P. Lacôte)","Run (2014, P. Lacôte)"]},
+  ECU:{name:"Equador",flag:"🇪🇨",trad:"Pasillo e música andina (sanjuanito)",songs:["Nuestro Juramento — Julio Jaramillo","Pasional — Julio Jaramillo","Sanjuanito tradicional"],films:["Ratas, Ratones, Rateros (1999, S. Cordero)","Qué Tan Lejos (2006, T. Hermida)"]},
+  CUW:{name:"Curaçao",flag:"🇨🇼",trad:"Tumba, tambú e ritmo em papiamento",songs:["Tumba de Carnaval tradicional","Tambú (canto e tambor)","Ritmo kombiná"],films:["Tula: The Revolt (2013, J. van Belle)"]},
+  TUN:{name:"Tunísia",flag:"🇹🇳",trad:"Malouf andaluz e mezoued popular",songs:["Malouf tunisino tradicional","Mezoued popular (gaita de pele)"],films:["Os Silêncios do Palácio (1994, M. Tlatli)","Halfaouine (1990, F. Boughedir)"]},
+  JPN:{name:"Japão",flag:"🇯🇵",trad:"Min'yō folk, gagaku da corte e shamisen/koto/taiko",songs:["Sakura Sakura — tradicional","Soran Bushi — canção de pescadores","Música de koto tradicional"],films:["Os Sete Samurais (1954, A. Kurosawa)","A Viagem de Chihiro (2001, H. Miyazaki)","Era Uma Vez em Tóquio (1953, Y. Ozu)"]},
+  ESP:{name:"Espanha",flag:"🇪🇸",trad:"Flamenco, copla e jota",songs:["Entre Dos Aguas — Paco de Lucía","La Leyenda del Tiempo — Camarón","Copla espanhola tradicional"],films:["Tudo Sobre Minha Mãe (1999, P. Almodóvar)","O Labirinto do Fauno (2006, G. del Toro)","O Espírito da Colmeia (1973, V. Erice)"]},
+  KSA:{name:"Arábia Saudita",flag:"🇸🇦",trad:"Khaleeji, ardah (canto e tambor) e oud",songs:["Ardah tradicional (najdi)","Música de oud do Golfo","Canção khaleeji popular"],films:["Wadjda (2012, H. al-Mansour)","A Candidata Perfeita (2019, H. al-Mansour)"]},
+  BEL:{name:"Bélgica",flag:"🇧🇪",trad:"Chanson (Jacques Brel) e folk flamengo",songs:["Ne Me Quitte Pas — Jacques Brel","Le Plat Pays — Jacques Brel"],films:["Rosetta (1999, irmãos Dardenne)","A Criança (2005, irmãos Dardenne)","Toto, o Herói (1991, J. van Dormael)"]},
+  IRN:{name:"Irã",flag:"🇮🇷",trad:"Clássica persa (radif), tar e setar",songs:["Música clássica persa (radif)","Dastgah tradicional ao tar","Canção folclórica persa"],films:["A Separação (2011, A. Farhadi)","Filhos do Paraíso (1997, M. Majidi)","Gosto de Cereja (1997, A. Kiarostami)"]},
+  URU:{name:"Uruguai",flag:"🇺🇾",trad:"Candombe, murga e canção popular",songs:["Candombe tradicional (tambores)","Brindis por Pierrot — Jaime Roos","Guitarra Negra — Alfredo Zitarrosa"],films:["Whisky (2004, Rebella & Stoll)","25 Watts (2001, mesma dupla)","A Noite de 12 Anos (2018, Á. Brechner)"]},
+  CPV:{name:"Cabo Verde",flag:"🇨🇻",trad:"Morna, coladeira e funaná",songs:["Sodade — Cesária Évora","Petit Pays — Cesária Évora","Funaná tradicional"],films:["Na Cidade Vazia (2004, M. P. Queirós)"]},
+  NZL:{name:"Nova Zelândia",flag:"🇳🇿",trad:"Waiata e haka maori",songs:["Pokarekare Ana — tradicional maori","Haka (canto cerimonial)","Waiata tradicional"],films:["Encurralados (1994, L. Tamahori)","A Encantadora de Baleias (2002, N. Caro)","Boy (2010, T. Waititi)"]},
+  EGY:{name:"Egito",flag:"🇪🇬",trad:"Clássica árabe (Umm Kulthum) e shaabi",songs:["Enta Omri — Umm Kulthum","Música de Mohammed Abdel Wahab","Shaabi popular"],films:["A Estação Central (1958, Y. Chahine)","O Edifício Yacoubian (2006, M. Hamed)"]},
+  ARG:{name:"Argentina",flag:"🇦🇷",trad:"Tango e folclore (chacarera, zamba)",songs:["Mi Buenos Aires Querido — Carlos Gardel","Libertango — Astor Piazzolla","Alfonsina y el Mar — Mercedes Sosa"],films:["O Segredo dos Seus Olhos (2009, Campanella)","Relatos Selvagens (2014, D. Szifron)","A História Oficial (1985, L. Puenzo)"]},
+  AUT:{name:"Áustria",flag:"🇦🇹",trad:"Valsa (Strauss), iodel e clássica",songs:["O Danúbio Azul — Johann Strauss II","Iodel alpino tradicional","Volksmusik tirolesa"],films:["Os Falsários (2007, S. Ruzowitzky)","Amor (2012, M. Haneke)","A Fita Branca (2009, M. Haneke)"]},
+  FRA:{name:"França",flag:"🇫🇷",trad:"Chanson française e musette",songs:["La Vie en Rose — Édith Piaf","Ne Me Quitte Pas — J. Brel","Les Feuilles Mortes — Y. Montand"],films:["O Fabuloso Destino de Amélie (2001, Jeunet)","Os Incompreendidos (1959, F. Truffaut)","O Ódio (1995, M. Kassovitz)"]},
+  IRQ:{name:"Iraque",flag:"🇮🇶",trad:"Maqam iraquiano e oud",songs:["Maqam iraquiano tradicional","Música de oud (Munir Bashir)","Canção de Kadim Al Sahir"],films:["Filho da Babilônia (2009, M. Al-Daradji)","O Amanhecer do Mundo (2008, A. R. Hamid)"]},
+  NOR:{name:"Noruega",flag:"🇳🇴",trad:"Folk nórdico (Hardanger fiddle) e Grieg",songs:["Manhã (Peer Gynt) — Edvard Grieg","Música ao violino de Hardanger","Canção folclórica norueguesa"],films:["Elling (2001, P. Næss)","A Pior Pessoa do Mundo (2021, J. Trier)","Kon-Tiki (2012, Rønning & Sandberg)"]},
+  SEN:{name:"Senegal",flag:"🇸🇳",trad:"Mbalax e percussão sabar",songs:["7 Seconds — Youssou N'Dour","Set — Youssou N'Dour","Música de Baaba Maal"],films:["Touki Bouki (1973, D. D. Mambéty)","A Negra de... (1966, O. Sembène)","Atlantique (2019, M. Diop)"]},
+  JOR:{name:"Jordânia",flag:"🇯🇴",trad:"Música beduína e dabke",songs:["Dabke tradicional","Canto beduíno","Música folclórica jordaniana"],films:["Theeb (2014, N. Abu Nowar)","Capitão Abu Raed (2007, A. Matalqa)"]},
+  DZA:{name:"Argélia",flag:"🇩🇿",trad:"Raï, chaabi e música cabila",songs:["Aïcha — Khaled","A Vava Inouva — Idir","Música chaabi argelina"],films:["A Batalha de Argel (1966, G. Pontecorvo)","Dias de Glória (2006, R. Bouchareb)","Papicha (2019, M. Meddour)"]},
+  POR:{name:"Portugal",flag:"🇵🇹",trad:"Fado e folclore",songs:["Barco Negro — Amália Rodrigues","Lágrima — Amália Rodrigues","Ó Gente da Minha Terra — Mariza"],films:["Tabu (2012, M. Gomes)","Aniki-Bóbó (1942, M. de Oliveira)","Cartas da Guerra (2016, I. Ferreira)"]},
+  UZB:{name:"Uzbequistão",flag:"🇺🇿",trad:"Shashmaqam e folk com dutar/doira",songs:["Shashmaqam clássico","Música ao dutar tradicional","Canção folclórica uzbeque"],films:["Tashkent, Cidade do Pão (1968, S. Abbasov)"]},
+  ENG:{name:"Inglaterra",flag:"🏴",trad:"Folk inglês, sea shanties e Morris dance",songs:["Greensleeves — tradicional","Scarborough Fair — tradicional","Sea shanty tradicional"],films:["Kes (1969, K. Loach)","This Is England (2006, S. Meadows)","Billy Elliot (2000, S. Daldry)"]},
+  GHA:{name:"Gana",flag:"🇬🇭",trad:"Highlife e percussão tradicional",songs:["All for You — E.T. Mensah","Sunshine Day — Osibisa","Highlife tradicional"],films:["O Enterro de Kojo (2018, B. Blitz)","Love Brewed in the African Pot (1981, K. Ansah)"]},
+  PAN:{name:"Panamá",flag:"🇵🇦",trad:"Tamborito, típico (pindín) e salsa",songs:["Pedro Navaja — Rubén Blades","Tamborito tradicional","Mejorana ao violão típico"],films:["Caja 25 (2012, Pellegrini & Manzano)"]},
+  CRO:{name:"Croácia",flag:"🇭🇷",trad:"Klapa (canto a capela) e tamburica",songs:["Klapa dálmata tradicional","Música de tamburica","Canção folclórica croata"],films:["A Constituição (2016, R. Ogresta)","Tu Me Carregas (2015, I. Š. Bilić)"]},
+  COL:{name:"Colômbia",flag:"🇨🇴",trad:"Cumbia, vallenato e música do Pacífico",songs:["La Pollera Colorá — cumbia tradicional","La Gota Fría — vallenato","Música de Totó la Momposina"],films:["O Abraço da Serpente (2015, C. Guerra)","Monos (2019, A. Landes)","A Vendedora de Rosas (1998, V. Gaviria)"]},
+  COD:{name:"Congo (RDC)",flag:"🇨🇩",trad:"Rumba congolesa e soukous",songs:["Música de Franco & TPOK Jazz","Soukous tradicional","Canção de Papa Wemba"],films:["Viva Riva! (2010, D. Munga)","Félicité (2017, A. Gomis)"]},
+  SUI:{name:"Suíça",flag:"🇨🇭",trad:"Iodel, trompa dos Alpes e Ländler",songs:["Iodel suíço tradicional","Música de trompa alpina (alphorn)","Ländler folclórico"],films:["O Barco Está Cheio (1981, M. Imhoof)","Minha Vida de Abobrinha (2016, C. Barras)"]},
+  CAN:{name:"Canadá",flag:"🇨🇦",trad:"Folk, chanson quebequense e música indígena",songs:["Suzanne — Leonard Cohen","The Canadian Railroad Trilogy — G. Lightfoot","Canto inuíte de garganta (katajjaq)"],films:["A Doçura do Amanhã (1997, A. Egoyan)","Mommy (2014, X. Dolan)","Atanarjuat (2001, Z. Kunuk)"]},
+  USA:{name:"Estados Unidos",flag:"🇺🇸",trad:"Folk, blues, country e jazz",songs:["This Land Is Your Land — Woody Guthrie","Cross Road Blues — Robert Johnson","Take Me Home, Country Roads — John Denver"],films:["Cidadão Kane (1941, O. Welles)","Nomadland (2020, C. Zhao)","Faça a Coisa Certa (1989, S. Lee)"]},
+  AUS:{name:"Austrália",flag:"🇦🇺",trad:"Folk bush, didgeridoo aborígene e country",songs:["Waltzing Matilda — tradicional","Música de didgeridoo aborígene","Down Under — Men at Work"],films:["Walkabout (1971, N. Roeg)","A Geração Roubada (2002, P. Noyce)","Mad Max (1979, G. Miller)"]},
+};
+
+const MATCHES = [
+  {d:"25/06 • 17h",st:"final",h:"ECU",a:"GER",s:"2 x 1"},
+  {d:"25/06 • 17h",st:"final",h:"CUW",a:"CIV",s:"0 x 2"},
+  {d:"25/06 • 20h",st:"scheduled",h:"TUN",a:"NED"},
+  {d:"25/06 • 20h",st:"scheduled",h:"JPN",a:"SWE"},
+  {d:"25/06 • 23h",st:"scheduled",h:"TUR",a:"USA"},
+  {d:"25/06 • 23h",st:"scheduled",h:"PAR",a:"AUS"},
+  {d:"21/06 • 19h",st:"final",h:"URU",a:"CPV",s:"2 x 2"},
+  {d:"21/06 • 22h",st:"scheduled",h:"NZL",a:"EGY"},
+  {d:"22/06 • 14h",st:"scheduled",h:"ARG",a:"AUT"},
+  {d:"22/06 • 18h",st:"scheduled",h:"FRA",a:"IRQ"},
+  {d:"22/06 • 21h",st:"scheduled",h:"NOR",a:"SEN"},
+  {d:"23/06 • 00h",st:"scheduled",h:"JOR",a:"DZA"},
+  {d:"23/06 • 14h",st:"scheduled",h:"POR",a:"UZB"},
+  {d:"23/06 • 17h",st:"scheduled",h:"ENG",a:"GHA"},
+  {d:"23/06 • 20h",st:"final",h:"PAN",a:"CRO",s:"0 x 1"},
+  {d:"23/06 • 23h",st:"final",h:"COL",a:"COD",s:"1 x 0"},
+  {d:"24/06 • 16h",st:"final",h:"SUI",a:"CAN",s:"2 x 1"},
+  {d:"24/06 • 19h",st:"final",h:"SCO",a:"BRA",s:"0 x 3"},
+  {d:"24/06 • 19h",st:"final",h:"MAR",a:"HTI",s:"4 x 2"},
+  {d:"19/06 • 19h",st:"final",h:"SCO",a:"MAR",s:"0 x 1"},
+  {d:"19/06 • 21h",st:"final",h:"BRA",a:"HTI",s:"3 x 0"},
+  {d:"20/06 • 00h",st:"final",h:"TUR",a:"PAR",s:"0 x 1"},
+  {d:"20/06 • 14h",st:"final",h:"NED",a:"SWE",s:"5 x 1"},
+  {d:"20/06 • 17h",st:"final",h:"GER",a:"CIV",s:"2 x 1"},
+  {d:"20/06 • 21h",st:"final",h:"ECU",a:"CUW",s:"0 x 0"},
+  {d:"21/06 • 01h",st:"final",h:"TUN",a:"JPN",s:"0 x 4"},
+  {d:"21/06 • 13h",st:"final",h:"ESP",a:"KSA",s:"4 x 0"},
+  {d:"21/06 • 16h",st:"final",h:"BEL",a:"IRN",s:"0 x 0"},
+];
+
+let sel = 0, openH = false, openA = false;
+const sp = q => "https://open.spotify.com/search/" + encodeURIComponent(q);
+const yt = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+function panel(code, side, open){
+  const c = C[code];
+  const extraSongs = c.songs.slice(1).map(s=>`<a class="s" href="${sp(c.name+' '+s)}" target="_blank" rel="noreferrer">♪ ${esc(s)}</a>`).join("");
+  const extraFilms = c.films.slice(1).map(f=>`<a class="f" href="${yt(f+' filme trailer')}" target="_blank" rel="noreferrer">▸ ${esc(f)}</a>`).join("");
+  const hasMore = c.songs.length>1 || c.films.length>1;
+  return `<div class="panel">
+    <div class="pc"><span class="fl">${c.flag}</span><div style="min-width:0"><h3>${esc(c.name)}</h3><p class="trad">${esc(c.trad)}</p></div></div>
+    <a class="big mus" href="${sp(c.name+' '+c.songs[0])}" target="_blank" rel="noreferrer"><span class="ic">🎵</span><div style="min-width:0"><div class="tag">Música</div><div class="ti">${esc(c.songs[0])}</div></div><span class="pl">▶</span></a>
+    <a class="big cin" href="${yt(c.films[0]+' filme trailer')}" target="_blank" rel="noreferrer"><span class="ic">🎬</span><div style="min-width:0"><div class="tag">Filme</div><div class="ti">${esc(c.films[0])}</div></div><span class="pl">▶</span></a>
+    ${hasMore?`<button class="more" onclick="toggle('${side}')">${open?'▲ ocultar':'▼ ver mais'}</button>`:''}
+    ${open?`<div class="extra">${extraSongs}${extraFilms}</div>`:''}
+  </div>`;
+}
+
+function render(){
+  document.getElementById("strip").innerHTML = MATCHES.map((m,i)=>`<button class="chip ${i===sel?'on':''}" onclick="pick(${i})"><div class="fl">${C[m.h].flag} ${C[m.a].flag}</div><div class="nm">${esc(C[m.h].name)} × ${esc(C[m.a].name)}</div></button>`).join("");
+  const m = MATCHES[sel];
+  document.getElementById("detail").innerHTML = `<div class="banner"><div class="when">${m.d}${m.st==='final'?' • resultado final':''}</div><div class="vs">${C[m.h].flag} ${esc(C[m.h].name)}<span class="sc">${m.s||'vs'}</span>${esc(C[m.a].name)} ${C[m.a].flag}</div></div><div class="panels">${panel(m.h,'h',openH)}${panel(m.a,'a',openA)}</div>`;
+}
+function pick(i){ sel=i; openH=false; openA=false; render(); }
+function toggle(side){ if(side==='h')openH=!openH; else openA=!openA; render(); }
+render();
+</script>
+</body>
+</html>
