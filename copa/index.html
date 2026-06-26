@@ -25,6 +25,7 @@
   .banner .vs { color:#fff; font-weight:700; font-size:16px; }
   .banner .vs .sc { color:#34d399; margin:0 8px; }
   .plbtn { display:inline-flex; align-items:center; gap:6px; margin-top:10px; background:#1db954; color:#fff; text-decoration:none; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; }
+  .plrow { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
   .panels { display:flex; flex-direction:column; gap:12px; }
   @media(min-width:560px){ .panels{ flex-direction:row; } }
   .panel { flex:1; min-width:0; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
@@ -149,8 +150,6 @@ const MATCHES = [
 
 const WA = "5521981022589";
 const PL = {
-  "ECU-GER":"https://open.spotify.com/playlist/5Z5Dg715iVyfi3qvAxlC3G",
-  "CUW-CIV":"https://open.spotify.com/playlist/0vaWDqi8Jn6fq78ZabsT3j",
   "TUN-NED":"https://open.spotify.com/playlist/0sjw35i9ZYAtiIjneF3toY",
   "JPN-SWE":"https://open.spotify.com/playlist/0tjZD4F4qw0d9409QCjiT5",
   "TUR-USA":"https://open.spotify.com/playlist/5PoGv40wsXryoiNIBuZxqD",
@@ -159,6 +158,13 @@ const PL = {
   "SEN-IRQ":"https://open.spotify.com/playlist/6w8aEFQM7wAchztfKX7Zya",
   "URU-ESP":"https://open.spotify.com/playlist/5x5pGJyoKGiXCyMEP4K1GZ",
   "CPV-KSA":"https://open.spotify.com/playlist/3yJSu884z0UNBlIPl7gox8",
+};
+// Playlists por país (públicas). Usadas como 1 botão por país quando o jogo não tem playlist própria em PL.
+const SPL = {
+  ECU:"https://open.spotify.com/playlist/1WFqWwhObDkXUF4v9653nS", // Pasillos, Albazos y Valses Ecuatorianos
+  GER:"https://open.spotify.com/playlist/72Dq4XYJWAYGUG2a0xJlUL", // Traditional German Folk Songs
+  CIV:"https://open.spotify.com/playlist/37i9dQZF1DX0z1epx5KTtS", // Coupé Décalé (oficial Spotify)
+  CUW:"https://open.spotify.com/search/Cura%C3%A7ao%20tumba%20tamb%C3%BA", // busca pública (sem playlist real)
 };
 const sp = q => "https://open.spotify.com/search/" + encodeURIComponent(q);
 const yt = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
@@ -209,6 +215,14 @@ function chipHtml(m,i,src){
   return `<button class="chip ${selSrc===src&&i===sel?'on':''}" onclick="pick(${i},'${src}')"><div class="dt">${fmtDate(m.date)} · ${m.t}</div><div class="fl">${C[m.h].flag} ${C[m.a].flag}</div><div class="nm">${esc(C[m.h].name)} × ${esc(C[m.a].name)}</div></button>`;
 }
 
+// Botão(ões) de Spotify do jogo: playlist própria (PL) se houver; senão, 1 botão por país (SPL).
+function spotifyBtns(m){
+  const key = m.h+'-'+m.a;
+  if(PL[key]) return `<a class="plbtn" href="${PL[key]}" target="_blank" rel="noreferrer">🎧 Playlist do jogo no Spotify</a>`;
+  const btns = [m.h,m.a].filter(c=>SPL[c]).map(c=>`<a class="plbtn" href="${SPL[c]}" target="_blank" rel="noreferrer">🎧 ${C[c].flag} Música — ${esc(C[c].name)}</a>`).join("");
+  return btns ? `<div class="plrow">${btns}</div>` : "";
+}
+
 function render(){
   const { list, note, prevList } = DATA;
   document.getElementById("note").textContent = note;
@@ -234,7 +248,7 @@ function render(){
   let activeList = selSrc==='prev' ? prevList : list;
   if(sel>=activeList.length){ sel=0; selSrc='main'; activeList=list; }
   const m = activeList[sel];
-  document.getElementById("detail").innerHTML = `<div class="banner"><div class="when">${fmtDate(m.date)} · ${m.t}${m.s?' • resultado final':''}</div><div class="vs">${C[m.h].flag} ${esc(C[m.h].name)}<span class="sc">${m.s||'vs'}</span>${esc(C[m.a].name)} ${C[m.a].flag}</div>${PL[m.h+'-'+m.a]?`<a class="plbtn" href="${PL[m.h+'-'+m.a]}" target="_blank" rel="noreferrer">🎧 Playlist do jogo no Spotify</a>`:''}</div><div class="panels">${panel(m.h,'h',openH)}${panel(m.a,'a',openA)}</div>`;
+  document.getElementById("detail").innerHTML = `<div class="banner"><div class="when">${fmtDate(m.date)} · ${m.t}${m.s?' • resultado final':''}</div><div class="vs">${C[m.h].flag} ${esc(C[m.h].name)}<span class="sc">${m.s||'vs'}</span>${esc(C[m.a].name)} ${C[m.a].flag}</div>${spotifyBtns(m)}</div><div class="panels">${panel(m.h,'h',openH)}${panel(m.a,'a',openA)}</div>`;
 }
 function pick(i,src){ sel=i; selSrc=src||'main'; openH=false; openA=false; render(); }
 function togglePrev(){ showPrev=!showPrev; render(); }
