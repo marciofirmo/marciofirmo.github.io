@@ -8,19 +8,23 @@
   * { box-sizing: border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:#f1f5f9; color:#1e293b; }
   .wrap { max-width:820px; margin:0 auto; padding:16px; }
-  .head { text-align:center; margin-bottom:18px; }
+  .head { text-align:center; margin-bottom:14px; }
   .head h1 { font-size:24px; font-weight:800; margin:0; }
   .head p { font-size:13px; color:#64748b; margin:4px 0 0; }
+  .note { text-align:center; font-size:12px; color:#0f766e; background:#ccfbf1; border-radius:999px; padding:6px 12px; display:inline-block; margin:0 auto 14px; }
+  .notewrap { text-align:center; }
   .lbl { font-size:13px; font-weight:600; color:#475569; margin-bottom:8px; }
   .strip { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; margin-bottom:16px; -webkit-overflow-scrolling:touch; }
-  .chip { flex:0 0 auto; border:1px solid #e2e8f0; background:#fff; color:#475569; border-radius:16px; padding:8px 12px; text-align:center; cursor:pointer; font-family:inherit; }
+  .chip { flex:0 0 auto; border:1px solid #e2e8f0; background:#fff; color:#475569; border-radius:14px; padding:8px 12px; text-align:center; cursor:pointer; font-family:inherit; }
   .chip.on { border-color:#10b981; background:#10b981; color:#fff; }
-  .chip .fl { font-size:18px; line-height:1; }
-  .chip .nm { font-size:10px; margin-top:3px; white-space:nowrap; opacity:.9; }
+  .chip .dt { font-size:10px; font-weight:700; opacity:.85; }
+  .chip .fl { font-size:18px; line-height:1.2; }
+  .chip .nm { font-size:10px; margin-top:2px; white-space:nowrap; opacity:.9; }
   .banner { background:#1e293b; border-radius:12px; padding:12px; margin-bottom:12px; text-align:center; }
   .banner .when { color:#cbd5e1; font-size:12px; margin-bottom:4px; }
   .banner .vs { color:#fff; font-weight:700; font-size:16px; }
   .banner .vs .sc { color:#34d399; margin:0 8px; }
+  .plbtn { display:inline-flex; align-items:center; gap:6px; margin-top:10px; background:#1db954; color:#fff; text-decoration:none; font-size:13px; font-weight:700; padding:8px 14px; border-radius:999px; }
   .panels { display:flex; flex-direction:column; gap:12px; }
   @media(min-width:560px){ .panels{ flex-direction:row; } }
   .panel { flex:1; min-width:0; background:#fff; border:1px solid #e2e8f0; border-radius:16px; padding:16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
@@ -41,16 +45,20 @@
   .big .pl { margin-left:auto; font-size:20px; }
   .big.mus .pl { color:#059669; }
   .big.cin .pl { color:#4f46e5; }
-  .more { background:none; border:none; color:#94a3b8; font-size:12px; width:100%; padding:8px 0 0; cursor:pointer; font-family:inherit; }
+  .suggest { display:flex; align-items:center; justify-content:center; gap:6px; border:1px dashed #cbd5e1; border-radius:10px; padding:9px; margin-top:4px; text-decoration:none; color:#475569; font-size:12px; font-weight:600; }
+  .suggest:active { background:#f8fafc; }
+  .more { background:none; border:none; color:#94a3b8; font-size:12px; width:100%; padding:10px 0 0; cursor:pointer; font-family:inherit; }
   .extra a { display:block; font-size:14px; margin-top:6px; text-decoration:none; }
   .extra a.s { color:#047857; }
   .extra a.f { color:#4338ca; }
+  .empty { text-align:center; color:#64748b; padding:30px 16px; }
   .foot { text-align:center; font-size:11px; color:#94a3b8; margin-top:20px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="head"><h1>⚽ Copa Cultural 2026</h1><p>Música tradicional e cinema dos países, jogo a jogo</p></div>
+  <div class="notewrap"><div class="note" id="note"></div></div>
   <div class="lbl">📅 Deslize e escolha um jogo</div>
   <div class="strip" id="strip"></div>
   <div id="detail"></div>
@@ -100,62 +108,101 @@ const C = {
   CAN:{name:"Canadá",flag:"🇨🇦",trad:"Folk, chanson quebequense e música indígena",songs:["Suzanne — Leonard Cohen","The Canadian Railroad Trilogy — G. Lightfoot","Canto inuíte de garganta (katajjaq)"],films:["A Doçura do Amanhã (1997, A. Egoyan)","Mommy (2014, X. Dolan)","Atanarjuat (2001, Z. Kunuk)"]},
   USA:{name:"Estados Unidos",flag:"🇺🇸",trad:"Folk, blues, country e jazz",songs:["This Land Is Your Land — Woody Guthrie","Cross Road Blues — Robert Johnson","Take Me Home, Country Roads — John Denver"],films:["Cidadão Kane (1941, O. Welles)","Nomadland (2020, C. Zhao)","Faça a Coisa Certa (1989, S. Lee)"]},
   AUS:{name:"Austrália",flag:"🇦🇺",trad:"Folk bush, didgeridoo aborígene e country",songs:["Waltzing Matilda — tradicional","Música de didgeridoo aborígene","Down Under — Men at Work"],films:["Walkabout (1971, N. Roeg)","A Geração Roubada (2002, P. Noyce)","Mad Max (1979, G. Miller)"]},
+  MEX:{name:"México",flag:"🇲🇽",trad:"Mariachi, son jarocho e ranchera",songs:["Cielito Lindo — tradicional","La Bamba — son jarocho","El Rey — José Alfredo Jiménez"],films:["E Sua Mãe Também (2001, A. Cuarón)","Amores Perros (2000, A. G. Iñárritu)","Roma (2018, A. Cuarón)"]},
+  RSA:{name:"África do Sul",flag:"🇿🇦",trad:"Mbube, isicathamiya e kwaito",songs:["Pata Pata — Miriam Makeba","Mbube — Solomon Linda","Música de Ladysmith Black Mambazo"],films:["Tsotsi (2005, G. Hood)","Mapantsula (1988, O. Schmitz)","Distrito 9 (2009, N. Blomkamp)"]},
+  KOR:{name:"Coreia do Sul",flag:"🇰🇷",trad:"Pansori, samul nori e trote",songs:["Arirang — tradicional","Pansori tradicional (canto épico)","Samul nori (percussão)"],films:["Parasita (2019, Bong Joon-ho)","Oldboy (2003, Park Chan-wook)","A Criada (1960, Kim Ki-young)"]},
+  CZE:{name:"Tchéquia",flag:"🇨🇿",trad:"Polca, dumka e folk da Boêmia/Morávia",songs:["Škoda lásky (Beer Barrel Polka) — tradicional","Vltava — Bedřich Smetana","Canção folclórica morávia"],films:["Comboios Estreitamente Vigiados (1966, J. Menzel)","Kolya (1996, J. Svěrák)","A Loja na Rua Principal (1965, Kadár & Klos)"]},
+  BIH:{name:"Bósnia e Herzegovina",flag:"🇧🇦",trad:"Sevdalinka e folk dos Bálcãs",songs:["Sevdalinka tradicional","Kraj tanana šadrvana — sevdah","Música de Mostar Sevdah Reunion"],films:["Terra de Ninguém (2001, D. Tanović)","Grbavica (2006, J. Žbanić)"]},
+  QAT:{name:"Catar",flag:"🇶🇦",trad:"Khaleeji, fjiri (canto de pérolas) e oud",songs:["Fjiri tradicional (mergulhadores de pérola)","Música khaleeji do Golfo","Canção em oud árabe"],films:["Cinema emergente — curtas do Doha Film Institute"]},
 };
 
+// Tabela de jogos. A página mostra só hoje + os próximos 2 dias (pelo relógio de quem abre).
 const MATCHES = [
-  {d:"25/06 • 17h",st:"final",h:"ECU",a:"GER",s:"2 x 1"},
-  {d:"25/06 • 17h",st:"final",h:"CUW",a:"CIV",s:"0 x 2"},
-  {d:"25/06 • 20h",st:"scheduled",h:"TUN",a:"NED"},
-  {d:"25/06 • 20h",st:"scheduled",h:"JPN",a:"SWE"},
-  {d:"25/06 • 23h",st:"scheduled",h:"TUR",a:"USA"},
-  {d:"25/06 • 23h",st:"scheduled",h:"PAR",a:"AUS"},
-  {d:"21/06 • 19h",st:"final",h:"URU",a:"CPV",s:"2 x 2"},
-  {d:"21/06 • 22h",st:"scheduled",h:"NZL",a:"EGY"},
-  {d:"22/06 • 14h",st:"scheduled",h:"ARG",a:"AUT"},
-  {d:"22/06 • 18h",st:"scheduled",h:"FRA",a:"IRQ"},
-  {d:"22/06 • 21h",st:"scheduled",h:"NOR",a:"SEN"},
-  {d:"23/06 • 00h",st:"scheduled",h:"JOR",a:"DZA"},
-  {d:"23/06 • 14h",st:"scheduled",h:"POR",a:"UZB"},
-  {d:"23/06 • 17h",st:"scheduled",h:"ENG",a:"GHA"},
-  {d:"23/06 • 20h",st:"final",h:"PAN",a:"CRO",s:"0 x 1"},
-  {d:"23/06 • 23h",st:"final",h:"COL",a:"COD",s:"1 x 0"},
-  {d:"24/06 • 16h",st:"final",h:"SUI",a:"CAN",s:"2 x 1"},
-  {d:"24/06 • 19h",st:"final",h:"SCO",a:"BRA",s:"0 x 3"},
-  {d:"24/06 • 19h",st:"final",h:"MAR",a:"HTI",s:"4 x 2"},
-  {d:"19/06 • 19h",st:"final",h:"SCO",a:"MAR",s:"0 x 1"},
-  {d:"19/06 • 21h",st:"final",h:"BRA",a:"HTI",s:"3 x 0"},
-  {d:"20/06 • 00h",st:"final",h:"TUR",a:"PAR",s:"0 x 1"},
-  {d:"20/06 • 14h",st:"final",h:"NED",a:"SWE",s:"5 x 1"},
-  {d:"20/06 • 17h",st:"final",h:"GER",a:"CIV",s:"2 x 1"},
-  {d:"20/06 • 21h",st:"final",h:"ECU",a:"CUW",s:"0 x 0"},
-  {d:"21/06 • 01h",st:"final",h:"TUN",a:"JPN",s:"0 x 4"},
-  {d:"21/06 • 13h",st:"final",h:"ESP",a:"KSA",s:"4 x 0"},
-  {d:"21/06 • 16h",st:"final",h:"BEL",a:"IRN",s:"0 x 0"},
+  {date:"2026-06-24",t:"16h",h:"SUI",a:"CAN",s:"2 x 1"},
+  {date:"2026-06-24",t:"16h",h:"BIH",a:"QAT",s:"3 x 1"},
+  {date:"2026-06-24",t:"19h",h:"SCO",a:"BRA",s:"0 x 3"},
+  {date:"2026-06-24",t:"19h",h:"MAR",a:"HTI",s:"4 x 2"},
+  {date:"2026-06-24",t:"22h",h:"CZE",a:"MEX",s:"0 x 3"},
+  {date:"2026-06-24",t:"22h",h:"RSA",a:"KOR",s:"1 x 0"},
+  {date:"2026-06-25",t:"17h",h:"ECU",a:"GER",s:"2 x 1"},
+  {date:"2026-06-25",t:"17h",h:"CUW",a:"CIV",s:"0 x 2"},
+  {date:"2026-06-25",t:"20h",h:"TUN",a:"NED"},
+  {date:"2026-06-25",t:"20h",h:"JPN",a:"SWE"},
+  {date:"2026-06-25",t:"23h",h:"TUR",a:"USA"},
+  {date:"2026-06-25",t:"23h",h:"PAR",a:"AUS"},
+  {date:"2026-06-26",t:"16h",h:"NOR",a:"FRA"},
+  {date:"2026-06-26",t:"16h",h:"SEN",a:"IRQ"},
+  {date:"2026-06-26",t:"21h",h:"URU",a:"ESP"},
+  {date:"2026-06-26",t:"21h",h:"CPV",a:"KSA"},
+  {date:"2026-06-27",t:"00h",h:"NZL",a:"BEL"},
+  {date:"2026-06-27",t:"00h",h:"EGY",a:"IRN"},
+  {date:"2026-06-27",t:"18h",h:"PAN",a:"ENG"},
+  {date:"2026-06-27",t:"18h",h:"CRO",a:"GHA"},
 ];
 
-let sel = 0, openH = false, openA = false;
+const WA = "5521981022589";
+const PL = {
+  "ECU-GER":"https://open.spotify.com/playlist/5Z5Dg715iVyfi3qvAxlC3G",
+  "CUW-CIV":"https://open.spotify.com/playlist/0vaWDqi8Jn6fq78ZabsT3j",
+  "TUN-NED":"https://open.spotify.com/playlist/0sjw35i9ZYAtiIjneF3toY",
+  "JPN-SWE":"https://open.spotify.com/playlist/0tjZD4F4qw0d9409QCjiT5",
+  "TUR-USA":"https://open.spotify.com/playlist/5PoGv40wsXryoiNIBuZxqD",
+  "PAR-AUS":"https://open.spotify.com/playlist/7DYqRH0VgonEV23pWxxTPM",
+};
 const sp = q => "https://open.spotify.com/search/" + encodeURIComponent(q);
 const yt = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+const wa = country => "https://wa.me/" + WA + "?text=" + encodeURIComponent("Sugestão para " + country + " (Copa Cultural): ");
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const cleanSong = s => s.replace(/\([^)]*\)/g,"").replace(/—\s*tradicional/gi,"").replace(/\btradicional\b/gi,"").replace(/\s+/g," ").trim();
+const cleanFilm = f => f.replace(/\([^)]*\)/g,"").replace(/\s+/g," ").trim();
+const WD = ["dom","seg","ter","qua","qui","sex","sáb"];
+function isoLocal(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function fmtDate(iso){ const p=iso.split("-"); const d=new Date(+p[0],+p[1]-1,+p[2]); return WD[d.getDay()]+" "+p[2]+"/"+p[1]; }
+
+function buildList(){
+  const today = isoLocal(new Date());
+  const win = [0,1,2].map(i=>{ const d=new Date(); d.setDate(d.getDate()+i); return isoLocal(d); });
+  let list = MATCHES.filter(m=>win.includes(m.date));
+  let note = "Mostrando hoje e os próximos 2 dias";
+  if(list.length===0){
+    const future = MATCHES.filter(m=>m.date>=today).sort((a,b)=>a.date<b.date?-1:1);
+    if(future.length){ const nd=future[0].date; list=MATCHES.filter(m=>m.date===nd); note="Próximos jogos disponíveis"; }
+  }
+  if(list.length===0){ list = MATCHES.slice(-6); note="Últimos jogos cadastrados"; }
+  return { list, note };
+}
+
+let DATA = buildList();
+let sel = 0, openH = false, openA = false;
 
 function panel(code, side, open){
   const c = C[code];
-  const extraSongs = c.songs.slice(1).map(s=>`<a class="s" href="${sp(c.name+' '+s)}" target="_blank" rel="noreferrer">♪ ${esc(s)}</a>`).join("");
-  const extraFilms = c.films.slice(1).map(f=>`<a class="f" href="${yt(f+' filme trailer')}" target="_blank" rel="noreferrer">▸ ${esc(f)}</a>`).join("");
+  if(!c) return `<div class="panel"><p class="empty">Seleção ainda não cadastrada.</p></div>`;
+  const extraSongs = c.songs.slice(1).map(s=>`<a class="s" href="${sp(cleanSong(s))}" target="_blank" rel="noreferrer">♪ ${esc(s)}</a>`).join("");
+  const extraFilms = c.films.slice(1).map(f=>`<a class="f" href="${yt(cleanFilm(f)+' trailer')}" target="_blank" rel="noreferrer">▸ ${esc(f)}</a>`).join("");
   const hasMore = c.songs.length>1 || c.films.length>1;
   return `<div class="panel">
     <div class="pc"><span class="fl">${c.flag}</span><div style="min-width:0"><h3>${esc(c.name)}</h3><p class="trad">${esc(c.trad)}</p></div></div>
-    <a class="big mus" href="${sp(c.name+' '+c.songs[0])}" target="_blank" rel="noreferrer"><span class="ic">🎵</span><div style="min-width:0"><div class="tag">Música</div><div class="ti">${esc(c.songs[0])}</div></div><span class="pl">▶</span></a>
-    <a class="big cin" href="${yt(c.films[0]+' filme trailer')}" target="_blank" rel="noreferrer"><span class="ic">🎬</span><div style="min-width:0"><div class="tag">Filme</div><div class="ti">${esc(c.films[0])}</div></div><span class="pl">▶</span></a>
+    <a class="big mus" href="${sp(cleanSong(c.songs[0]))}" target="_blank" rel="noreferrer"><span class="ic">🎵</span><div style="min-width:0"><div class="tag">Música</div><div class="ti">${esc(c.songs[0])}</div></div><span class="pl">▶</span></a>
+    <a class="big cin" href="${yt(cleanFilm(c.films[0])+' trailer')}" target="_blank" rel="noreferrer"><span class="ic">🎬</span><div style="min-width:0"><div class="tag">Filme</div><div class="ti">${esc(c.films[0])}</div></div><span class="pl">▶</span></a>
+    <a class="suggest" href="${wa(c.name)}" target="_blank" rel="noreferrer">💡 Sugira uma música ou filme</a>
     ${hasMore?`<button class="more" onclick="toggle('${side}')">${open?'▲ ocultar':'▼ ver mais'}</button>`:''}
     ${open?`<div class="extra">${extraSongs}${extraFilms}</div>`:''}
   </div>`;
 }
 
 function render(){
-  document.getElementById("strip").innerHTML = MATCHES.map((m,i)=>`<button class="chip ${i===sel?'on':''}" onclick="pick(${i})"><div class="fl">${C[m.h].flag} ${C[m.a].flag}</div><div class="nm">${esc(C[m.h].name)} × ${esc(C[m.a].name)}</div></button>`).join("");
-  const m = MATCHES[sel];
-  document.getElementById("detail").innerHTML = `<div class="banner"><div class="when">${m.d}${m.st==='final'?' • resultado final':''}</div><div class="vs">${C[m.h].flag} ${esc(C[m.h].name)}<span class="sc">${m.s||'vs'}</span>${esc(C[m.a].name)} ${C[m.a].flag}</div></div><div class="panels">${panel(m.h,'h',openH)}${panel(m.a,'a',openA)}</div>`;
+  const { list, note } = DATA;
+  document.getElementById("note").textContent = note;
+  if(list.length===0){
+    document.getElementById("strip").innerHTML = "";
+    document.getElementById("detail").innerHTML = `<p class="empty">Sem jogos cadastrados para esta janela.<br>Volte mais perto da próxima rodada.</p>`;
+    return;
+  }
+  if(sel>=list.length) sel=0;
+  document.getElementById("strip").innerHTML = list.map((m,i)=>`<button class="chip ${i===sel?'on':''}" onclick="pick(${i})"><div class="dt">${fmtDate(m.date)} · ${m.t}</div><div class="fl">${C[m.h].flag} ${C[m.a].flag}</div><div class="nm">${esc(C[m.h].name)} × ${esc(C[m.a].name)}</div></button>`).join("");
+  const m = list[sel];
+  document.getElementById("detail").innerHTML = `<div class="banner"><div class="when">${fmtDate(m.date)} · ${m.t}${m.s?' • resultado final':''}</div><div class="vs">${C[m.h].flag} ${esc(C[m.h].name)}<span class="sc">${m.s||'vs'}</span>${esc(C[m.a].name)} ${C[m.a].flag}</div>${PL[m.h+'-'+m.a]?`<a class="plbtn" href="${PL[m.h+'-'+m.a]}" target="_blank" rel="noreferrer">🎧 Playlist do jogo no Spotify</a>`:''}</div><div class="panels">${panel(m.h,'h',openH)}${panel(m.a,'a',openA)}</div>`;
 }
 function pick(i){ sel=i; openH=false; openA=false; render(); }
 function toggle(side){ if(side==='h')openH=!openH; else openA=!openA; render(); }
