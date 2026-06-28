@@ -149,16 +149,6 @@ const MATCHES = [
 ];
 
 const WA = "5521981022589";
-const PL = {
-  "TUN-NED":"https://open.spotify.com/playlist/0sjw35i9ZYAtiIjneF3toY",
-  "JPN-SWE":"https://open.spotify.com/playlist/0tjZD4F4qw0d9409QCjiT5",
-  "TUR-USA":"https://open.spotify.com/playlist/5PoGv40wsXryoiNIBuZxqD",
-  "PAR-AUS":"https://open.spotify.com/playlist/7DYqRH0VgonEV23pWxxTPM",
-  "NOR-FRA":"https://open.spotify.com/playlist/2E5BareQ0nxbLyFfcgBz7S",
-  "SEN-IRQ":"https://open.spotify.com/playlist/6w8aEFQM7wAchztfKX7Zya",
-  "URU-ESP":"https://open.spotify.com/playlist/5x5pGJyoKGiXCyMEP4K1GZ",
-  "CPV-KSA":"https://open.spotify.com/playlist/3yJSu884z0UNBlIPl7gox8",
-};
 // Playlists públicas reais por país. Para os países fora desta lista, a página cai
 // automaticamente numa busca pública do Spotify pelo gênero do país (campo trad).
 const SPL = {
@@ -219,10 +209,8 @@ function chipHtml(m,i,src){
 
 // Link de música por país: playlist pública real (SPL) ou, na falta, busca pública por gênero.
 function countryPL(c){ return SPL[c] || sp(C[c].name+" "+C[c].trad); }
-// Botões de Spotify do jogo: playlist do jogo (PL) se houver; senão, 1 botão por país.
+// Botões de Spotify do jogo: sempre 1 botão por país (os dois times que jogam).
 function spotifyBtns(m){
-  const key = m.h+'-'+m.a;
-  if(PL[key]) return `<a class="plbtn" href="${PL[key]}" target="_blank" rel="noreferrer">🎧 Playlist do jogo no Spotify</a>`;
   const btns = [m.h,m.a].map(c=>`<a class="plbtn" href="${countryPL(c)}" target="_blank" rel="noreferrer">🎧 ${C[c].flag} Música — ${esc(C[c].name)}</a>`).join("");
   return `<div class="plrow">${btns}</div>`;
 }
