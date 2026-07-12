@@ -124,25 +124,43 @@ const C = {
   QAT:{name:"Catar",flag:"🇶🇦",trad:"Khaleeji, fjiri (canto de pérolas) e oud",songs:["Fjiri tradicional (mergulhadores de pérola)","Música khaleeji do Golfo","Canção em oud árabe"],films:["Cinema emergente — curtas do Doha Film Institute"]},
 };
 
-// Tabela de jogos — Copa do Mundo 2026, mata-mata (Rodada de 32). Horários em Brasília (BRT).
+// Tabela de jogos — Copa do Mundo 2026, mata-mata (Rodada de 32 → Final). Horários em Brasília (BRT).
 // A página mostra ontem + hoje + os próximos 2 dias (pelo relógio de quem abre).
 const MATCHES = [
+  // Rodada de 32
   {date:"2026-06-28",t:"16h",h:"RSA",a:"CAN",s:"0 x 1"},
-  {date:"2026-06-29",t:"14h",h:"BRA",a:"JPN"},
-  {date:"2026-06-29",t:"17h30",h:"GER",a:"PAR"},
-  {date:"2026-06-29",t:"22h",h:"NED",a:"MAR"},
-  {date:"2026-06-30",t:"14h",h:"CIV",a:"NOR"},
-  {date:"2026-06-30",t:"18h",h:"FRA",a:"SWE"},
-  {date:"2026-06-30",t:"22h",h:"MEX",a:"ECU"},
-  {date:"2026-07-01",t:"13h",h:"ENG",a:"COD"},
-  {date:"2026-07-01",t:"17h",h:"BEL",a:"SEN"},
-  {date:"2026-07-01",t:"21h",h:"USA",a:"BIH"},
-  {date:"2026-07-02",t:"16h",h:"ESP",a:"AUT"},
-  {date:"2026-07-02",t:"20h",h:"POR",a:"CRO"},
-  {date:"2026-07-03",t:"00h",h:"SUI",a:"DZA"},
-  {date:"2026-07-03",t:"15h",h:"AUS",a:"EGY"},
-  {date:"2026-07-03",t:"19h",h:"ARG",a:"CPV"},
-  {date:"2026-07-03",t:"22h30",h:"COL",a:"GHA"},
+  {date:"2026-06-29",t:"14h",h:"BRA",a:"JPN",s:"2 x 1"},
+  {date:"2026-06-29",t:"17h30",h:"GER",a:"PAR",s:"1 x 1 (3-4 pen)"},
+  {date:"2026-06-29",t:"22h",h:"NED",a:"MAR",s:"1 x 1 (2-3 pen)"},
+  {date:"2026-06-30",t:"14h",h:"CIV",a:"NOR",s:"1 x 2"},
+  {date:"2026-06-30",t:"18h",h:"FRA",a:"SWE",s:"3 x 0"},
+  {date:"2026-06-30",t:"22h",h:"MEX",a:"ECU",s:"2 x 0"},
+  {date:"2026-07-01",t:"13h",h:"ENG",a:"COD",s:"2 x 1"},
+  {date:"2026-07-01",t:"17h",h:"BEL",a:"SEN",s:"3 x 2"},
+  {date:"2026-07-01",t:"21h",h:"USA",a:"BIH",s:"2 x 0"},
+  {date:"2026-07-02",t:"16h",h:"ESP",a:"AUT",s:"3 x 0"},
+  {date:"2026-07-02",t:"20h",h:"POR",a:"CRO",s:"2 x 1"},
+  {date:"2026-07-03",t:"00h",h:"SUI",a:"DZA",s:"2 x 0"},
+  {date:"2026-07-03",t:"15h",h:"AUS",a:"EGY",s:"1 x 1 (2-4 pen)"},
+  {date:"2026-07-03",t:"19h",h:"ARG",a:"CPV",s:"3 x 2"},
+  {date:"2026-07-03",t:"22h30",h:"COL",a:"GHA",s:"1 x 0"},
+  // Oitavas de final
+  {date:"2026-07-04",t:"18h",h:"MAR",a:"CAN",s:"3 x 0"},
+  {date:"2026-07-04",t:"22h",h:"FRA",a:"PAR",s:"1 x 0"},
+  {date:"2026-07-05",t:"16h",h:"NOR",a:"BRA",s:"2 x 1"},
+  {date:"2026-07-05",t:"20h",h:"ENG",a:"MEX",s:"3 x 2"},
+  {date:"2026-07-06",t:"15h",h:"ESP",a:"POR",s:"1 x 0"},
+  {date:"2026-07-06",t:"20h",h:"BEL",a:"USA",s:"4 x 1"},
+  {date:"2026-07-07",t:"12h",h:"ARG",a:"EGY",s:"3 x 2"},
+  {date:"2026-07-07",t:"16h",h:"SUI",a:"COL",s:"0 x 0 (4-3 pen)"},
+  // Quartas de final
+  {date:"2026-07-09",t:"17h",h:"FRA",a:"MAR",s:"2 x 0"},
+  {date:"2026-07-10",t:"16h",h:"ESP",a:"BEL",s:"2 x 1"},
+  {date:"2026-07-11",t:"18h",h:"NOR",a:"ENG",s:"1 x 2"},
+  {date:"2026-07-11",t:"22h",h:"ARG",a:"SUI",s:"3 x 1"},
+  // Semifinais
+  {date:"2026-07-14",t:"16h",h:"FRA",a:"ESP"},
+  {date:"2026-07-15",t:"16h",h:"ENG",a:"ARG"},
 ];
 
 const WA = "5521981022589";
