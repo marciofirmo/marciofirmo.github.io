@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revisão Estatística Interativa — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 840px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.3rem; color: var(--azul); margin-bottom: 4px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  #status { font-weight: 600; }
+  #status.pronto { color: var(--verde); }
+  #status.erro { color: var(--verm); }
+  .abas { display: flex; gap: 6px; margin: 14px 0 0; flex-wrap: wrap; }
+  .abas button { border: 1px solid var(--borda); border-bottom: 0; background: #eef1f5;
+                 border-radius: 10px 10px 0 0; padding: 10px 16px; font-size: .95rem;
+                 font-weight: 600; cursor: pointer; color: #4a5563; }
+  .abas button.ativa { background: #fff; color: var(--azul);
+                       outline: 2px solid var(--azul); outline-offset: -2px; }
+  .painel { border: 1px solid var(--borda); border-radius: 0 10px 10px 10px;
+            padding: 14px; display: none; }
+  .painel.ativa { display: block; }
+  .ctl { display: grid; grid-template-columns: 280px 1fr 70px; gap: 10px; align-items: center;
+         font-size: .92rem; margin: 6px 0; }
+  .ctl input[type=range] { width: 100%; }
+  .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700; text-align: right; }
+  .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+  .botoes button { border: 0; border-radius: 8px; padding: 11px 20px; font-size: .98rem;
+           font-weight: 600; cursor: pointer; background: var(--azul); color: #fff; }
+  .botoes button:disabled { background: #9fb3cb; cursor: wait; }
+  .botoes button.sec { background: #e8ebef; color: #1c2430; }
+  .leitura { font-size: .9rem; background: #fffbe8; border: 1px solid #e8ddb0;
+             border-radius: 10px; padding: 10px 12px; margin: 10px 0 0; }
+  .saida { font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
+           background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px;
+           padding: 8px 10px; margin-top: 8px; white-space: pre-wrap; }
+  canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+           border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+  @media (max-width: 640px) { .ctl { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+</head>
+<body>
+
+<h1>Revisão Estatística Interativa</h1>
+<p class="sub">Economia da Educação — UERJ. Três demonstrações com R rodando no navegador: grandes números, correlação e correlação parcial.</p>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<div class="abas">
+  <button data-aba="a1" class="ativa">1 · Grandes números: convergência</button>
+  <button data-aba="a2">2 · Correlação: treinando o olho</button>
+  <button data-aba="a3">3 · Correlação parcial: "controlar por"</button>
+</div>
+
+<!-- ================= ABA 1 ================= -->
+<div class="painel ativa" id="a1">
+  <div class="box"><b>A pergunta:</b> mais dados sempre resolvem? A <b>lei dos grandes números</b>
+  diz que médias e estimadores <b>convergem</b> quando n cresce. O gráfico da esquerda mostra a
+  média amostral do salário se aproximando da média verdadeira. O da direita mostra os dois
+  estimadores da aula — <b>certo</b> (Y ~ X + Z) e <b>errado</b> (Y ~ X) — no mesmo mundo do
+  Laboratório do Viés. <i>Os dois convergem… mas para onde?</i></div>
+  <div class="ctl"><span>β₂ — efeito da habilidade no salário</span>
+    <input type="range" id="a1b2" min="0" max="2" step="0.25" value="1">
+    <span class="val" id="a1b2v">1,00</span></div>
+  <div class="ctl"><span>δ — habilidade anda com a educação</span>
+    <input type="range" id="a1dl" min="0" max="1" step="0.1" value="0.5">
+    <span class="val" id="a1dlv">0,50</span></div>
+  <div class="botoes">
+    <button id="a1rodar" disabled>&#9654; Rodar</button>
+    <button id="a1nova" class="sec">Nova simulação</button>
+  </div>
+  <div class="saida" id="a1saida">A saída aparecerá aqui.</div>
+  <div id="a1graf"></div>
+  <div class="leitura"><b>Como ler:</b> o estimador certo (verde) converge para o efeito
+  verdadeiro (0,5). O errado (vermelho) também converge — mas para <b>0,5 + β₂×δ</b>: o número
+  errado, com toda a precisão do mundo. <b>Mais dados aumentam a precisão; não consertam o viés.</b></div>
+</div>
+
+<!-- ================= ABA 2 ================= -->
+<div class="painel" id="a2">
+  <div class="box"><b>A pergunta:</b> o que significa dizer que habilidade e escolaridade têm
+  correlação 0,3? E 0,8? Escolha o <b>r</b> e o <b>n</b> e veja a nuvem — treine o olho para
+  reconhecer correlações na vida real.</div>
+  <div class="ctl"><span>r — correlação entre habilidade e escolaridade</span>
+    <input type="range" id="a2r" min="-0.95" max="0.95" step="0.05" value="0.5">
+    <span class="val" id="a2rv">0,50</span></div>
+  <div class="ctl"><span>n — tamanho da amostra</span>
+    <input type="range" id="a2n" min="30" max="2000" step="10" value="300">
+    <span class="val" id="a2nv">300</span></div>
+  <div class="botoes">
+    <button id="a2rodar" disabled>&#9654; Rodar</button>
+    <button id="a2nova" class="sec">Nova amostra</button>
+  </div>
+  <div class="saida" id="a2saida">A saída aparecerá aqui.</div>
+  <div id="a2graf"></div>
+  <div class="leitura"><b>Como ler:</b> o r <b>amostral</b> (impresso no gráfico) fica perto do
+  r escolhido — e tanto mais perto quanto maior o n (a lei dos grandes números de novo). Com n
+  pequeno, correlação amostral engana: rode "Nova amostra" algumas vezes com n = 30 e veja o r
+  pular.</div>
+</div>
+
+<!-- ================= ABA 3 ================= -->
+<div class="painel" id="a3">
+  <div class="box"><b>A pergunta:</b> o que "controlar por habilidade" faz, <i>visualmente</i>?
+  À esquerda, a relação <b>bruta</b> salário × escolaridade, com os pontos coloridos pelo nível
+  de habilidade (baixa/média/alta). À direita, a relação <b>parcial</b>: o que sobra de X e de Y
+  depois de remover o que a habilidade explica em cada um. A inclinação da direita é o efeito
+  <b>já controlado</b> — comparar iguais, em versão estatística.</div>
+  <div class="ctl"><span>β₁ — efeito real da educação</span>
+    <input type="range" id="a3b1" min="0" max="1.5" step="0.1" value="0.5">
+    <span class="val" id="a3b1v">0,50</span></div>
+  <div class="ctl"><span>β₂ — efeito da habilidade no salário</span>
+    <input type="range" id="a3b2" min="0" max="2" step="0.25" value="1">
+    <span class="val" id="a3b2v">1,00</span></div>
+  <div class="ctl"><span>δ — habilidade anda com a educação</span>
+    <input type="range" id="a3dl" min="0" max="1" step="0.1" value="0.5">
+    <span class="val" id="a3dlv">0,50</span></div>
+  <div class="botoes">
+    <button id="a3rodar" disabled>&#9654; Rodar</button>
+    <button id="a3nova" class="sec">Nova amostra</button>
+  </div>
+  <div class="saida" id="a3saida">A saída aparecerá aqui.</div>
+  <div id="a3graf"></div>
+  <div class="leitura"><b>Como ler:</b> a correlação <b>bruta</b> (esquerda) mistura o efeito da
+  educação com o da habilidade — repare que, <b>dentro de cada cor</b>, a nuvem já é mais
+  "achatada". A correlação <b>parcial</b> (direita) remove a habilidade dos dois lados e recupera
+  a inclinação verdadeira (β₁). Ponha β₁ = 0 e veja a relação bruta forte virar uma nuvem
+  <b>sem inclinação</b> na direita.</div>
+</div>
+
+<footer>
+  Companheiras desta página: o <a href="laboratorio-vies-webr.html">Laboratório do Viés</a>
+  (cenários certo × errado) e a <a href="vies-variavel-omitida-webr.html">versão editor</a>
+  (código livre). Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a>.
+</footer>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+let seeds = { a1: 123, a2: 123, a3: 123 };
+
+// abas
+document.querySelectorAll(".abas button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".abas button").forEach(x => x.classList.remove("ativa"));
+    document.querySelectorAll(".painel").forEach(x => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    $(b.dataset.aba).classList.add("ativa");
+  });
+});
+
+// labels vivos
+[["a1b2","a1b2v"],["a1dl","a1dlv"],["a2r","a2rv"],["a3b1","a3b1v"],["a3b2","a3b2v"],["a3dl","a3dlv"]]
+  .forEach(([i, o]) => $(i).addEventListener("input", () => $(o).textContent = fmt(parseFloat($(i).value))));
+$("a2n").addEventListener("input", () => $("a2nv").textContent = $("a2n").value);
+
+function codigoA1() {
+  const b2 = parseFloat($("a1b2").value), dl = parseFloat($("a1dl").value);
+  return `set.seed(${seeds.a1})
+n_max <- 20000
+X <- rnorm(n_max, 10, 4)
+Z <- ${dl} * X + rnorm(n_max, 0, 2)
+Y <- 2 + 0.5 * X + ${b2} * Z + rnorm(n_max, 0, 5)
+ns <- unique(round(exp(seq(log(30), log(n_max), length.out = 45))))
+med   <- sapply(ns, function(n) mean(Y[1:n]))
+b_err <- sapply(ns, function(n) coef(lm(Y[1:n] ~ X[1:n]))[2])
+b_cer <- sapply(ns, function(n) coef(lm(Y[1:n] ~ X[1:n] + Z[1:n]))[2])
+alvo_err <- 0.5 + ${b2} * ${dl}
+par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.5, 1))
+plot(ns, med, log = "x", type = "l", lwd = 2, col = "gray30",
+     main = "Media amostral do salario", xlab = "n (escala log)", ylab = "media")
+abline(h = mean(Y), col = "blue", lwd = 2, lty = 2)
+legend("topright", bty = "n", lwd = 2, lty = c(1, 2), col = c("gray30", "blue"),
+       legend = c("media com n obs.", "media verdadeira"))
+plot(ns, b_err, log = "x", type = "l", lwd = 2.5, col = "red", ylim = range(c(b_err, b_cer, 0.4)),
+     main = "Os dois estimadores da aula", xlab = "n (escala log)", ylab = "beta estimado")
+lines(ns, b_cer, lwd = 2.5, col = "forestgreen")
+abline(h = 0.5, col = "blue", lwd = 2, lty = 2)
+abline(h = alvo_err, col = "red", lwd = 1.5, lty = 3)
+legend("right", bty = "n", lwd = 2, col = c("red", "forestgreen", "blue"),
+       legend = c("errado (Y ~ X)", "certo (Y ~ X + Z)", "efeito verdadeiro (0.5)"))
+cat("RES", alvo_err, tail(b_err, 1), tail(b_cer, 1), "\\n")`;
+}
+
+function codigoA2() {
+  const r = parseFloat($("a2r").value), n = parseInt($("a2n").value);
+  return `set.seed(${seeds.a2})
+n <- ${n}
+esc <- rnorm(n)
+hab <- ${r} * esc + sqrt(1 - ${r}^2) * rnorm(n)
+r_am <- cor(esc, hab)
+plot(esc, hab, pch = 16, col = rgb(0.1, 0.3, 0.55, 0.45),
+     main = paste0("r escolhido = ${fmt(r).replace(",", ".")} | r amostral = ", round(r_am, 2)),
+     xlab = "escolaridade (padronizada)", ylab = "habilidade (padronizada)")
+abline(lm(hab ~ esc), col = "red", lwd = 2)
+cat("RES", r_am, "\\n")`;
+}
+
+function codigoA3() {
+  const b1 = parseFloat($("a3b1").value), b2 = parseFloat($("a3b2").value), dl = parseFloat($("a3dl").value);
+  return `set.seed(${seeds.a3})
+n <- 800
+X <- rnorm(n, 10, 4)
+Z <- ${dl} * X + rnorm(n, 0, 2)
+Y <- 2 + ${b1} * X + ${b2} * Z + rnorm(n, 0, 5)
+r_bruto <- cor(X, Y)
+rx <- resid(lm(X ~ Z)); ry <- resid(lm(Y ~ Z))
+r_parcial <- cor(rx, ry)
+terc <- cut(Z, quantile(Z, c(0, 1/3, 2/3, 1)), include.lowest = TRUE,
+            labels = c("hab. baixa", "hab. media", "hab. alta"))
+cores <- c("#8ecae6", "#f4a261", "#b02a37")[terc]
+par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.5, 1))
+plot(X, Y, pch = 16, col = cores, cex = 0.7,
+     main = paste0("Bruta: r = ", round(r_bruto, 2)),
+     xlab = "escolaridade", ylab = "salario")
+abline(lm(Y ~ X), col = "red", lwd = 3, lty = 2)
+legend("topleft", bty = "n", pch = 16, col = c("#8ecae6", "#f4a261", "#b02a37"),
+       legend = c("hab. baixa", "hab. media", "hab. alta"), cex = 0.85)
+plot(rx, ry, pch = 16, col = rgb(0.1, 0.45, 0.28, 0.45), cex = 0.7,
+     main = paste0("Parcial (tirando Z): r = ", round(r_parcial, 2)),
+     xlab = "escolaridade sem a parte da habilidade",
+     ylab = "salario sem a parte da habilidade")
+abline(lm(ry ~ rx), col = "forestgreen", lwd = 3)
+cat("RES", r_bruto, r_parcial, coef(lm(ry ~ rx))[2], "\\n")`;
+}
+
+let webR, shelter;
+async function iniciar() {
+  try {
+    const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    $("status").textContent = "pronto! Escolha uma aba e aperte Rodar.";
+    $("status").className = "pronto";
+    ["a1rodar", "a2rodar", "a3rodar"].forEach(id => $(id).disabled = false);
+  } catch (e) {
+    $("status").textContent = "falha ao carregar o R: " + e.message + " — verifique a conexão e recarregue.";
+    $("status").className = "erro";
+  }
+}
+
+async function rodar(aba, gerador, interpreta) {
+  const btn = $(aba + "rodar");
+  btn.disabled = true;
+  $("status").textContent = "executando…"; $("status").className = "";
+  $(aba + "graf").innerHTML = "";
+  try {
+    const captura = await shelter.captureR(gerador(), {
+      withAutoprint: false, captureStreams: true, captureConditions: true,
+      captureGraphics: { width: 780, height: 430, bg: "white", pointsize: 13 }
+    });
+    let res = null;
+    for (const l of captura.output)
+      if (l.type === "stdout" && l.data.startsWith("RES"))
+        res = l.data.trim().split(/\s+/).slice(1).map(parseFloat);
+    $(aba + "saida").innerHTML = res ? interpreta(res) : "(sem saída)";
+    for (const img of captura.images) {
+      const cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext("2d").drawImage(img, 0, 0);
+      $(aba + "graf").appendChild(cv);
+    }
+    $("status").textContent = "pronto!"; $("status").className = "pronto";
+  } catch (e) {
+    $(aba + "saida").textContent = "Erro do R: " + e.message;
+    $("status").textContent = "erro na execução."; $("status").className = "erro";
+  } finally {
+    if (shelter) await shelter.purge();
+    btn.disabled = false;
+  }
+}
+
+$("a1rodar").addEventListener("click", () => rodar("a1", codigoA1, r =>
+  `Alvo do estimador ERRADO (0,5 + β₂×δ) = <b>${fmt(r[0])}</b> · com n = 20.000: errado chegou a <b>${fmt(r[1])}</b>, certo a <b>${fmt(r[2])}</b> (verdadeiro: 0,50).`));
+$("a2rodar").addEventListener("click", () => rodar("a2", codigoA2, r =>
+  `r amostral = <b>${fmt(r[0])}</b>. Rode "Nova amostra" e veja o quanto ele varia com esse n.`));
+$("a3rodar").addEventListener("click", () => rodar("a3", codigoA3, r =>
+  `Correlação bruta = <b>${fmt(r[0])}</b> · correlação parcial (tirando Z) = <b>${fmt(r[1])}</b> · inclinação parcial = <b>${fmt(r[2])}</b> (compare com o β₁ escolhido).`));
+
+$("a1nova").addEventListener("click", () => { seeds.a1 = Math.floor(Math.random() * 1e5); if (!$("a1rodar").disabled) $("a1rodar").click(); });
+$("a2nova").addEventListener("click", () => { seeds.a2 = Math.floor(Math.random() * 1e5); if (!$("a2rodar").disabled) $("a2rodar").click(); });
+$("a3nova").addEventListener("click", () => { seeds.a3 = Math.floor(Math.random() * 1e5); if (!$("a3rodar").disabled) $("a3rodar").click(); });
+
+iniciar();
+</script>
+</body>
+</html>

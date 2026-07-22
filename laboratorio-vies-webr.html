@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório do Viés de Variável Omitida — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 820px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.3rem; color: var(--azul); margin-bottom: 4px; }
+  h2 { font-size: 1.02rem; color: var(--azul); margin: 18px 0 6px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  #status { font-weight: 600; }
+  #status.pronto { color: var(--verde); }
+  #status.erro { color: var(--verm); }
+  .cenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+              gap: 8px; margin: 8px 0 4px; }
+  .cenarios button { border: 1px solid var(--borda); border-radius: 8px;
+              padding: 10px; font-size: .88rem; cursor: pointer; background: #fff;
+              text-align: left; line-height: 1.35; }
+  .cenarios button b { color: var(--azul); }
+  .cenarios button.ativo { outline: 3px solid var(--azul); background: #eef3fa; }
+  .controles { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 10px 0; }
+  .ctl { display: grid; grid-template-columns: 250px 1fr 74px; gap: 10px; align-items: center;
+         font-size: .92rem; }
+  .ctl input[type=range] { width: 100%; }
+  .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700;
+              text-align: right; }
+  .previsao { font-size: .95rem; background: #fffbe8; border: 1px solid #e8ddb0;
+              border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+  .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+  .botoes button { border: 0; border-radius: 8px; padding: 12px 22px; font-size: 1rem;
+           font-weight: 600; cursor: pointer; }
+  #rodar { background: var(--azul); color: #fff; }
+  #rodar:disabled { background: #9fb3cb; cursor: wait; }
+  #amostra { background: #e8ebef; color: #1c2430; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .card { border: 2px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+  .card h3 { margin: 0 0 4px; font-size: .9rem; }
+  .card .big { font-size: 1.7rem; font-weight: 800; font-family: ui-monospace, Consolas, monospace; }
+  .card.errado { border-color: var(--verm); } .card.errado h3 { color: var(--verm); }
+  .card.certo  { border-color: var(--verde); } .card.certo h3 { color: var(--verde); }
+  .card .nota { font-size: .8rem; color: #5a6573; }
+  #verifica { font-size: .92rem; margin-top: 8px; }
+  #graficos canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+                     border-radius: 10px; margin-top: 12px; background: #fff; }
+  details { margin-top: 12px; font-size: .88rem; }
+  details pre { background: #10151c; color: #d7e3f0; border-radius: 10px; padding: 12px;
+                font-size: .8rem; overflow-x: auto; white-space: pre-wrap; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+  @media (max-width: 640px) { .ctl { grid-template-columns: 1fr; gap: 2px; }
+                              .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Laboratório do Viés de Variável Omitida</h1>
+<p class="sub">Economia da Educação — UERJ. Você escolhe o mundo; o R (no navegador) mostra o que a regressão encontra — estimando certo e estimando errado.</p>
+
+<div class="box">
+  <b>O mundo simulado:</b> salário = 2 + <b>β₁</b>·escolaridade + <b>β₂</b>·habilidade + sorte,
+  com habilidade = <b>δ</b>·escolaridade + ruído. O pesquisador <i>errado</i> roda
+  <code>salário ~ escolaridade</code> (não observa habilidade); o <i>certo</i> roda
+  <code>salário ~ escolaridade + habilidade</code>. A fórmula da aula prevê:
+  <b>viés = β₂ × δ</b>.
+</div>
+
+<h2>1. Escolha um cenário (ou monte o seu nos controles)</h2>
+<div class="cenarios" id="cenarios"></div>
+
+<h2>2. Ajuste os efeitos, se quiser</h2>
+<div class="controles">
+  <div class="ctl"><span>β₁ — efeito <b>real</b> da educação</span>
+    <input type="range" id="b1" min="0" max="1.5" step="0.1" value="0.5">
+    <span class="val" id="b1v">0,5</span></div>
+  <div class="ctl"><span>β₂ — efeito da <b>habilidade</b> no salário</span>
+    <input type="range" id="b2" min="-2" max="2" step="0.25" value="1">
+    <span class="val" id="b2v">1,0</span></div>
+  <div class="ctl"><span>δ — habilidade anda junto com a educação?</span>
+    <input type="range" id="dl" min="-1" max="1" step="0.1" value="0.5">
+    <span class="val" id="dlv">0,5</span></div>
+</div>
+
+<div class="previsao" id="previsao"></div>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+<div class="botoes">
+  <button id="rodar" disabled>&#9654; Rodar a regressão</button>
+  <button id="amostra">Nova amostra (outra turma de 1.000 pessoas)</button>
+</div>
+
+<div class="cards">
+  <div class="card errado"><h3>ESTIMANDO ERRADO — salário ~ escolaridade</h3>
+    <div class="big" id="res_errado">—</div>
+    <div class="nota">o que o pesquisador sem dados de habilidade encontra</div></div>
+  <div class="card certo"><h3>ESTIMANDO CERTO — salário ~ escolaridade + habilidade</h3>
+    <div class="big" id="res_certo">—</div>
+    <div class="nota">controlando pela variável omitida</div></div>
+</div>
+<div id="verifica"></div>
+<div id="graficos"></div>
+
+<details><summary>Ver o código R que está rodando (muda com os controles)</summary>
+<pre id="codigoview"></pre></details>
+
+<footer>
+  Companheiras desta página: a <a href="revisao-estatistica-webr.html">Revisão Estatística
+  Interativa</a> (grandes números, correlações e correlação parcial) e a
+  <a href="vies-variavel-omitida-webr.html">versão editor</a> (código livre). Tecnologia:
+  <a href="https://docs.r-wasm.org/webr/latest/">webR</a> (R em WebAssembly).
+  A versão completa para rodar no computador está no Classroom
+  (<code>exemplo vies educacao v2.R</code>).
+</footer>
+
+<script type="module">
+const CENARIOS = [
+  { nome: "Clássico: viés para cima", desc: "habilidade ajuda no salário (+) e anda com o estudo (+)", b1: 0.5, b2: 1, dl: 0.5 },
+  { nome: "δ = 0: habilidade não anda com o estudo", desc: "a omitida existe, mas não contamina — sem viés", b1: 0.5, b2: 1, dl: 0 },
+  { nome: "β₂ = 0: habilidade irrelevante", desc: "anda com o estudo, mas não afeta salário — sem viés", b1: 0.5, b2: 0, dl: 0.5 },
+  { nome: "Viés para baixo", desc: "os mais hábeis estudam MENOS (δ negativo)", b1: 0.5, b2: 1, dl: -0.4 },
+  { nome: "Educação sem efeito nenhum", desc: "β₁ = 0 — e mesmo assim a regressão errada 'encontra' efeito", b1: 0, b2: 1, dl: 0.6 },
+  { nome: "Viés dobrado", desc: "habilidade fortíssima e muito ligada ao estudo", b1: 0.5, b2: 2, dl: 0.8 },
+];
+
+const $ = id => document.getElementById(id);
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+let seed = 123;
+
+function estado() {
+  return { b1: parseFloat($("b1").value), b2: parseFloat($("b2").value), dl: parseFloat($("dl").value) };
+}
+
+function codigoR() {
+  const { b1, b2, dl } = estado();
+  return `set.seed(${seed})
+n <- 1000
+X <- rnorm(n, mean = 10, sd = 4)          # escolaridade
+Z <- ${dl} * X + rnorm(n, 0, 2)           # habilidade
+Y <- 2 + ${b1} * X + ${b2} * Z + rnorm(n, 0, 5)  # salario
+
+m_errado <- lm(Y ~ X)
+m_certo  <- lm(Y ~ X + Z)
+delta_am <- coef(lm(Z ~ X))[2]
+
+cat("RES", coef(m_errado)[2], coef(m_certo)[2], delta_am, "\\n")
+
+plot(X, Y, pch = 16, col = rgb(0, 0, 0, 0.22),
+     main = "O que cada regressao encontra",
+     xlab = "X (escolaridade)", ylab = "Y (salario)")
+abline(m_errado, col = "red", lwd = 3, lty = 2)
+abline(a = mean(Y) - ${b1} * mean(X), b = ${b1}, col = "blue", lwd = 3)
+abline(a = mean(Y) - coef(m_certo)[2] * mean(X), b = coef(m_certo)[2],
+       col = "forestgreen", lwd = 2, lty = 3)
+legend("topleft", bty = "n", lwd = 3, lty = c(2, 1, 3),
+       col = c("red", "blue", "forestgreen"),
+       legend = c("Estimando ERRADO (Y ~ X)",
+                  paste0("Efeito verdadeiro (", ${b1}, ")"),
+                  "Estimando CERTO (Y ~ X + Z)"))`;
+}
+
+function atualizaPainel() {
+  const { b1, b2, dl } = estado();
+  $("b1v").textContent = fmt(b1); $("b2v").textContent = fmt(b2); $("dlv").textContent = fmt(dl);
+  const vies = b2 * dl;
+  const esperado = b1 + vies;
+  let frase;
+  if (Math.abs(vies) < 1e-9) frase = "<b>sem viés</b> — a regressão errada deve acertar";
+  else if (vies > 0) frase = "a regressão errada deve <b>superestimar</b>";
+  else frase = "a regressão errada deve <b>subestimar</b>";
+  $("previsao").innerHTML =
+    `<b>Previsão da fórmula</b> (antes de rodar): viés = β₂ × δ = ${fmt(b2)} × ${fmt(dl)} = <b>${fmt(vies)}</b> → ` +
+    `${frase}: deve encontrar ≈ <b>${fmt(esperado)}</b> no lugar do efeito verdadeiro <b>${fmt(b1)}</b>.`;
+  $("codigoview").textContent = codigoR();
+  document.querySelectorAll(".cenarios button").forEach(b => b.classList.remove("ativo"));
+  $("res_errado").textContent = "—"; $("res_certo").textContent = "—"; $("verifica").textContent = "";
+}
+
+// monta os botões de cenário
+const elC = $("cenarios");
+CENARIOS.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.innerHTML = `<b>${i + 1}. ${c.nome}</b><br>${c.desc}<br><span style="color:#5a6573">β₁=${fmt(c.b1)} · β₂=${fmt(c.b2)} · δ=${fmt(c.dl)}</span>`;
+  b.addEventListener("click", () => {
+    $("b1").value = c.b1; $("b2").value = c.b2; $("dl").value = c.dl;
+    atualizaPainel();
+    b.classList.add("ativo");
+    if (!$("rodar").disabled) rodar();
+  });
+  elC.appendChild(b);
+});
+
+["b1", "b2", "dl"].forEach(id => $(id).addEventListener("input", atualizaPainel));
+$("amostra").addEventListener("click", () => { seed = Math.floor(Math.random() * 100000); atualizaPainel(); if (!$("rodar").disabled) rodar(); });
+
+let webR, shelter;
+async function iniciar() {
+  try {
+    const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    $("status").textContent = "pronto! Escolha um cenário ou aperte Rodar.";
+    $("status").className = "pronto";
+    $("rodar").disabled = false;
+  } catch (e) {
+    $("status").textContent = "falha ao carregar o R: " + e.message + " — verifique a conexão e recarregue.";
+    $("status").className = "erro";
+  }
+}
+
+async function rodar() {
+  $("rodar").disabled = true;
+  $("status").textContent = "executando…"; $("status").className = "";
+  $("graficos").innerHTML = "";
+  try {
+    const captura = await shelter.captureR(codigoR(), {
+      withAutoprint: false, captureStreams: true, captureConditions: true,
+      captureGraphics: { width: 700, height: 470, bg: "white", pointsize: 14 }
+    });
+    let res = null;
+    for (const linha of captura.output) {
+      if (linha.type === "stdout" && linha.data.startsWith("RES")) {
+        const p = linha.data.trim().split(/\s+/);
+        res = { errado: parseFloat(p[1]), certo: parseFloat(p[2]), delta: parseFloat(p[3]) };
+      }
+    }
+    const { b1, b2 } = estado();
+    if (res) {
+      $("res_errado").textContent = fmt(res.errado);
+      $("res_certo").textContent = fmt(res.certo);
+      const prev = b1 + b2 * res.delta;
+      $("verifica").innerHTML =
+        `<b>Conferindo a fórmula com o δ desta amostra</b> (${fmt(res.delta)}): ` +
+        `β₁ + β₂×δ = ${fmt(b1)} + ${fmt(b2)}×${fmt(res.delta)} = <b>${fmt(prev)}</b> — ` +
+        `e a regressão errada encontrou <b>${fmt(res.errado)}</b>. ` +
+        `Estimando certo, recuperou ≈ <b>${fmt(res.certo)}</b> (verdadeiro: ${fmt(b1)}).`;
+    }
+    for (const img of captura.images) {
+      const cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext("2d").drawImage(img, 0, 0);
+      $("graficos").appendChild(cv);
+    }
+    $("status").textContent = "pronto! Mude os controles e rode de novo.";
+    $("status").className = "pronto";
+  } catch (e) {
+    $("status").textContent = "erro na execução: " + e.message;
+    $("status").className = "erro";
+  } finally {
+    if (shelter) await shelter.purge();
+    $("rodar").disabled = false;
+  }
+}
+
+$("rodar").addEventListener("click", rodar);
+atualizaPainel();
+iniciar();
+</script>
+</body>
+</html>
