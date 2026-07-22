@@ -190,13 +190,13 @@ CENARIOS.forEach((c, i) => {
     $("b1").value = c.b1; $("b2").value = c.b2; $("dl").value = c.dl;
     atualizaPainel();
     b.classList.add("ativo");
-    if (!$("rodar").disabled) rodar();
+    if (!$("rodar").disabled) { $("status").textContent = "cenário configurado — aperte Rodar."; $("status").className = ""; }
   });
   elC.appendChild(b);
 });
 
 ["b1", "b2", "dl"].forEach(id => $(id).addEventListener("input", atualizaPainel));
-$("amostra").addEventListener("click", () => { seed = Math.floor(Math.random() * 100000); atualizaPainel(); if (!$("rodar").disabled) rodar(); });
+$("amostra").addEventListener("click", () => { seed = Math.floor(Math.random() * 100000); atualizaPainel(); if (!$("rodar").disabled) { $("status").textContent = "nova amostra sorteada — aperte Rodar."; $("status").className = ""; } });
 
 let webR, shelter;
 async function iniciar() {

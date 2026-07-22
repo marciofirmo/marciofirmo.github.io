@@ -16,6 +16,7 @@
          border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
   #status { font-weight: 600; }
   #status.pronto { color: var(--verde); }
+  #status.aviso { color: #9a6b00; }
   #status.erro { color: var(--verm); }
   .abas { display: flex; gap: 6px; margin: 14px 0 0; flex-wrap: wrap; }
   .abas button { border: 1px solid var(--borda); border-bottom: 0; background: #eef1f5;
@@ -26,10 +27,15 @@
   .painel { border: 1px solid var(--borda); border-radius: 0 10px 10px 10px;
             padding: 14px; display: none; }
   .painel.ativa { display: block; }
-  .ctl { display: grid; grid-template-columns: 280px 1fr 70px; gap: 10px; align-items: center;
+  .ctl { display: grid; grid-template-columns: 280px 1fr 80px; gap: 10px; align-items: center;
          font-size: .92rem; margin: 6px 0; }
   .ctl input[type=range] { width: 100%; }
   .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700; text-align: right; }
+  .etapas { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 4px; }
+  .etapas button { border: 1px solid var(--borda); background: #fff; border-radius: 8px;
+                   padding: 9px 12px; font-size: .86rem; cursor: pointer; line-height: 1.3;
+                   text-align: left; }
+  .etapas button.ativa { outline: 3px solid var(--azul); background: #eef3fa; font-weight: 600; }
   .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
   .botoes button { border: 0; border-radius: 8px; padding: 11px 20px; font-size: .98rem;
            font-weight: 600; cursor: pointer; background: var(--azul); color: #fff; }
@@ -50,23 +56,26 @@
 <body>
 
 <h1>Revisão Estatística Interativa</h1>
-<p class="sub">Economia da Educação — UERJ. Três demonstrações com R rodando no navegador: grandes números, correlação e correlação parcial.</p>
+<p class="sub">Economia da Educação — UERJ. Três demonstrações com R no navegador. Regra da página: os botões só <b>configuram</b>; nada roda até você apertar <b>Rodar</b>.</p>
 
 <p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
 
 <div class="abas">
-  <button data-aba="a1" class="ativa">1 · Grandes números: convergência</button>
+  <button data-aba="a1" class="ativa">1 · Grandes números: escolha o n</button>
   <button data-aba="a2">2 · Correlação: treinando o olho</button>
-  <button data-aba="a3">3 · Correlação parcial: "controlar por"</button>
+  <button data-aba="a3">3 · Correlação parcial, em etapas</button>
 </div>
 
 <!-- ================= ABA 1 ================= -->
 <div class="painel ativa" id="a1">
-  <div class="box"><b>A pergunta:</b> mais dados sempre resolvem? A <b>lei dos grandes números</b>
-  diz que médias e estimadores <b>convergem</b> quando n cresce. O gráfico da esquerda mostra a
-  média amostral do salário se aproximando da média verdadeira. O da direita mostra os dois
-  estimadores da aula — <b>certo</b> (Y ~ X + Z) e <b>errado</b> (Y ~ X) — no mesmo mundo do
-  Laboratório do Viés. <i>Os dois convergem… mas para onde?</i></div>
+  <div class="box"><b>A pergunta:</b> mais dados sempre resolvem? Escolha o <b>n</b> e rode:
+  com n pequeno os estimadores balançam; aumente o n e veja cada um <b>assentar</b> — a lei dos
+  grandes números em ação. À esquerda, a média amostral do salário; à direita, os dois
+  estimadores da aula (certo e errado) no mundo do Laboratório do Viés. <i>Os dois convergem…
+  mas para onde?</i></div>
+  <div class="ctl"><span><b>n</b> — tamanho da amostra</span>
+    <input type="range" id="a1n" min="0" max="9" step="1" value="4">
+    <span class="val" id="a1nv">500</span></div>
   <div class="ctl"><span>β₂ — efeito da habilidade no salário</span>
     <input type="range" id="a1b2" min="0" max="2" step="0.25" value="1">
     <span class="val" id="a1b2v">1,00</span></div>
@@ -75,20 +84,22 @@
     <span class="val" id="a1dlv">0,50</span></div>
   <div class="botoes">
     <button id="a1rodar" disabled>&#9654; Rodar</button>
-    <button id="a1nova" class="sec">Nova simulação</button>
+    <button id="a1nova" class="sec">Sortear nova amostra</button>
   </div>
-  <div class="saida" id="a1saida">A saída aparecerá aqui.</div>
+  <div class="saida" id="a1saida">Escolha o n e aperte Rodar.</div>
   <div id="a1graf"></div>
-  <div class="leitura"><b>Como ler:</b> o estimador certo (verde) converge para o efeito
-  verdadeiro (0,5). O errado (vermelho) também converge — mas para <b>0,5 + β₂×δ</b>: o número
-  errado, com toda a precisão do mundo. <b>Mais dados aumentam a precisão; não consertam o viés.</b></div>
+  <div class="leitura"><b>Como ler:</b> a trajetória mostra o estimador recalculado conforme os
+  dados chegam, até o seu n (ponto cheio no fim). O certo (verde) caminha para o efeito
+  verdadeiro (0,5); o errado (vermelho) caminha para <b>0,5 + β₂×δ</b> — converge igualzinho,
+  mas para o número errado. <b>Mais dados aumentam a precisão; não consertam o viés.</b>
+  Sugestão de aula: rode com n = 50, depois 500, depois 20.000.</div>
 </div>
 
 <!-- ================= ABA 2 ================= -->
 <div class="painel" id="a2">
   <div class="box"><b>A pergunta:</b> o que significa dizer que habilidade e escolaridade têm
-  correlação 0,3? E 0,8? Escolha o <b>r</b> e o <b>n</b> e veja a nuvem — treine o olho para
-  reconhecer correlações na vida real.</div>
+  correlação 0,3? E 0,8? Escolha o <b>r</b> e o <b>n</b>, rode, e treine o olho para reconhecer
+  correlações na vida real.</div>
   <div class="ctl"><span>r — correlação entre habilidade e escolaridade</span>
     <input type="range" id="a2r" min="-0.95" max="0.95" step="0.05" value="0.5">
     <span class="val" id="a2rv">0,50</span></div>
@@ -97,23 +108,29 @@
     <span class="val" id="a2nv">300</span></div>
   <div class="botoes">
     <button id="a2rodar" disabled>&#9654; Rodar</button>
-    <button id="a2nova" class="sec">Nova amostra</button>
+    <button id="a2nova" class="sec">Sortear nova amostra</button>
   </div>
-  <div class="saida" id="a2saida">A saída aparecerá aqui.</div>
+  <div class="saida" id="a2saida">Escolha r e n e aperte Rodar.</div>
   <div id="a2graf"></div>
-  <div class="leitura"><b>Como ler:</b> o r <b>amostral</b> (impresso no gráfico) fica perto do
-  r escolhido — e tanto mais perto quanto maior o n (a lei dos grandes números de novo). Com n
-  pequeno, correlação amostral engana: rode "Nova amostra" algumas vezes com n = 30 e veja o r
-  pular.</div>
+  <div class="leitura"><b>Como ler:</b> o r <b>amostral</b> (no título do gráfico) fica perto do
+  r escolhido — e tanto mais perto quanto maior o n (grandes números de novo). Sugestão de aula:
+  n = 30, sorteie novas amostras algumas vezes e veja o r amostral pular; depois n = 2.000.</div>
 </div>
 
 <!-- ================= ABA 3 ================= -->
 <div class="painel" id="a3">
   <div class="box"><b>A pergunta:</b> o que "controlar por habilidade" faz, <i>visualmente</i>?
-  À esquerda, a relação <b>bruta</b> salário × escolaridade, com os pontos coloridos pelo nível
-  de habilidade (baixa/média/alta). À direita, a relação <b>parcial</b>: o que sobra de X e de Y
-  depois de remover o que a habilidade explica em cada um. A inclinação da direita é o efeito
-  <b>já controlado</b> — comparar iguais, em versão estatística.</div>
+  Vamos montar o gráfico <b>em etapas</b>: primeiro só os alunos de habilidade baixa e a reta
+  deles; depois adicionamos os de habilidade média; depois os de alta. Dentro de cada cor, a
+  reta é <b>achatada</b>. No fim, a reta que <b>ignora as cores</b> — bem mais inclinada — e a
+  versão formal (correlação parcial).</div>
+  <div class="etapas" id="a3etapas">
+    <button data-e="1" class="ativa"><b>Etapa 1</b><br>só hab. baixa + reta</button>
+    <button data-e="2"><b>Etapa 2</b><br>+ hab. média</button>
+    <button data-e="3"><b>Etapa 3</b><br>+ hab. alta</button>
+    <button data-e="4"><b>Etapa 4</b><br>a reta que ignora as cores</button>
+    <button data-e="5"><b>Etapa 5</b><br>a versão formal (parcial)</button>
+  </div>
   <div class="ctl"><span>β₁ — efeito real da educação</span>
     <input type="range" id="a3b1" min="0" max="1.5" step="0.1" value="0.5">
     <span class="val" id="a3b1v">0,50</span></div>
@@ -124,16 +141,16 @@
     <input type="range" id="a3dl" min="0" max="1" step="0.1" value="0.5">
     <span class="val" id="a3dlv">0,50</span></div>
   <div class="botoes">
-    <button id="a3rodar" disabled>&#9654; Rodar</button>
-    <button id="a3nova" class="sec">Nova amostra</button>
+    <button id="a3rodar" disabled>&#9654; Mostrar etapa</button>
+    <button id="a3nova" class="sec">Sortear nova amostra</button>
   </div>
-  <div class="saida" id="a3saida">A saída aparecerá aqui.</div>
+  <div class="saida" id="a3saida">Escolha a etapa e aperte Mostrar etapa.</div>
   <div id="a3graf"></div>
-  <div class="leitura"><b>Como ler:</b> a correlação <b>bruta</b> (esquerda) mistura o efeito da
-  educação com o da habilidade — repare que, <b>dentro de cada cor</b>, a nuvem já é mais
-  "achatada". A correlação <b>parcial</b> (direita) remove a habilidade dos dois lados e recupera
-  a inclinação verdadeira (β₁). Ponha β₁ = 0 e veja a relação bruta forte virar uma nuvem
-  <b>sem inclinação</b> na direita.</div>
+  <div class="leitura"><b>Como ler:</b> em cada cor, a legenda traz a <b>inclinação</b> da reta
+  daquele grupo — compare com a inclinação da reta "sem olhar as cores" (Etapa 4). Olhar dentro
+  da cor é comparar alunos de habilidade <b>parecida</b> — uma versão visual do "comparar
+  iguais". A Etapa 5 faz isso com todo o rigor: remove a habilidade dos dois lados e a
+  inclinação que sobra é o β₁. Experimento matador: ponha β₁ = 0 e refaça as etapas.</div>
 </div>
 
 <footer>
@@ -145,7 +162,9 @@
 <script type="module">
 const $ = id => document.getElementById(id);
 const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+const NS = [30, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000];
 let seeds = { a1: 123, a2: 123, a3: 123 };
+let etapa3 = 1;
 
 // abas
 document.querySelectorAll(".abas button").forEach(b => {
@@ -157,37 +176,63 @@ document.querySelectorAll(".abas button").forEach(b => {
   });
 });
 
-// labels vivos
+// labels vivos (sliders só configuram; nada roda)
 [["a1b2","a1b2v"],["a1dl","a1dlv"],["a2r","a2rv"],["a3b1","a3b1v"],["a3b2","a3b2v"],["a3dl","a3dlv"]]
   .forEach(([i, o]) => $(i).addEventListener("input", () => $(o).textContent = fmt(parseFloat($(i).value))));
+$("a1n").addEventListener("input", () => $("a1nv").textContent = NS[parseInt($("a1n").value)].toLocaleString("pt-BR"));
 $("a2n").addEventListener("input", () => $("a2nv").textContent = $("a2n").value);
 
+// etapas da aba 3 (só configuram)
+document.querySelectorAll("#a3etapas button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#a3etapas button").forEach(x => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    etapa3 = parseInt(b.dataset.e);
+    aviso("etapa " + etapa3 + " selecionada — aperte Mostrar etapa.");
+  });
+});
+
+function aviso(txt) {
+  if ($("status").className === "erro") return;
+  $("status").textContent = txt;
+  $("status").className = "aviso";
+}
+
 function codigoA1() {
+  const n = NS[parseInt($("a1n").value)];
   const b2 = parseFloat($("a1b2").value), dl = parseFloat($("a1dl").value);
   return `set.seed(${seeds.a1})
-n_max <- 20000
-X <- rnorm(n_max, 10, 4)
-Z <- ${dl} * X + rnorm(n_max, 0, 2)
-Y <- 2 + 0.5 * X + ${b2} * Z + rnorm(n_max, 0, 5)
-ns <- unique(round(exp(seq(log(30), log(n_max), length.out = 45))))
+n_alvo <- ${n}
+X <- rnorm(n_alvo, 10, 4)
+Z <- ${dl} * X + rnorm(n_alvo, 0, 2)
+Y <- 2 + 0.5 * X + ${b2} * Z + rnorm(n_alvo, 0, 5)
+ns <- unique(c(round(exp(seq(log(30), log(n_alvo), length.out = 40))), n_alvo))
+ns <- ns[ns >= 30 & ns <= n_alvo]
 med   <- sapply(ns, function(n) mean(Y[1:n]))
 b_err <- sapply(ns, function(n) coef(lm(Y[1:n] ~ X[1:n]))[2])
 b_cer <- sapply(ns, function(n) coef(lm(Y[1:n] ~ X[1:n] + Z[1:n]))[2])
 alvo_err <- 0.5 + ${b2} * ${dl}
+k <- length(ns)
 par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.5, 1))
 plot(ns, med, log = "x", type = "l", lwd = 2, col = "gray30",
-     main = "Media amostral do salario", xlab = "n (escala log)", ylab = "media")
+     main = paste0("Media amostral (n = ", n_alvo, ")"),
+     xlab = "n (escala log)", ylab = "media do salario")
+points(ns[k], med[k], pch = 19, cex = 1.5, col = "gray30")
 abline(h = mean(Y), col = "blue", lwd = 2, lty = 2)
 legend("topright", bty = "n", lwd = 2, lty = c(1, 2), col = c("gray30", "blue"),
-       legend = c("media com n obs.", "media verdadeira"))
-plot(ns, b_err, log = "x", type = "l", lwd = 2.5, col = "red", ylim = range(c(b_err, b_cer, 0.4)),
-     main = "Os dois estimadores da aula", xlab = "n (escala log)", ylab = "beta estimado")
+       legend = c("media ate n", "media verdadeira"))
+plot(ns, b_err, log = "x", type = "l", lwd = 2.5, col = "red",
+     ylim = range(c(b_err, b_cer, 0.4, alvo_err)),
+     main = "Os dois estimadores da aula",
+     xlab = "n (escala log)", ylab = "beta estimado")
 lines(ns, b_cer, lwd = 2.5, col = "forestgreen")
+points(ns[k], b_err[k], pch = 19, cex = 1.5, col = "red")
+points(ns[k], b_cer[k], pch = 19, cex = 1.5, col = "forestgreen")
 abline(h = 0.5, col = "blue", lwd = 2, lty = 2)
 abline(h = alvo_err, col = "red", lwd = 1.5, lty = 3)
 legend("right", bty = "n", lwd = 2, col = c("red", "forestgreen", "blue"),
        legend = c("errado (Y ~ X)", "certo (Y ~ X + Z)", "efeito verdadeiro (0.5)"))
-cat("RES", alvo_err, tail(b_err, 1), tail(b_cer, 1), "\\n")`;
+cat("RES", n_alvo, med[k], b_err[k], b_cer[k], alvo_err, "\\n")`;
 }
 
 function codigoA2() {
@@ -211,25 +256,49 @@ n <- 800
 X <- rnorm(n, 10, 4)
 Z <- ${dl} * X + rnorm(n, 0, 2)
 Y <- 2 + ${b1} * X + ${b2} * Z + rnorm(n, 0, 5)
-r_bruto <- cor(X, Y)
-rx <- resid(lm(X ~ Z)); ry <- resid(lm(Y ~ Z))
-r_parcial <- cor(rx, ry)
-terc <- cut(Z, quantile(Z, c(0, 1/3, 2/3, 1)), include.lowest = TRUE,
-            labels = c("hab. baixa", "hab. media", "hab. alta"))
-cores <- c("#8ecae6", "#f4a261", "#b02a37")[terc]
-par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.5, 1))
-plot(X, Y, pch = 16, col = cores, cex = 0.7,
-     main = paste0("Bruta: r = ", round(r_bruto, 2)),
-     xlab = "escolaridade", ylab = "salario")
-abline(lm(Y ~ X), col = "red", lwd = 3, lty = 2)
-legend("topleft", bty = "n", pch = 16, col = c("#8ecae6", "#f4a261", "#b02a37"),
-       legend = c("hab. baixa", "hab. media", "hab. alta"), cex = 0.85)
-plot(rx, ry, pch = 16, col = rgb(0.1, 0.45, 0.28, 0.45), cex = 0.7,
-     main = paste0("Parcial (tirando Z): r = ", round(r_parcial, 2)),
-     xlab = "escolaridade sem a parte da habilidade",
-     ylab = "salario sem a parte da habilidade")
-abline(lm(ry ~ rx), col = "forestgreen", lwd = 3)
-cat("RES", r_bruto, r_parcial, coef(lm(ry ~ rx))[2], "\\n")`;
+terc <- cut(Z, quantile(Z, c(0, 1/3, 2/3, 1)), include.lowest = TRUE, labels = FALSE)
+cores <- c("#8ecae6", "#f4a261", "#b02a37")
+nomes <- c("hab. baixa", "hab. media", "hab. alta")
+etapa <- ${etapa3}
+par(mar = c(4.2, 4.2, 2.6, 1))
+if (etapa <= 4) {
+  grupos <- 1:min(etapa, 3)
+  titulo <- c("Etapa 1: so hab. baixa - e a reta dela",
+              "Etapa 2: entra a hab. media - cada cor com sua reta",
+              "Etapa 3: entra a hab. alta - tres retas achatadas",
+              "Etapa 4: a reta que IGNORA as cores e mais inclinada")[etapa]
+  plot(X, Y, type = "n", main = titulo, xlab = "escolaridade", ylab = "salario")
+  incl <- c()
+  for (g in grupos) {
+    sel <- terc == g
+    points(X[sel], Y[sel], pch = 16, col = cores[g], cex = 0.75)
+    m <- lm(Y[sel] ~ X[sel])
+    xr <- range(X[sel])
+    lines(xr, coef(m)[1] + coef(m)[2] * xr, col = cores[g], lwd = 3.5)
+    incl <- c(incl, coef(m)[2])
+  }
+  leg <- paste0(nomes[grupos], ": inclinacao ", sprintf("%.2f", incl))
+  colv <- cores[grupos]; lwdv <- rep(3.5, length(grupos)); ltyv <- rep(1, length(grupos))
+  if (etapa == 4) {
+    m_tudo <- lm(Y ~ X)
+    abline(m_tudo, col = "red", lwd = 4, lty = 2)
+    leg <- c(leg, paste0("TODAS juntas: inclinacao ", sprintf("%.2f", coef(m_tudo)[2])))
+    colv <- c(colv, "red"); lwdv <- c(lwdv, 4); ltyv <- c(ltyv, 2)
+    incl <- c(incl, coef(m_tudo)[2])
+  }
+  legend("topleft", bty = "n", lwd = lwdv, lty = ltyv, col = colv, legend = leg, cex = 0.9)
+  cat("RES", etapa, paste(sprintf("%.3f", incl), collapse = " "), "\\n")
+} else {
+  rx <- resid(lm(X ~ Z)); ry <- resid(lm(Y ~ Z))
+  m_p <- lm(ry ~ rx)
+  plot(rx, ry, pch = 16, col = rgb(0.1, 0.45, 0.28, 0.45), cex = 0.75,
+       main = paste0("Etapa 5: correlacao parcial - inclinacao ", sprintf("%.2f", coef(m_p)[2]),
+                     " (o beta1 verdadeiro e ${b1})"),
+       xlab = "escolaridade sem a parte da habilidade",
+       ylab = "salario sem a parte da habilidade")
+  abline(m_p, col = "forestgreen", lwd = 4)
+  cat("RES", 5, sprintf("%.3f", coef(m_p)[2]), sprintf("%.3f", cor(rx, ry)), "\\n")
+}`;
 }
 
 let webR, shelter;
@@ -239,7 +308,7 @@ async function iniciar() {
     webR = new WebR();
     await webR.init();
     shelter = await new webR.Shelter();
-    $("status").textContent = "pronto! Escolha uma aba e aperte Rodar.";
+    $("status").textContent = "pronto! Configure e aperte Rodar.";
     $("status").className = "pronto";
     ["a1rodar", "a2rodar", "a3rodar"].forEach(id => $(id).disabled = false);
   } catch (e) {
@@ -256,7 +325,7 @@ async function rodar(aba, gerador, interpreta) {
   try {
     const captura = await shelter.captureR(gerador(), {
       withAutoprint: false, captureStreams: true, captureConditions: true,
-      captureGraphics: { width: 780, height: 430, bg: "white", pointsize: 13 }
+      captureGraphics: { width: 780, height: 460, bg: "white", pointsize: 13 }
     });
     let res = null;
     for (const l of captura.output)
@@ -269,7 +338,8 @@ async function rodar(aba, gerador, interpreta) {
       cv.getContext("2d").drawImage(img, 0, 0);
       $(aba + "graf").appendChild(cv);
     }
-    $("status").textContent = "pronto!"; $("status").className = "pronto";
+    $("status").textContent = "pronto! Configure e rode de novo quando quiser.";
+    $("status").className = "pronto";
   } catch (e) {
     $(aba + "saida").textContent = "Erro do R: " + e.message;
     $("status").textContent = "erro na execução."; $("status").className = "erro";
@@ -280,15 +350,20 @@ async function rodar(aba, gerador, interpreta) {
 }
 
 $("a1rodar").addEventListener("click", () => rodar("a1", codigoA1, r =>
-  `Alvo do estimador ERRADO (0,5 + β₂×δ) = <b>${fmt(r[0])}</b> · com n = 20.000: errado chegou a <b>${fmt(r[1])}</b>, certo a <b>${fmt(r[2])}</b> (verdadeiro: 0,50).`));
+  `Com n = <b>${r[0].toLocaleString("pt-BR")}</b>: média = <b>${fmt(r[1])}</b> · errado = <b>${fmt(r[2])}</b> · certo = <b>${fmt(r[3])}</b> · alvo do errado (0,5 + β₂×δ) = <b>${fmt(r[4])}</b>. Aumente o n e rode de novo.`));
 $("a2rodar").addEventListener("click", () => rodar("a2", codigoA2, r =>
-  `r amostral = <b>${fmt(r[0])}</b>. Rode "Nova amostra" e veja o quanto ele varia com esse n.`));
-$("a3rodar").addEventListener("click", () => rodar("a3", codigoA3, r =>
-  `Correlação bruta = <b>${fmt(r[0])}</b> · correlação parcial (tirando Z) = <b>${fmt(r[1])}</b> · inclinação parcial = <b>${fmt(r[2])}</b> (compare com o β₁ escolhido).`));
+  `r amostral = <b>${fmt(r[0])}</b>. Sorteie outra amostra (e rode) para ver o quanto ele varia com esse n.`));
+$("a3rodar").addEventListener("click", () => rodar("a3", codigoA3, r => {
+  const e = r[0];
+  if (e <= 3) return `Etapa ${e}: inclinação dentro de cada cor = <b>${r.slice(1).map(fmt).join(" · ")}</b> — compare com o β₁ escolhido.`;
+  if (e === 4) return `Etapa 4: inclinações dentro das cores = <b>${r.slice(1, 4).map(fmt).join(" · ")}</b> — e ignorando as cores: <b>${fmt(r[4])}</b>. A diferença é o viés.`;
+  return `Etapa 5: inclinação parcial = <b>${fmt(r[1])}</b> (r parcial = ${fmt(r[2])}) — compare com o β₁ escolhido.`;
+}));
 
-$("a1nova").addEventListener("click", () => { seeds.a1 = Math.floor(Math.random() * 1e5); if (!$("a1rodar").disabled) $("a1rodar").click(); });
-$("a2nova").addEventListener("click", () => { seeds.a2 = Math.floor(Math.random() * 1e5); if (!$("a2rodar").disabled) $("a2rodar").click(); });
-$("a3nova").addEventListener("click", () => { seeds.a3 = Math.floor(Math.random() * 1e5); if (!$("a3rodar").disabled) $("a3rodar").click(); });
+// "nova amostra" só configura (não roda)
+$("a1nova").addEventListener("click", () => { seeds.a1 = Math.floor(Math.random() * 1e5); aviso("nova amostra sorteada — aperte Rodar."); });
+$("a2nova").addEventListener("click", () => { seeds.a2 = Math.floor(Math.random() * 1e5); aviso("nova amostra sorteada — aperte Rodar."); });
+$("a3nova").addEventListener("click", () => { seeds.a3 = Math.floor(Math.random() * 1e5); aviso("nova amostra sorteada — aperte Mostrar etapa."); });
 
 iniciar();
 </script>
