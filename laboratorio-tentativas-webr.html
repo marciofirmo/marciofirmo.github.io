@@ -15,10 +15,13 @@
   .box { background: var(--cinza); border: 1px solid var(--borda);
          border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
   .eq { background: #fff; border: 1px solid var(--borda); border-radius: 8px;
-        padding: 8px 12px; margin: 8px 0; font-family: Georgia, "Times New Roman", serif;
-        font-size: 1.0rem; overflow-x: auto; white-space: nowrap; }
+        padding: 8px 12px; margin: 6px 0; font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.0rem; overflow-x: auto; }
   .eq small { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
               color: #5a6573; }
+  .eq .leg { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+             font-size: .84rem; color: #5a6573; margin-top: 3px; white-space: normal; }
+  .hip small { display: block; margin-top: 6px; color: #5a6573; }
   .hip { background: #eef6ee; border: 1px solid #bcd9bc; border-radius: 10px;
          padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
   .hip b.ok { color: var(--verde); } .hip b.no { color: var(--verm); }
@@ -78,11 +81,16 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   a habilidade Z aumenta o salário por conta própria — e, na inscrição <b>voluntária</b>, os mais
   hábeis se inscrevem mais.</div>
   <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·T<sub>i</sub> + 3·Z<sub>i</sub> + e<sub>i</sub>
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; voluntário: T<sub>i</sub> = 1{<b>γ</b>·Z<sub>i</sub> + η<sub>i</sub> &gt; 0}
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; sorteio: T<sub>i</sub> ~ moeda(½)</div>
-  <div class="hip"><b>Hipótese:</b> E(u | T) = 0, onde u = 3Z + e.
-    <b class="no">Voluntários: falha</b> se γ &gt; 0 (Z entra em u <i>e</i> decide T).
-    <b class="ok">Sorteio: vale por construção</b> (T independe de Z e de e).</div>
+    <div class="leg"><b>Lendo:</b> salário = base (10) <b>+ τ, se a pessoa fez o treinamento</b> (T=1) + 3 por unidade de habilidade (Z) + sorte (e). O τ é o que queremos medir.</div></div>
+  <div class="eq">Inscrição voluntária: &nbsp;T<sub>i</sub> = 1 se <b>γ</b>·Z<sub>i</sub> + η<sub>i</sub> &gt; 0
+    <div class="leg"><b>Lendo:</b> faz o treinamento quem tem habilidade e vontade (η) suficientes. Quanto maior o <b>γ</b>, mais a <b>habilidade</b> decide quem entra — γ é o "quanto os hábeis se inscrevem mais".</div></div>
+  <div class="eq">Sorteio: &nbsp;T<sub>i</sub> = cara ou coroa
+    <div class="leg"><b>Lendo:</b> a moeda não olha habilidade nem vontade — metade entra, metade não, ao acaso.</div></div>
+  <div class="hip"><b>Quando a diferença de médias mede o τ?</b> Quando tratados e não-tratados são
+    <b>iguais no resto</b> — no que ficou fora da comparação (a habilidade e a sorte).<br>
+    <b class="no">Voluntários: falha</b> — com γ &gt; 0, o grupo que treinou <b>já era mais hábil antes</b>; a diferença de salários mistura o τ com a habilidade.<br>
+    <b class="ok">Sorteio: vale</b> — a moeda ignora tudo; os grupos saem iguais <b>até no que ninguém mede</b>.
+    <small><b>No formal:</b> a hipótese é E(u | T) = 0, com u = 3Z + e (o "resto"). No voluntário, T depende de Z, que está dentro de u → E(u | T=1) &gt; E(u | T=0), hipótese violada. No sorteio, T é independente de tudo → vale por construção.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro (na 1ª equação)</span>
     <input type="range" id="t1tau" min="0" max="4" step="0.5" value="2"><span class="val" id="t1tauv">2,00</span></div>
   <div class="ctl"><span><span class="sym">γ</span> — auto-seleção (na 2ª equação)</span>
@@ -99,11 +107,16 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   habilidade Z, só um <b>teste</b> Z* que a mede <b>com erro</b> <span class="sym">λ</span>.
   Controlar por Z* é controlar por uma régua embaçada.</div>
   <div class="eq">Y<sub>i</sub> = 2 + 0,5·X<sub>i</sub> + 1·Z<sub>i</sub> + v<sub>i</sub>
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; Z<sub>i</sub> = 0,5·X<sub>i</sub> + ν<sub>i</sub>
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; observamos Z*<sub>i</sub> = Z<sub>i</sub> + <b>λ</b>·ξ<sub>i</sub></div>
-  <div class="hip"><b>Hipótese:</b> E(u | X, Z*) = 0 — condicional ao controle, o erro não anda
-  com X. <b class="ok">Vale com λ = 0</b> (controle perfeito).
-  <b class="no">Falha crescente com λ &gt; 0</b>: a parte de Z que o teste não captura volta para o erro.</div>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>0,5 por ano de estudo</b> (X) + 1 por unidade de habilidade (Z) + sorte. O 0,5 é o efeito verdadeiro.</div></div>
+  <div class="eq">Z<sub>i</sub> = 0,5·X<sub>i</sub> + ν<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> habilidade anda junto com escolaridade — o problema clássico da aula.</div></div>
+  <div class="eq">Observamos só o teste: &nbsp;Z*<sub>i</sub> = Z<sub>i</sub> + <b>λ</b>·ξ<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> ninguém observa a habilidade de verdade — só um <b>teste</b> que a mede com erro. λ = 0: régua perfeita. λ grande: régua embaçada.</div></div>
+  <div class="hip"><b>Quando controlar funciona?</b> Controlar por Z* é comparar pessoas de
+    <b>mesma nota no teste</b> — a aposta é que, feito isso, não sobra diferença relevante.<br>
+    <b class="ok">Com λ = 0: vale</b> — a nota do teste é a própria habilidade; a comparação fica limpa.<br>
+    <b class="no">Com λ &gt; 0: falha aos poucos</b> — a parte da habilidade que o teste não captura continua escondida no erro, e o viés volta na proporção do que escapou.
+    <small><b>No formal:</b> a hipótese é E(u | X, Z*) = 0. Com erro de medida, u ainda contém (Z − Z*), que anda com X → a hipótese vale só parcialmente, e a estimativa fica entre a ingênua e a verdadeira.</small></div>
   <div class="ctl"><span><span class="sym">λ</span> — erro de medida do teste (na 3ª equação)</span>
     <input type="range" id="t2err" min="0" max="4" step="0.5" value="0"><span class="val" id="t2errv">0,00</span></div>
   <div class="botoes"><button id="t2rodar" disabled>&#9654; Rodar</button>
@@ -119,10 +132,14 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   escolaridade dos dois irmãos. Dentro do par, os irmãos diferem só por acaso — a menos que a
   "quebra" <span class="sym">ρ</span> ligue essa diferença à habilidade individual.</div>
   <div class="eq">Y<sub>if</sub> = 5 + 0,5·X<sub>if</sub> + <b>φ</b>·α<sub>f</sub> + <b>ρ</b>·a<sub>if</sub> + e<sub>if</sub>
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; X<sub>if</sub> = 8 + α<sub>f</sub> + a<sub>if</sub> + η<sub>if</sub></div>
-  <div class="hip"><b>Hipótese:</b> na diferença entre irmãos, α<sub>f</sub> <b>cancela</b>; exige
-  E(Δe | ΔX) = 0. <b class="ok">Vale com ρ = 0</b> (a diferença dentro do par é só acaso).
-  <b class="no">Falha com ρ &gt; 0</b>: a habilidade individual a<sub>if</sub> volta a contaminar — o problema em miniatura.</div>
+    <div class="leg"><b>Lendo:</b> salário do irmão i da família f = base + <b>0,5 por ano de estudo</b> + o fator da família α<sub>f</sub> (igual para os 2 irmãos, com força φ) + a habilidade individual a<sub>if</sub> (de cada irmão, com força ρ) + sorte.</div></div>
+  <div class="eq">X<sub>if</sub> = 8 + α<sub>f</sub> + a<sub>if</sub> + η<sub>if</sub>
+    <div class="leg"><b>Lendo:</b> a escolaridade também sobe com a família e com a habilidade individual — por isso a comparação entre pessoas quaisquer contamina.</div></div>
+  <div class="hip"><b>Quando comparar irmãos funciona?</b> Subtrair um irmão do outro <b>apaga tudo
+    o que é da família</b> — o α<sub>f</sub> é igual para os dois e some na conta.<br>
+    <b class="ok">Com ρ = 0: vale</b> — a diferença de estudo dentro do par é só acaso, e a diferença de salários mede o 0,5.<br>
+    <b class="no">Com ρ &gt; 0: falha</b> — o irmão que estudou mais é também o mais hábil <b>individualmente</b>; a habilidade individual não é da família, não cancela, e o problema volta em miniatura.
+    <small><b>No formal:</b> na diferença, Y₂−Y₁ = 0,5·(X₂−X₁) + ρ·(a₂−a₁) + (e₂−e₁); a hipótese é E(Δe + ρ·Δa | ΔX) = 0 — verdadeira só se ρ = 0, porque Δa entra em ΔX.</small></div>
   <div class="ctl"><span><span class="sym">φ</span> — força do fator familiar (fixo no par)</span>
     <input type="range" id="t3fam" min="0" max="4" step="0.5" value="2"><span class="val" id="t3famv">2,00</span></div>
   <div class="ctl"><span><span class="sym">ρ</span> — quebra: habilidade individual dentro do par</span>
@@ -140,10 +157,14 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   em <span class="sym">π</span> anos. A "quebra" <span class="sym">κ</span> faz a bolsa afetar o
   salário <b>por fora</b> (violação da exclusão).</div>
   <div class="eq">X<sub>i</sub> = 8 + <b>π</b>·Z<sub>b,i</sub> + 2·hab<sub>i</sub> + η<sub>i</sub>
-    &nbsp;&nbsp;<small>|</small>&nbsp;&nbsp; Y<sub>i</sub> = 5 + 0,5·X<sub>i</sub> + 3·hab<sub>i</sub> + <b>κ</b>·Z<sub>b,i</sub> + e<sub>i</sub></div>
-  <div class="hip"><b>Hipóteses:</b> relevância Cov(Z<sub>b</sub>, X) ≠ 0 (o π — testável no 1º
-  estágio) e exclusão Cov(Z<sub>b</sub>, u) = 0. <b class="ok">Vale com κ = 0</b>.
-  <b class="no">Falha com κ ≠ 0</b> — e o IV erra sem avisar (a exclusão não é testável).</div>
+    <div class="leg"><b>Lendo:</b> escolaridade = base + <b>π anos a mais para quem ganhou a bolsa</b> (Z<sub>b</sub> = 1, sorteada) + habilidade + acaso. O π é a força do "empurrão".</div></div>
+  <div class="eq">Y<sub>i</sub> = 5 + 0,5·X<sub>i</sub> + 3·hab<sub>i</sub> + <b>κ</b>·Z<sub>b,i</sub> + e<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>0,5 por ano de estudo</b> + habilidade + sorte. O termo <b>κ·Z<sub>b</sub></b> é a trapaça que você controla: com κ ≠ 0, a bolsa afeta o salário <b>por fora</b> da escolaridade (ex.: entra no currículo) — violando a exclusão.</div></div>
+  <div class="hip"><b>Quando o IV funciona?</b> A ideia: usar <b>só o pedaço da escolaridade causado
+    pela bolsa</b> — como a bolsa foi sorteada, esse pedaço é limpo de habilidade.<br>
+    Precisa de duas coisas: (i) a bolsa <b>mexer mesmo</b> na escolaridade (π ≠ 0 — dá para checar no 1º estágio); (ii) a bolsa <b>não mexer no salário por nenhum outro caminho</b> (κ = 0 — <b>não dá para checar</b>: é uma promessa, defendida por argumento).<br>
+    <b class="ok">Com κ = 0: vale.</b> <b class="no">Com κ ≠ 0: falha — e o IV erra sem avisar.</b>
+    <small><b>No formal:</b> relevância Cov(Z<sub>b</sub>, X) ≠ 0 e exclusão Cov(Z<sub>b</sub>, u) = 0, onde u = 3·hab + e. Com κ ≠ 0, o termo κ·Z<sub>b</sub> entra no "u" e a exclusão cai.</small></div>
   <div class="ctl"><span><span class="sym">π</span> — força do instrumento (1º estágio)</span>
     <input type="range" id="t4pi" min="0.1" max="3" step="0.1" value="1.5"><span class="val" id="t4piv">1,50</span></div>
   <div class="ctl"><span><span class="sym">κ</span> — quebra da exclusão (na equação de Y)</span>
@@ -159,10 +180,13 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   <div class="box"><b>O mundo:</b> uma bolsa dada a quem tira <b>60 ou mais</b> numa prova. A nota
   também melhora o salário por si (quem tira 90 é diferente de quem tira 30). Comparar bolsistas
   com não-bolsistas mistura tudo; comparar <b>vizinhos do corte</b>, não.</div>
-  <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·1{nota<sub>i</sub> ≥ 60} + 0,1·nota<sub>i</sub> + u<sub>i</sub></div>
-  <div class="hip"><b>Hipótese:</b> E(u | nota) é <b>contínua no corte</b> — só o tratamento salta
-  em 60: E(u | nota → 60⁻) = E(u | nota → 60⁺). A janela <span class="sym">h</span> decide o
-  trade-off: <b>estreita</b> = mais comparável, menos dados; <b>larga</b> = mais dados, mais contaminação da própria nota.</div>
+  <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·(bolsa se nota ≥ 60) + 0,1·nota<sub>i</sub> + u<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>τ para quem ganhou a bolsa</b> (nota 60 ou mais) + 0,1 por ponto de nota (a nota também paga por si: mede habilidade) + resto.</div></div>
+  <div class="hip"><b>Quando comparar no corte funciona?</b> Quem tirou 59 e quem tirou 61 são
+    <b>praticamente a mesma pessoa</b> — a única coisa que muda ao cruzar o 60 é a bolsa.<br>
+    Comparar <b>todos</b> os bolsistas com todos os não-bolsistas mistura a bolsa com a nota (bolsistas têm nota muito maior). Comparar só os <b>vizinhos do corte</b> isola a bolsa.<br>
+    A janela <span class="sym">h</span> é o dilema prático: <b>estreita</b> = pessoas mais parecidas, porém poucas; <b>larga</b> = mais gente, porém menos parecida.
+    <small><b>No formal:</b> a hipótese é continuidade: E(u | nota) não dá salto em 60 — só o tratamento salta. Nada além da bolsa pode mudar exatamente no 60 (nem manipulação de nota, nem outra política com o mesmo corte).</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da bolsa (na equação)</span>
     <input type="range" id="t5tau" min="0" max="6" step="0.5" value="3"><span class="val" id="t5tauv">3,00</span></div>
   <div class="ctl"><span><span class="sym">h</span> — janela em torno do corte (± pontos)</span>
@@ -179,10 +203,15 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   <span class="sym">τ</span>, negativo); a rede B, não. A é melhor desde sempre (+8 de nível) e as
   duas sobem <span class="sym">g</span> pontos no período (tendência comum). A "quebra"
   <span class="sym">δ</span><sub>A</sub> dá à rede A uma tendência extra — não-paralela.</div>
-  <div class="eq">Y<sub>it</sub> = 20 + 8·A<sub>i</sub> + <b>g</b>·pós<sub>t</sub> + <b>δ</b><sub>A</sub>·A<sub>i</sub>·pós<sub>t</sub><small> (quebra)</small> + <b>τ</b>·A<sub>i</sub>·pós<sub>t</sub><small> (greve)</small> + e<sub>it</sub></div>
-  <div class="hip"><b>Hipótese:</b> tendências paralelas — E(Δu | A) = E(Δu | B).
-  <b class="ok">Vale com δ<sub>A</sub> = 0</b>: o DiD cancela nível (os +8) e tendência (o g).
-  <b class="no">Falha com δ<sub>A</sub> ≠ 0</b>: o DiD atribui a tendência extra à greve — e erra exatamente em δ<sub>A</sub>.</div>
+  <div class="eq">Rede B: &nbsp;nota = 20 + <b>g</b>·pós + e
+    <div class="leg"><b>Lendo:</b> a rede B parte de 20 e sobe <b>g</b> pontos no período (a "tendência da época" — melhora que aconteceria de qualquer jeito).</div></div>
+  <div class="eq">Rede A: &nbsp;nota = 28 + (<b>g</b> + <b>δ</b><sub>A</sub> + <b>τ</b>)·pós + e
+    <div class="leg"><b>Lendo:</b> a rede A parte de 28 (melhor desde sempre: +8 de nível) e, no período, soma três coisas: a mesma tendência da época (<b>g</b>), uma eventual tendência <b>própria</b> (<b>δ</b><sub>A</sub> — a quebra) e o efeito da greve (<b>τ</b>, negativo).</div></div>
+  <div class="hip"><b>Quando o DiD funciona?</b> Ele subtrai a variação de B da variação de A — com isso
+    <b>cancela o nível</b> (os +8, que não mudam) e <b>cancela a tendência da época</b> (o g, comum às duas). Sobra o que só aconteceu com A no período.<br>
+    <b class="ok">Com δ<sub>A</sub> = 0: vale</b> — sem a greve, A teria subido igual a B; o que sobra é só o τ.<br>
+    <b class="no">Com δ<sub>A</sub> ≠ 0: falha</b> — A tinha uma melhora (ou piora) própria, e o DiD entrega τ + δ<sub>A</sub>: erra <b>exatamente em δ<sub>A</sub></b>. Teste no slider!
+    <small><b>No formal:</b> a hipótese de tendências paralelas é E(ΔY sem greve | A) = E(ΔY | B) — sobre as <i>variações</i>, não sobre os níveis. Verificação parcial na prática: as tendências eram paralelas <i>antes</i> do choque?</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da greve</span>
     <input type="range" id="t6tau" min="-8" max="0" step="0.5" value="-4"><span class="val" id="t6tauv">-4,00</span></div>
   <div class="ctl"><span><span class="sym">g</span> — tendência da época (comum às duas)</span>
