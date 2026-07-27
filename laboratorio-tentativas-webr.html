@@ -22,6 +22,11 @@
   .eq .leg { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
              font-size: .84rem; color: #5a6573; margin-top: 3px; white-space: normal; }
   .hip small { display: block; margin-top: 6px; color: #5a6573; }
+  .est { background: #eef3fa; border: 1px solid #bcd0e8; border-radius: 10px;
+         padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
+  .est .f { font-family: Georgia, "Times New Roman", serif; }
+  .est b.no { color: var(--verm); } .est b.ok { color: var(--verde); }
+  .est small { display: block; margin-top: 5px; color: #5a6573; }
   .hip { background: #eef6ee; border: 1px solid #bcd9bc; border-radius: 10px;
          padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
   .hip b.ok { color: var(--verde); } .hip b.no { color: var(--verm); }
@@ -91,6 +96,10 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <b class="no">Voluntários: falha</b> — com γ &gt; 0, o grupo que treinou <b>já era mais hábil antes</b>; a diferença de salários mistura o τ com a habilidade.<br>
     <b class="ok">Sorteio: vale</b> — a moeda ignora tudo; os grupos saem iguais <b>até no que ninguém mede</b>.
     <small><b>No formal:</b> a hipótese é E(u | T) = 0, com u = 3Z + e (o "resto"). No voluntário, T depende de Z, que está dentro de u → E(u | T=1) &gt; E(u | T=0), hipótese violada. No sorteio, T é independente de tudo → vale por construção.</small></div>
+  <div class="est"><b>O que cada método estima</b> — a <b>mesma equação</b>, em dados diferentes:<br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> nos dados dos <b>voluntários</b>: o b̂ (diferença de médias) mistura τ com habilidade.<br>
+    <b class="ok">Sorteio</b> → estima <span class="f">Y = a + b·T</span> nos dados do <b>sorteio</b>: o b̂ ≈ τ.
+    <small>Repare: o que muda não é a conta — é <b>como o T foi gerado</b>. A mesma regressão, limpa ou contaminada pela origem dos dados.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro (na 1ª equação)</span>
     <input type="range" id="t1tau" min="0" max="4" step="0.5" value="2"><span class="val" id="t1tauv">2,00</span></div>
   <div class="ctl"><span><span class="sym">γ</span> — auto-seleção (na 2ª equação)</span>
@@ -117,6 +126,10 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <b class="ok">Com λ = 0: vale</b> — a nota do teste é a própria habilidade; a comparação fica limpa.<br>
     <b class="no">Com λ &gt; 0: falha aos poucos</b> — a parte da habilidade que o teste não captura continua escondida no erro, e o viés volta na proporção do que escapou.
     <small><b>No formal:</b> a hipótese é E(u | X, Z*) = 0. Com erro de medida, u ainda contém (Z − Z*), que anda com X → a hipótese vale só parcialmente, e a estimativa fica entre a ingênua e a verdadeira.</small></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — sem nada sobre habilidade; o b̂ sai ≈ 1,0 (viesado).<br>
+    <b class="ok">Controles</b> → estima <span class="f">Y = a + b·X + c·Z*</span> — a nota do teste entra na regressão; com λ = 0, o b̂ sai ≈ 0,50.
+    <small>É a diferença entre <code>lm(Y ~ X)</code> e <code>lm(Y ~ X + Zteste)</code> no R.</small></div>
   <div class="ctl"><span><span class="sym">λ</span> — erro de medida do teste (na 3ª equação)</span>
     <input type="range" id="t2err" min="0" max="4" step="0.5" value="0"><span class="val" id="t2errv">0,00</span></div>
   <div class="botoes"><button id="t2rodar" disabled>&#9654; Rodar</button>
@@ -140,6 +153,10 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <b class="ok">Com ρ = 0: vale</b> — a diferença de estudo dentro do par é só acaso, e a diferença de salários mede o 0,5.<br>
     <b class="no">Com ρ &gt; 0: falha</b> — o irmão que estudou mais é também o mais hábil <b>individualmente</b>; a habilidade individual não é da família, não cancela, e o problema volta em miniatura.
     <small><b>No formal:</b> na diferença, Y₂−Y₁ = 0,5·(X₂−X₁) + ρ·(a₂−a₁) + (e₂−e₁); a hipótese é E(Δe + ρ·Δa | ΔX) = 0 — verdadeira só se ρ = 0, porque Δa entra em ΔX.</small></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> com <b>todos os irmãos juntos</b> ("entre famílias") — o b̂ carrega o fator familiar.<br>
+    <b class="ok">Gêmeos / efeitos fixos</b> → estima <span class="f">ΔY = b·ΔX</span> — a regressão das <b>diferenças</b> (irmão 2 − irmão 1); o α da família já saiu antes de estimar.
+    <small>No R: <code>lm(Y ~ X)</code> vs. <code>lm(I(Y2−Y1) ~ I(X2−X1))</code>.</small></div>
   <div class="ctl"><span><span class="sym">φ</span> — força do fator familiar (fixo no par)</span>
     <input type="range" id="t3fam" min="0" max="4" step="0.5" value="2"><span class="val" id="t3famv">2,00</span></div>
   <div class="ctl"><span><span class="sym">ρ</span> — quebra: habilidade individual dentro do par</span>
@@ -165,6 +182,10 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     Precisa de duas coisas: (i) a bolsa <b>mexer mesmo</b> na escolaridade (π ≠ 0 — dá para checar no 1º estágio); (ii) a bolsa <b>não mexer no salário por nenhum outro caminho</b> (κ = 0 — <b>não dá para checar</b>: é uma promessa, defendida por argumento).<br>
     <b class="ok">Com κ = 0: vale.</b> <b class="no">Com κ ≠ 0: falha — e o IV erra sem avisar.</b>
     <small><b>No formal:</b> relevância Cov(Z<sub>b</sub>, X) ≠ 0 e exclusão Cov(Z<sub>b</sub>, u) = 0, onde u = 3·hab + e. Com κ ≠ 0, o termo κ·Z<sub>b</sub> entra no "u" e a exclusão cai.</small></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — usa <b>toda</b> a variação de X, a limpa (bolsa) e a suja (habilidade).<br>
+    <b class="ok">IV / 2SLS</b> → estima em <b>2 passos</b>: (1º estágio) <span class="f">X = a₀ + π·Z<sub>b</sub></span> e guarda o previsto X̂; (2º estágio) <span class="f">Y = a₁ + b·X̂</span> — só a variação <b>que veio da bolsa</b>.
+    <small>Equivalente à conta de Wald: b̂ = (Ȳ<sub>bolsa</sub> − Ȳ<sub>sem</sub>) / (X̄<sub>bolsa</sub> − X̄<sub>sem</sub>) — a inclinação da reta verde que liga as duas médias no gráfico.</small></div>
   <div class="ctl"><span><span class="sym">π</span> — força do instrumento (1º estágio)</span>
     <input type="range" id="t4pi" min="0.1" max="3" step="0.1" value="1.5"><span class="val" id="t4piv">1,50</span></div>
   <div class="ctl"><span><span class="sym">κ</span> — quebra da exclusão (na equação de Y)</span>
@@ -187,6 +208,10 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     Comparar <b>todos</b> os bolsistas com todos os não-bolsistas mistura a bolsa com a nota (bolsistas têm nota muito maior). Comparar só os <b>vizinhos do corte</b> isola a bolsa.<br>
     A janela <span class="sym">h</span> é o dilema prático: <b>estreita</b> = pessoas mais parecidas, porém poucas; <b>larga</b> = mais gente, porém menos parecida.
     <small><b>No formal:</b> a hipótese é continuidade: E(u | nota) não dá salto em 60 — só o tratamento salta. Nada além da bolsa pode mudar exatamente no 60 (nem manipulação de nota, nem outra política com o mesmo corte).</small></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> com <b>todos</b>: a diferença de médias bolsista × não-bolsista (mistura bolsa e nota).<br>
+    <b class="ok">RDD</b> → estima, só na janela |nota − 60| ≤ h, <b>uma reta de cada lado</b>: <span class="f">Y = a<sub>e</sub> + b<sub>e</sub>·(nota−60)</span> à esquerda e <span class="f">Y = a<sub>d</sub> + b<sub>d</sub>·(nota−60)</span> à direita. O efeito é o <b>salto</b> no corte: a<sub>d</sub> − a<sub>e</sub>.
+    <small>Os dois interceptos são os valores previstos exatamente em 60 — a distância entre as pontas das retas vermelha e verde no gráfico.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da bolsa (na equação)</span>
     <input type="range" id="t5tau" min="0" max="6" step="0.5" value="3"><span class="val" id="t5tauv">3,00</span></div>
   <div class="ctl"><span><span class="sym">h</span> — janela em torno do corte (± pontos)</span>
@@ -212,6 +237,11 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <b class="ok">Com δ<sub>A</sub> = 0: vale</b> — sem a greve, A teria subido igual a B; o que sobra é só o τ.<br>
     <b class="no">Com δ<sub>A</sub> ≠ 0: falha</b> — A tinha uma melhora (ou piora) própria, e o DiD entrega τ + δ<sub>A</sub>: erra <b>exatamente em δ<sub>A</sub></b>. Teste no slider!
     <small><b>No formal:</b> a hipótese de tendências paralelas é E(ΔY sem greve | A) = E(ΔY | B) — sobre as <i>variações</i>, não sobre os níveis. Verificação parcial na prática: as tendências eram paralelas <i>antes</i> do choque?</small></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Ingênuo 1</b> → <span class="f">média(A) − média(B)</span>, só no pós — carrega o <b>nível</b> (+8).<br>
+    <b class="no">Ingênuo 2</b> → <span class="f">média(depois) − média(antes)</span>, só na A — carrega a <b>tendência</b> (g).<br>
+    <b class="ok">DiD</b> → a dupla diferença: <span class="f">[Ā<sub>dep</sub> − Ā<sub>ant</sub>] − [B̄<sub>dep</sub> − B̄<sub>ant</sub>]</span> — subtrai a tendência e o nível de uma vez.
+    <small>Em forma de regressão: <span class="f">Y = a + b·A + c·pós + τ<sub>DiD</sub>·(A×pós)</span> — o coeficiente da interação é o DiD; é assim que os papers estimam.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da greve</span>
     <input type="range" id="t6tau" min="-8" max="0" step="0.5" value="-4"><span class="val" id="t6tauv">-4,00</span></div>
   <div class="ctl"><span><span class="sym">g</span> — tendência da época (comum às duas)</span>
