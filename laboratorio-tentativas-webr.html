@@ -45,7 +45,11 @@
   .painel.ativa { display: block; }
   .ctl { display: grid; grid-template-columns: minmax(240px, 420px) 1fr 74px; gap: 10px;
          align-items: center; font-size: .9rem; margin: 6px 0; }
-  .ctl input[type=range] { width: 100%; }
+  .ctl input[type=range] { width: 100%; height: 34px; accent-color: var(--azul); }
+  @media (max-width: 640px) {
+    .ctl { grid-template-columns: 1fr 64px; row-gap: 2px; margin: 10px 0; }
+    .ctl span:first-child { grid-column: 1 / -1; }
+  }
   .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700; text-align: right; }
   .ctl .sym { font-family: Georgia, serif; font-style: italic; }
   .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
@@ -74,7 +78,7 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
 <div class="abas">
   <button data-aba="t1" class="ativa">1 · Sorteio</button>
   <button data-aba="t2">2 · Controles</button>
-  <button data-aba="t3">3 · Gêmeos / EF</button>
+  <button data-aba="t3">3 · Painel / EF</button>
   <button data-aba="t4">4 · IV</button>
   <button data-aba="t5">5 · RDD</button>
   <button data-aba="t6">6 · DiD</button>
@@ -91,15 +95,15 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <div class="leg"><b>Lendo:</b> faz o treinamento quem tem habilidade e vontade (η) suficientes. Quanto maior o <b>γ</b>, mais a <b>habilidade</b> decide quem entra — γ é o "quanto os hábeis se inscrevem mais".</div></div>
   <div class="eq">Sorteio: &nbsp;T<sub>i</sub> = cara ou coroa
     <div class="leg"><b>Lendo:</b> a moeda não olha habilidade nem vontade — metade entra, metade não, ao acaso.</div></div>
-  <div class="hip"><b>Quando a diferença de médias mede o τ?</b> Quando tratados e não-tratados são
-    <b>iguais no resto</b> — no que ficou fora da comparação (a habilidade e a sorte).<br>
-    <b class="no">Voluntários: falha</b> — com γ &gt; 0, o grupo que treinou <b>já era mais hábil antes</b>; a diferença de salários mistura o τ com a habilidade.<br>
-    <b class="ok">Sorteio: vale</b> — a moeda ignora tudo; os grupos saem iguais <b>até no que ninguém mede</b>.
-    <small><b>No formal:</b> a hipótese é E(u | T) = 0, com u = 3Z + e (o "resto"). No voluntário, T depende de Z, que está dentro de u → E(u | T=1) &gt; E(u | T=0), hipótese violada. No sorteio, T é independente de tudo → vale por construção.</small></div>
   <div class="est"><b>O que cada método estima</b> — a <b>mesma equação</b>, em dados diferentes:<br>
     <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> nos dados dos <b>voluntários</b>: o b̂ (diferença de médias) mistura τ com habilidade.<br>
     <b class="ok">Sorteio</b> → estima <span class="f">Y = a + b·T</span> nos dados do <b>sorteio</b>: o b̂ ≈ τ.
     <small>Repare: o que muda não é a conta — é <b>como o T foi gerado</b>. A mesma regressão, limpa ou contaminada pela origem dos dados.</small></div>
+  <div class="hip"><b>Quando a diferença de médias mede o τ?</b> Quando tratados e não-tratados são
+    <b>iguais no resto</b> — no que ficou fora da comparação (a habilidade e a sorte).<br>
+    <b class="no">Método ingênuo (voluntários): falha</b> — com γ &gt; 0, o grupo que treinou <b>já era mais hábil antes</b>; a diferença de salários mistura o τ com a habilidade.<br>
+    <b class="ok">Sorteio: vale</b> — a moeda ignora tudo; os grupos saem iguais <b>até no que ninguém mede</b>.
+    <small><b>No formal:</b> a hipótese é E(u | T) = 0, com u = 3Z + e (o "resto"). No voluntário, T depende de Z, que está dentro de u → E(u | T=1) &gt; E(u | T=0), hipótese violada. No sorteio, T é independente de tudo → vale por construção.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro (na 1ª equação)</span>
     <input type="range" id="t1tau" min="0" max="4" step="0.5" value="2"><span class="val" id="t1tauv">2,00</span></div>
   <div class="ctl"><span><span class="sym">γ</span> — auto-seleção (na 2ª equação)</span>
@@ -121,15 +125,15 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <div class="leg"><b>Lendo:</b> habilidade anda junto com escolaridade — o problema clássico da aula.</div></div>
   <div class="eq">Observamos só o teste: &nbsp;Z*<sub>i</sub> = Z<sub>i</sub> + <b>λ</b>·ξ<sub>i</sub>
     <div class="leg"><b>Lendo:</b> ninguém observa a habilidade de verdade — só um <b>teste</b> que a mede com erro. λ = 0: régua perfeita. λ grande: régua embaçada.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — sem nada sobre habilidade; o b̂ sai ≈ 1,0 (viesado).<br>
+    <b class="ok">Controles</b> → estima <span class="f">Y = a + b·X + c·Z*</span> — a nota do teste entra na regressão; com λ = 0, o b̂ sai ≈ 0,50.
+    <small>É a diferença entre <code>lm(Y ~ X)</code> e <code>lm(Y ~ X + Zteste)</code> no R.</small></div>
   <div class="hip"><b>Quando controlar funciona?</b> Controlar por Z* é comparar pessoas de
     <b>mesma nota no teste</b> — a aposta é que, feito isso, não sobra diferença relevante.<br>
     <b class="ok">Com λ = 0: vale</b> — a nota do teste é a própria habilidade; a comparação fica limpa.<br>
     <b class="no">Com λ &gt; 0: falha aos poucos</b> — a parte da habilidade que o teste não captura continua escondida no erro, e o viés volta na proporção do que escapou.
     <small><b>No formal:</b> a hipótese é E(u | X, Z*) = 0. Com erro de medida, u ainda contém (Z − Z*), que anda com X → a hipótese vale só parcialmente, e a estimativa fica entre a ingênua e a verdadeira.</small></div>
-  <div class="est"><b>O que cada método estima:</b><br>
-    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — sem nada sobre habilidade; o b̂ sai ≈ 1,0 (viesado).<br>
-    <b class="ok">Controles</b> → estima <span class="f">Y = a + b·X + c·Z*</span> — a nota do teste entra na regressão; com λ = 0, o b̂ sai ≈ 0,50.
-    <small>É a diferença entre <code>lm(Y ~ X)</code> e <code>lm(Y ~ X + Zteste)</code> no R.</small></div>
   <div class="ctl"><span><span class="sym">λ</span> — erro de medida do teste (na 3ª equação)</span>
     <input type="range" id="t2err" min="0" max="4" step="0.5" value="0"><span class="val" id="t2errv">0,00</span></div>
   <div class="botoes"><button id="t2rodar" disabled>&#9654; Rodar</button>
@@ -140,26 +144,26 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
 
 <!-- ============ T3 GÊMEOS / EF ============ -->
 <div class="painel" id="t3">
-  <div class="box"><b>O mundo:</b> 150 pares de gêmeos. Cada família tem um fator fixo
-  <span class="sym">α</span><sub>f</sub> (recursos, ambiente) que aumenta o salário <b>e</b> a
-  escolaridade dos dois irmãos. Dentro do par, os irmãos diferem só por acaso — a menos que a
-  "quebra" <span class="sym">ρ</span> ligue essa diferença à habilidade individual.</div>
-  <div class="eq">Y<sub>if</sub> = 5 + 0,5·X<sub>if</sub> + <b>φ</b>·α<sub>f</sub> + <b>ρ</b>·a<sub>if</sub> + e<sub>if</sub>
-    <div class="leg"><b>Lendo:</b> salário do irmão i da família f = base + <b>0,5 por ano de estudo</b> + o fator da família α<sub>f</sub> (igual para os 2 irmãos, com força φ) + a habilidade individual a<sub>if</sub> (de cada irmão, com força ρ) + sorte.</div></div>
-  <div class="eq">X<sub>if</sub> = 8 + α<sub>f</sub> + a<sub>if</sub> + η<sub>if</sub>
-    <div class="leg"><b>Lendo:</b> a escolaridade também sobe com a família e com a habilidade individual — por isso a comparação entre pessoas quaisquer contamina.</div></div>
-  <div class="hip"><b>Quando comparar irmãos funciona?</b> Subtrair um irmão do outro <b>apaga tudo
-    o que é da família</b> — o α<sub>f</sub> é igual para os dois e some na conta.<br>
-    <b class="ok">Com ρ = 0: vale</b> — a diferença de estudo dentro do par é só acaso, e a diferença de salários mede o 0,5.<br>
-    <b class="no">Com ρ &gt; 0: falha</b> — o irmão que estudou mais é também o mais hábil <b>individualmente</b>; a habilidade individual não é da família, não cancela, e o problema volta em miniatura.
-    <small><b>No formal:</b> na diferença, Y₂−Y₁ = 0,5·(X₂−X₁) + ρ·(a₂−a₁) + (e₂−e₁); a hipótese é E(Δe + ρ·Δa | ΔX) = 0 — verdadeira só se ρ = 0, porque Δa entra em ΔX.</small></div>
+  <div class="box"><b>O mundo:</b> um <b>painel</b>: 200 escolas observadas em <b>2 anos</b>. Cada
+  escola tem um fator fixo <span class="sym">α</span><sub>i</sub> (gestão, comunidade) que aumenta a
+  nota <b>e</b> as horas de tutoria em todos os anos. O que muda de um ano para o outro é o que o
+  método usa. <i>(Gêmeos são o caso especial: a "unidade" é a família, vista duas vezes.)</i></div>
+  <div class="eq">Y<sub>it</sub> = 5 + 0,5·X<sub>it</sub> + <b>φ</b>·α<sub>i</sub> + <b>ρ</b>·w<sub>it</sub> + e<sub>it</sub>
+    <div class="leg"><b>Lendo:</b> nota da escola i no ano t = base + <b>0,5 por hora de tutoria</b> (X) + o fator fixo da escola α<sub>i</sub> (igual nos 2 anos, com força φ) + o choque do ano w<sub>it</sub> (com força ρ — a quebra) + sorte.</div></div>
+  <div class="eq">X<sub>it</sub> = 8 + α<sub>i</sub> + w<sub>it</sub> + η<sub>it</sub>
+    <div class="leg"><b>Lendo:</b> a tutoria também sobe com o fator fixo (escola boa faz mais tutoria <i>sempre</i>) e com o choque do ano — por isso comparar escolas diferentes contamina.</div></div>
   <div class="est"><b>O que cada método estima:</b><br>
-    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> com <b>todos os irmãos juntos</b> ("entre famílias") — o b̂ carrega o fator familiar.<br>
-    <b class="ok">Gêmeos / efeitos fixos</b> → estima <span class="f">ΔY = b·ΔX</span> — a regressão das <b>diferenças</b> (irmão 2 − irmão 1); o α da família já saiu antes de estimar.
-    <small>No R: <code>lm(Y ~ X)</code> vs. <code>lm(I(Y2−Y1) ~ I(X2−X1))</code>.</small></div>
-  <div class="ctl"><span><span class="sym">φ</span> — força do fator familiar (fixo no par)</span>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> com <b>todas as escolas juntas</b> ("entre escolas") — o b̂ carrega o fator fixo.<br>
+    <b class="ok">Painel / efeitos fixos</b> → estima <span class="f">ΔY = b·ΔX</span> — a regressão das <b>variações</b> (ano 2 − ano 1); o α<sub>i</sub> já saiu antes de estimar.
+    <small>No R: <code>lm(Y ~ X)</code> vs. <code>lm(I(Y2−Y1) ~ I(X2−X1))</code> — com muitos períodos, o equivalente é incluir um efeito fixo por escola.</small></div>
+  <div class="hip"><b>Quando o painel funciona?</b> Comparar cada escola <b>com ela mesma</b> no
+    ano seguinte <b>apaga tudo o que é fixo</b> — o α<sub>i</sub> é igual nos 2 anos e some na subtração.<br>
+    <b class="ok">Com ρ = 0: vale</b> — a variação de tutoria de um ano para o outro é "limpa", e a variação de nota mede o 0,5.<br>
+    <b class="no">Com ρ &gt; 0: falha</b> — o choque do ano (ex.: um gestor novo) aumenta a tutoria <b>e</b> a nota por outros canais; ele não é fixo, não cancela, e o problema volta dentro do painel.
+    <small><b>No formal:</b> na diferença, ΔY = 0,5·ΔX + ρ·Δw + Δe; a hipótese é E(ρ·Δw + Δe | ΔX) = 0 — verdadeira só se ρ = 0, porque Δw entra em ΔX.</small></div>
+  <div class="ctl"><span><span class="sym">φ</span> — força do fator fixo da escola (α<sub>i</sub>)</span>
     <input type="range" id="t3fam" min="0" max="4" step="0.5" value="2"><span class="val" id="t3famv">2,00</span></div>
-  <div class="ctl"><span><span class="sym">ρ</span> — quebra: habilidade individual dentro do par</span>
+  <div class="ctl"><span><span class="sym">ρ</span> — quebra: choque do ano afeta X e Y juntos</span>
     <input type="range" id="t3viol" min="0" max="2" step="0.25" value="0"><span class="val" id="t3violv">0,00</span></div>
   <div class="botoes"><button id="t3rodar" disabled>&#9654; Rodar</button>
     <button id="t3nova" class="sec">Sortear nova amostra</button></div>
@@ -177,15 +181,15 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <div class="leg"><b>Lendo:</b> escolaridade = base + <b>π anos a mais para quem ganhou a bolsa</b> (Z<sub>b</sub> = 1, sorteada) + habilidade + acaso. O π é a força do "empurrão".</div></div>
   <div class="eq">Y<sub>i</sub> = 5 + 0,5·X<sub>i</sub> + 3·hab<sub>i</sub> + <b>κ</b>·Z<sub>b,i</sub> + e<sub>i</sub>
     <div class="leg"><b>Lendo:</b> salário = base + <b>0,5 por ano de estudo</b> + habilidade + sorte. O termo <b>κ·Z<sub>b</sub></b> é a trapaça que você controla: com κ ≠ 0, a bolsa afeta o salário <b>por fora</b> da escolaridade (ex.: entra no currículo) — violando a exclusão.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — usa <b>toda</b> a variação de X, a limpa (bolsa) e a suja (habilidade).<br>
+    <b class="ok">IV / 2SLS</b> → estima em <b>2 passos</b>: (1º estágio) <span class="f">X = a₀ + π·Z<sub>b</sub></span> e guarda o previsto X̂; (2º estágio) <span class="f">Y = a₁ + b·X̂</span> — só a variação <b>que veio da bolsa</b>.
+    <small>Equivalente à conta de Wald: b̂ = (Ȳ<sub>bolsa</sub> − Ȳ<sub>sem</sub>) / (X̄<sub>bolsa</sub> − X̄<sub>sem</sub>) — a inclinação da reta verde que liga as duas médias no gráfico.</small></div>
   <div class="hip"><b>Quando o IV funciona?</b> A ideia: usar <b>só o pedaço da escolaridade causado
     pela bolsa</b> — como a bolsa foi sorteada, esse pedaço é limpo de habilidade.<br>
     Precisa de duas coisas: (i) a bolsa <b>mexer mesmo</b> na escolaridade (π ≠ 0 — dá para checar no 1º estágio); (ii) a bolsa <b>não mexer no salário por nenhum outro caminho</b> (κ = 0 — <b>não dá para checar</b>: é uma promessa, defendida por argumento).<br>
     <b class="ok">Com κ = 0: vale.</b> <b class="no">Com κ ≠ 0: falha — e o IV erra sem avisar.</b>
     <small><b>No formal:</b> relevância Cov(Z<sub>b</sub>, X) ≠ 0 e exclusão Cov(Z<sub>b</sub>, u) = 0, onde u = 3·hab + e. Com κ ≠ 0, o termo κ·Z<sub>b</sub> entra no "u" e a exclusão cai.</small></div>
-  <div class="est"><b>O que cada método estima:</b><br>
-    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — usa <b>toda</b> a variação de X, a limpa (bolsa) e a suja (habilidade).<br>
-    <b class="ok">IV / 2SLS</b> → estima em <b>2 passos</b>: (1º estágio) <span class="f">X = a₀ + π·Z<sub>b</sub></span> e guarda o previsto X̂; (2º estágio) <span class="f">Y = a₁ + b·X̂</span> — só a variação <b>que veio da bolsa</b>.
-    <small>Equivalente à conta de Wald: b̂ = (Ȳ<sub>bolsa</sub> − Ȳ<sub>sem</sub>) / (X̄<sub>bolsa</sub> − X̄<sub>sem</sub>) — a inclinação da reta verde que liga as duas médias no gráfico.</small></div>
   <div class="ctl"><span><span class="sym">π</span> — força do instrumento (1º estágio)</span>
     <input type="range" id="t4pi" min="0.1" max="3" step="0.1" value="1.5"><span class="val" id="t4piv">1,50</span></div>
   <div class="ctl"><span><span class="sym">κ</span> — quebra da exclusão (na equação de Y)</span>
@@ -203,15 +207,15 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
   com não-bolsistas mistura tudo; comparar <b>vizinhos do corte</b>, não.</div>
   <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·(bolsa se nota ≥ 60) + 0,1·nota<sub>i</sub> + u<sub>i</sub>
     <div class="leg"><b>Lendo:</b> salário = base + <b>τ para quem ganhou a bolsa</b> (nota 60 ou mais) + 0,1 por ponto de nota (a nota também paga por si: mede habilidade) + resto.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> com <b>todos</b>: a diferença de médias bolsista × não-bolsista (mistura bolsa e nota).<br>
+    <b class="ok">RDD</b> → estima, só na janela |nota − 60| ≤ h, <b>uma reta de cada lado</b>: <span class="f">Y = a<sub>e</sub> + b<sub>e</sub>·(nota−60)</span> à esquerda e <span class="f">Y = a<sub>d</sub> + b<sub>d</sub>·(nota−60)</span> à direita. O efeito é o <b>salto</b> no corte: a<sub>d</sub> − a<sub>e</sub>.
+    <small>Os dois interceptos são os valores previstos exatamente em 60 — a distância entre as pontas das retas vermelha e verde no gráfico.</small></div>
   <div class="hip"><b>Quando comparar no corte funciona?</b> Quem tirou 59 e quem tirou 61 são
     <b>praticamente a mesma pessoa</b> — a única coisa que muda ao cruzar o 60 é a bolsa.<br>
     Comparar <b>todos</b> os bolsistas com todos os não-bolsistas mistura a bolsa com a nota (bolsistas têm nota muito maior). Comparar só os <b>vizinhos do corte</b> isola a bolsa.<br>
     A janela <span class="sym">h</span> é o dilema prático: <b>estreita</b> = pessoas mais parecidas, porém poucas; <b>larga</b> = mais gente, porém menos parecida.
     <small><b>No formal:</b> a hipótese é continuidade: E(u | nota) não dá salto em 60 — só o tratamento salta. Nada além da bolsa pode mudar exatamente no 60 (nem manipulação de nota, nem outra política com o mesmo corte).</small></div>
-  <div class="est"><b>O que cada método estima:</b><br>
-    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> com <b>todos</b>: a diferença de médias bolsista × não-bolsista (mistura bolsa e nota).<br>
-    <b class="ok">RDD</b> → estima, só na janela |nota − 60| ≤ h, <b>uma reta de cada lado</b>: <span class="f">Y = a<sub>e</sub> + b<sub>e</sub>·(nota−60)</span> à esquerda e <span class="f">Y = a<sub>d</sub> + b<sub>d</sub>·(nota−60)</span> à direita. O efeito é o <b>salto</b> no corte: a<sub>d</sub> − a<sub>e</sub>.
-    <small>Os dois interceptos são os valores previstos exatamente em 60 — a distância entre as pontas das retas vermelha e verde no gráfico.</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da bolsa (na equação)</span>
     <input type="range" id="t5tau" min="0" max="6" step="0.5" value="3"><span class="val" id="t5tauv">3,00</span></div>
   <div class="ctl"><span><span class="sym">h</span> — janela em torno do corte (± pontos)</span>
@@ -232,16 +236,16 @@ Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apert
     <div class="leg"><b>Lendo:</b> a rede B parte de 20 e sobe <b>g</b> pontos no período (a "tendência da época" — melhora que aconteceria de qualquer jeito).</div></div>
   <div class="eq">Rede A: &nbsp;nota = 28 + (<b>g</b> + <b>δ</b><sub>A</sub> + <b>τ</b>)·pós + e
     <div class="leg"><b>Lendo:</b> a rede A parte de 28 (melhor desde sempre: +8 de nível) e, no período, soma três coisas: a mesma tendência da época (<b>g</b>), uma eventual tendência <b>própria</b> (<b>δ</b><sub>A</sub> — a quebra) e o efeito da greve (<b>τ</b>, negativo).</div></div>
-  <div class="hip"><b>Quando o DiD funciona?</b> Ele subtrai a variação de B da variação de A — com isso
-    <b>cancela o nível</b> (os +8, que não mudam) e <b>cancela a tendência da época</b> (o g, comum às duas). Sobra o que só aconteceu com A no período.<br>
-    <b class="ok">Com δ<sub>A</sub> = 0: vale</b> — sem a greve, A teria subido igual a B; o que sobra é só o τ.<br>
-    <b class="no">Com δ<sub>A</sub> ≠ 0: falha</b> — A tinha uma melhora (ou piora) própria, e o DiD entrega τ + δ<sub>A</sub>: erra <b>exatamente em δ<sub>A</sub></b>. Teste no slider!
-    <small><b>No formal:</b> a hipótese de tendências paralelas é E(ΔY sem greve | A) = E(ΔY | B) — sobre as <i>variações</i>, não sobre os níveis. Verificação parcial na prática: as tendências eram paralelas <i>antes</i> do choque?</small></div>
   <div class="est"><b>O que cada método estima:</b><br>
     <b class="no">Ingênuo 1</b> → <span class="f">média(A) − média(B)</span>, só no pós — carrega o <b>nível</b> (+8).<br>
     <b class="no">Ingênuo 2</b> → <span class="f">média(depois) − média(antes)</span>, só na A — carrega a <b>tendência</b> (g).<br>
     <b class="ok">DiD</b> → a dupla diferença: <span class="f">[Ā<sub>dep</sub> − Ā<sub>ant</sub>] − [B̄<sub>dep</sub> − B̄<sub>ant</sub>]</span> — subtrai a tendência e o nível de uma vez.
     <small>Em forma de regressão: <span class="f">Y = a + b·A + c·pós + τ<sub>DiD</sub>·(A×pós)</span> — o coeficiente da interação é o DiD; é assim que os papers estimam.</small></div>
+  <div class="hip"><b>Quando o DiD funciona?</b> Ele subtrai a variação de B da variação de A — com isso
+    <b>cancela o nível</b> (os +8, que não mudam) e <b>cancela a tendência da época</b> (o g, comum às duas). Sobra o que só aconteceu com A no período.<br>
+    <b class="ok">Com δ<sub>A</sub> = 0: vale</b> — sem a greve, A teria subido igual a B; o que sobra é só o τ.<br>
+    <b class="no">Com δ<sub>A</sub> ≠ 0: falha</b> — A tinha uma melhora (ou piora) própria, e o DiD entrega τ + δ<sub>A</sub>: erra <b>exatamente em δ<sub>A</sub></b>. Teste no slider!
+    <small><b>No formal:</b> a hipótese de tendências paralelas é E(ΔY sem greve | A) = E(ΔY | B) — sobre as <i>variações</i>, não sobre os níveis. Verificação parcial na prática: as tendências eram paralelas <i>antes</i> do choque?</small></div>
   <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da greve</span>
     <input type="range" id="t6tau" min="-8" max="0" step="0.5" value="-4"><span class="val" id="t6tauv">-4,00</span></div>
   <div class="ctl"><span><span class="sym">g</span> — tendência da época (comum às duas)</span>
@@ -345,25 +349,25 @@ legend("topleft", bty = "n", lwd = 3, lty = c(2, 1, 3), col = c("red", "forestgr
 cat("RES", coef(m_err)[2], coef(m_ctl)[2], "\\n")`,
 
 t3: () => `set.seed(${seeds.t3})
-np <- 150
+np <- 200
 fi <- ${P("t3fam")}; rho <- ${P("t3viol")}
 alfa <- rnorm(np, 0, 2)
-a1 <- rnorm(np, 0, 0.8); a2 <- rnorm(np, 0, 0.8)
-X1 <- 8 + alfa + a1 + rnorm(np, 0, 0.6); X2 <- 8 + alfa + a2 + rnorm(np, 0, 0.6)
-Y1 <- 5 + 0.5 * X1 + fi * alfa + rho * a1 + rnorm(np, 0, 1)
-Y2 <- 5 + 0.5 * X2 + fi * alfa + rho * a2 + rnorm(np, 0, 1)
+w1 <- rnorm(np, 0, 0.8); w2 <- rnorm(np, 0, 0.8)
+X1 <- 8 + alfa + w1 + rnorm(np, 0, 0.6); X2 <- 8 + alfa + w2 + rnorm(np, 0, 0.6)
+Y1 <- 5 + 0.5 * X1 + fi * alfa + rho * w1 + rnorm(np, 0, 1)
+Y2 <- 5 + 0.5 * X2 + fi * alfa + rho * w2 + rnorm(np, 0, 1)
 pool <- lm(c(Y1, Y2) ~ c(X1, X2))
 fe <- lm(I(Y2 - Y1) ~ I(X2 - X1))
 cor_f <- colorRampPalette(c("#8ecae6", "#f4a261", "#b02a37"))(np)[rank(alfa)]
 par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.6, 0.8))
-plot(c(X1, X2), c(Y1, Y2), pch = 16, col = adjustcolor(c(cor_f, cor_f), 0.55), cex = 0.65,
-     main = sprintf("Entre familias: inclinacao %.2f", coef(pool)[2]),
-     xlab = "escolaridade", ylab = "salario")
+plot(c(X1, X2), c(Y1, Y2), pch = 16, col = adjustcolor(c(cor_f, cor_f), 0.55), cex = 0.6,
+     main = sprintf("Entre escolas: inclinacao %.2f", coef(pool)[2]),
+     xlab = "horas de tutoria", ylab = "nota")
 segments(X1, Y1, X2, Y2, col = adjustcolor(cor_f, 0.35))
 abline(pool, col = "red", lwd = 3.5, lty = 2)
 plot(X2 - X1, Y2 - Y1, pch = 16, col = adjustcolor(cor_f, 0.6), cex = 0.7,
-     main = sprintf("Dentro do par: inclinacao %.2f (alvo 0.50)", coef(fe)[2]),
-     xlab = "diferenca de escolaridade entre irmaos", ylab = "diferenca de salario")
+     main = sprintf("Dentro da escola: inclinacao %.2f (alvo 0.50)", coef(fe)[2]),
+     xlab = "variacao de tutoria (ano 2 - ano 1)", ylab = "variacao de nota")
 abline(fe, col = "forestgreen", lwd = 3.5)
 abline(a = 0, b = 0.5, col = "blue", lwd = 2, lty = 3)
 cat("RES", coef(pool)[2], coef(fe)[2], "\\n")`,
@@ -449,8 +453,8 @@ t1: r => `Ingênuo (voluntários) = <b>${fmt(r[0])}</b> · sorteio = <b>${fmt(r[
 Diferença de habilidade média T−C: voluntários = <b>${fmt(r[2])}</b> (grupos já nascem diferentes) · sorteio = <b>${fmt(r[3])}</b> (≈ 0: iguais até no que ninguém vê).`,
 t2: r => `Ingênuo = <b>${fmt(r[0])}</b> · controlando Z* = <b>${fmt(r[1])}</b> · verdadeiro = 0,50.
 Com λ = ${fmt(P("t2err"))}: quanto pior a régua, mais a linha verde se aproxima da vermelha — controle imperfeito só remove parte do viés.`,
-t3: r => `Entre famílias = <b>${fmt(r[0])}</b> · dentro do par (Δ) = <b>${fmt(r[1])}</b> · verdadeiro = 0,50.
-As linhas finas ligam os 2 irmãos de cada família: a nuvem inclina pelo fator familiar; a diferença dentro do par o cancela.`,
+t3: r => `Entre escolas = <b>${fmt(r[0])}</b> · dentro da escola (Δ) = <b>${fmt(r[1])}</b> · verdadeiro = 0,50.
+As linhas finas ligam os 2 anos da mesma escola: a nuvem inclina pelo fator fixo; a variação ano a ano o cancela.`,
 t4: r => `Ingênuo = <b>${fmt(r[0])}</b> · IV = <b>${fmt(r[1])}</b> · verdadeiro = 0,50. 1º estágio: a bolsa elevou a escolaridade em <b>${fmt(r[2])}</b> ano (relevância — testável).
 A reta verde liga as médias dos 2 grupos do sorteio — o IV é literalmente essa inclinação.`,
 t5: r => `Ingênuo (todos) = <b>${fmt(r[0])}</b> · RDD (vizinhos) = <b>${fmt(r[1])}</b> · verdadeiro = ${fmt(P("t5tau"))}.
