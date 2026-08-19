@@ -26,7 +26,7 @@ sys.path.insert(0, AQUI)
 from config_cursos import CURSOS  # noqa: E402
 
 CONFERIR = "--conferir" in sys.argv
-HOJE = datetime.date.today().strftime("%d/%m/%Y")
+HOJE = datetime.date.today().strftime("%d/%m/%Y")  # usado só no relatório do console
 
 CSS = """/* Estilo das páginas de curso — alinhado ao index.html do site.
    Gerado por _gerar/publicar_material.py; não edite à mão. */
@@ -131,15 +131,10 @@ def pagina_curso(c, itens_ok):
                 a('  <li>%s</li>' % e(t))
             a('</ul>')
 
-    # --- avaliação ---
-    if c.get("avaliacao"):
+    # --- avaliação (texto genérico; sem datas, para valer em qualquer semestre) ---
+    if c.get("avaliacao_texto"):
         a('<h2>Avaliação</h2>')
-        a('<table class="datas">')
-        for o_que, quando in c["avaliacao"]:
-            a('  <tr><td>%s</td><td class="q">%s</td></tr>' % (e(o_que), e(quando)))
-        a('</table>')
-        if c.get("avaliacao_nota"):
-            a('<p class="secao-nota">%s</p>' % e(c["avaliacao_nota"]))
+        a('<p>%s</p>' % c["avaliacao_texto"])  # HTML permitido aqui (negrito, <br>)
 
     # --- bibliografia ---
     if c.get("bibliografia"):
@@ -152,8 +147,8 @@ def pagina_curso(c, itens_ok):
         a('<p class="secao-nota">Em preparação.</p>')
 
     a('<hr>')
-    a('<footer>Última atualização: %s. '
-      'Dúvidas e correções são bem-vindas — escreva para o professor.</footer>' % HOJE)
+    a('<footer>Material em revisão contínua — esta página guarda sempre a '
+      'versão mais recente. Dúvidas e correções são bem-vindas.</footer>')
     a('</div>')
     a('</body>')
     a('</html>')

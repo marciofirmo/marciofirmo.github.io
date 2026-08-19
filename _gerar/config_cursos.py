@@ -19,16 +19,15 @@ CURSOS = [
         "slug": "setor-publico",
         "nome": "Economia do Setor Público",
         "codigo": "UERJ · graduação · obrigatória",
-        "atualizado": "2026.1",
         "resumo": (
             "Por que, como e com que efeitos o Estado intervém na economia. "
             "O curso reconstrói a microeconomia necessária em cada tópico e traz "
             "sempre a camada brasileira: dados, instituições e casos reais."
         ),
         "nota_alunos_antigos": (
-            "Este material foi revisado e ampliado em 2026.1. Se você cursou a "
-            "disciplina antes, vale rever por aqui: os decks estão bem mais "
-            "completos que as versões anteriores."
+            "Esta página guarda sempre a versão mais recente do material. "
+            "Se você já cursou a disciplina, vale rever por aqui: os slides vêm "
+            "sendo bastante ampliados e reescritos."
         ),
         "fonte": DROPBOX + r"\6. Setor Público\03. Setor Público - 2026_1 - retomada",
         "secoes": [
@@ -78,16 +77,16 @@ CURSOS = [
               "Reforma tributária brasileira",
               "Federalismo fiscal; previdência e assistência"]),
         ],
-        "avaliacao": [
-            ("P1 (5 pontos) — Parte 1", "31/08/2026"),
-            ("P2 (5 pontos) — Parte 2", "26/10/2026"),
-            ("Prova Final", "03 a 09/11/2026"),
-        ],
-        "avaliacao_nota": (
-            "Média = P1 + P2. Acima de 7, aprovado; entre 4 e 7, Prova Final "
-            "(média final = dois terços da média mais um terço da PF). "
-            "Frequência mínima de 75% é exigência institucional da UERJ. "
-            "As provas são sempre às segundas-feiras."
+        "avaliacao_texto": (
+            "A avaliação é feita por provas, uma para cada parte do curso: a "
+            "primeira cobre a atuação governamental (gasto) e a segunda, a "
+            "taxação (receita). Quem não atinge a média nas provas faz a prova "
+            "final, que cobre o curso inteiro. A frequência mínima de 75% é "
+            "exigência institucional da UERJ."
+            "<br><br>"
+            "<strong>As datas, os pesos e o formato de cada semestre são "
+            "combinados em aula e divulgados na turma</strong> — esta página "
+            "reúne o material de estudo, que vale para qualquer semestre."
         ),
         "bibliografia": [
             ("GRUBER, J.",
@@ -100,7 +99,6 @@ CURSOS = [
         "slug": "economia-da-educacao",
         "nome": "Economia da Educação",
         "codigo": "UERJ · graduação · eletiva",
-        "atualizado": "2026.1",
         "resumo": (
             "Capital humano, retornos da educação, políticas educacionais e "
             "avaliação de impacto — com laboratórios interativos que rodam R no "
@@ -129,22 +127,19 @@ CURSOS = [
             },
         ],
         "programa": [],
-        "avaliacao": [],
-        "avaliacao_nota": "",
+        "avaliacao_texto": "",
         "bibliografia": [],
     },
     {
         "slug": "topicos-teoria-economica",
         "nome": "Tópicos em Teoria Econômica",
         "codigo": "UERJ · graduação",
-        "atualizado": "",
         "resumo": "Tópicos avançados selecionados em economia aplicada e teórica.",
         "nota_alunos_antigos": "",
         "fonte": "",
         "secoes": [],
         "programa": [],
-        "avaliacao": [],
-        "avaliacao_nota": "",
+        "avaliacao_texto": "",
         "bibliografia": [],
     },
 ]
