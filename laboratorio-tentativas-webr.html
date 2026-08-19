@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório das Seis Tentativas — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 880px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.28rem; color: var(--azul); margin-bottom: 4px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  .eq { background: #fff; border: 1px solid var(--borda); border-radius: 8px;
+        padding: 8px 12px; margin: 6px 0; font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.0rem; overflow-x: auto; }
+  .eq small { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+              color: #5a6573; }
+  .eq .leg { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+             font-size: .84rem; color: #5a6573; margin-top: 3px; white-space: normal; }
+  .hip small { display: block; margin-top: 6px; color: #5a6573; }
+  .est { background: #eef3fa; border: 1px solid #bcd0e8; border-radius: 10px;
+         padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
+  .est .f { font-family: Georgia, "Times New Roman", serif; }
+  .est b.no { color: var(--verm); } .est b.ok { color: var(--verde); }
+  .est small { display: block; margin-top: 5px; color: #5a6573; }
+  .hip { background: #eef6ee; border: 1px solid #bcd9bc; border-radius: 10px;
+         padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
+  .hip b.ok { color: var(--verde); } .hip b.no { color: var(--verm); }
+  #status { font-weight: 600; }
+  #status.pronto { color: var(--verde); }
+  #status.aviso { color: #9a6b00; }
+  #status.erro { color: var(--verm); }
+  .abas { display: flex; gap: 5px; margin: 14px 0 0; flex-wrap: wrap; }
+  .abas button { border: 1px solid var(--borda); border-bottom: 0; background: #eef1f5;
+                 border-radius: 10px 10px 0 0; padding: 9px 13px; font-size: .9rem;
+                 font-weight: 600; cursor: pointer; color: #4a5563; }
+  .abas button.ativa { background: #fff; color: var(--azul);
+                       outline: 2px solid var(--azul); outline-offset: -2px; }
+  .painel { border: 1px solid var(--borda); border-radius: 0 10px 10px 10px;
+            padding: 14px; display: none; }
+  .painel.ativa { display: block; }
+  .ctl { display: grid; grid-template-columns: minmax(240px, 420px) 1fr 74px; gap: 10px;
+         align-items: center; font-size: .9rem; margin: 6px 0; }
+  .ctl input[type=range] { width: 100%; height: 34px; accent-color: var(--azul); }
+  @media (max-width: 640px) {
+    .ctl { grid-template-columns: 1fr 64px; row-gap: 2px; margin: 10px 0; }
+    .ctl span:first-child { grid-column: 1 / -1; }
+  }
+  .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700; text-align: right; }
+  .ctl .sym { font-family: Georgia, serif; font-style: italic; }
+  .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+  .botoes button { border: 0; border-radius: 8px; padding: 11px 20px; font-size: .98rem;
+           font-weight: 600; cursor: pointer; background: var(--azul); color: #fff; }
+  .botoes button:disabled { background: #9fb3cb; cursor: wait; }
+  .botoes button.sec { background: #e8ebef; color: #1c2430; }
+  .saida { font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
+           background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px;
+           padding: 8px 10px; margin-top: 8px; white-space: pre-wrap; }
+  canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+           border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Laboratório das Seis Tentativas</h1>
+<p class="sub">Economia da Educação — UERJ. Em cada aba: o mundo <b>em equações</b>, a hipótese de
+identificação, os <b>microdados</b> gerados — e o ingênuo errando enquanto a técnica conserta.
+Os sliders são os <b>parâmetros das equações</b>. Nada roda até você apertar <b>Rodar</b>.</p>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<div class="abas">
+  <button data-aba="t1" class="ativa">1 · Sorteio</button>
+  <button data-aba="t2">2 · Controles</button>
+  <button data-aba="t3">3 · Painel / EF</button>
+  <button data-aba="t4">4 · IV</button>
+  <button data-aba="t5">5 · RDD</button>
+  <button data-aba="t6">6 · DiD</button>
+</div>
+
+<!-- ============ T1 SORTEIO ============ -->
+<div class="painel ativa" id="t1">
+  <div class="box"><b>O mundo:</b> um treinamento com efeito verdadeiro <span class="sym">τ</span>;
+  a habilidade Z aumenta o salário por conta própria — e, na inscrição <b>voluntária</b>, os mais
+  hábeis se inscrevem mais.</div>
+  <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·T<sub>i</sub> + 3·Z<sub>i</sub> + e<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base (10) <b>+ τ, se a pessoa fez o treinamento</b> (T=1) + 3 por unidade de habilidade (Z) + sorte (e). O τ é o que queremos medir.</div></div>
+  <div class="eq">Inscrição voluntária: &nbsp;T<sub>i</sub> = 1 se <b>γ</b>·Z<sub>i</sub> + η<sub>i</sub> &gt; 0
+    <div class="leg"><b>Lendo:</b> faz o treinamento quem tem habilidade e vontade (η) suficientes. Quanto maior o <b>γ</b>, mais a <b>habilidade</b> decide quem entra — γ é o "quanto os hábeis se inscrevem mais".</div></div>
+  <div class="eq">Sorteio: &nbsp;T<sub>i</sub> = cara ou coroa
+    <div class="leg"><b>Lendo:</b> a moeda não olha habilidade nem vontade — metade entra, metade não, ao acaso.</div></div>
+  <div class="est"><b>O que cada método estima</b> — a <b>mesma equação</b>, em dados diferentes:<br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> nos dados dos <b>voluntários</b>: o b̂ (diferença de médias) mistura τ com habilidade.<br>
+    <b class="ok">Sorteio</b> → estima <span class="f">Y = a + b·T</span> nos dados do <b>sorteio</b>: o b̂ ≈ τ.
+    <small>Repare: o que muda não é a conta — é <b>como o T foi gerado</b>. A mesma regressão, limpa ou contaminada pela origem dos dados.</small></div>
+  <div class="hip"><b>Quando a diferença de médias mede o τ?</b> Quando tratados e não-tratados são
+    <b>iguais no resto</b> — no que ficou fora da comparação (a habilidade e a sorte).<br>
+    <b class="no">Método ingênuo (voluntários): falha</b> — com γ &gt; 0, o grupo que treinou <b>já era mais hábil antes</b>; a diferença de salários mistura o τ com a habilidade.<br>
+    <b class="ok">Sorteio: vale</b> — a moeda ignora tudo; os grupos saem iguais <b>até no que ninguém mede</b>.
+    <small><b>No formal:</b> a hipótese é E(u | T) = 0, com u = 3Z + e (o "resto"). No voluntário, T depende de Z, que está dentro de u → E(u | T=1) &gt; E(u | T=0), hipótese violada. No sorteio, T é independente de tudo → vale por construção.</small></div>
+  <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro (na 1ª equação)</span>
+    <input type="range" id="t1tau" min="0" max="4" step="0.5" value="2"><span class="val" id="t1tauv">2,00</span></div>
+  <div class="ctl"><span><span class="sym">γ</span> — auto-seleção (na 2ª equação)</span>
+    <input type="range" id="t1sel" min="0" max="3" step="0.25" value="1"><span class="val" id="t1selv">1,00</span></div>
+  <div class="botoes"><button id="t1rodar" disabled>&#9654; Rodar</button>
+    <button id="t1nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t1saida">Configure e aperte Rodar.</div>
+  <div id="t1graf"></div>
+</div>
+
+<!-- ============ T2 CONTROLES ============ -->
+<div class="painel" id="t2">
+  <div class="box"><b>O mundo:</b> o clássico da aula — e um detalhe realista: não observamos a
+  habilidade Z, só um <b>teste</b> Z* que a mede <b>com erro</b> <span class="sym">λ</span>.
+  Controlar por Z* é controlar por uma régua embaçada.</div>
+  <div class="eq">Y<sub>i</sub> = 2 + 0,5·X<sub>i</sub> + 1·Z<sub>i</sub> + v<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>0,5 por ano de estudo</b> (X) + 1 por unidade de habilidade (Z) + sorte. O 0,5 é o efeito verdadeiro.</div></div>
+  <div class="eq">Z<sub>i</sub> = 0,5·X<sub>i</sub> + ν<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> habilidade anda junto com escolaridade — o problema clássico da aula.</div></div>
+  <div class="eq">Observamos só o teste: &nbsp;Z*<sub>i</sub> = Z<sub>i</sub> + <b>λ</b>·ξ<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> ninguém observa a habilidade de verdade — só um <b>teste</b> que a mede com erro. λ = 0: régua perfeita. λ grande: régua embaçada.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — sem nada sobre habilidade; o b̂ sai ≈ 1,0 (viesado).<br>
+    <b class="ok">Controles</b> → estima <span class="f">Y = a + b·X + c·Z*</span> — a nota do teste entra na regressão; com λ = 0, o b̂ sai ≈ 0,50.
+    <small>É a diferença entre <code>lm(Y ~ X)</code> e <code>lm(Y ~ X + Zteste)</code> no R.</small></div>
+  <div class="hip"><b>Quando controlar funciona?</b> Controlar por Z* é comparar pessoas de
+    <b>mesma nota no teste</b> — a aposta é que, feito isso, não sobra diferença relevante.<br>
+    <b class="ok">Com λ = 0: vale</b> — a nota do teste é a própria habilidade; a comparação fica limpa.<br>
+    <b class="no">Com λ &gt; 0: falha aos poucos</b> — a parte da habilidade que o teste não captura continua escondida no erro, e o viés volta na proporção do que escapou.
+    <small><b>No formal:</b> a hipótese é E(u | X, Z*) = 0. Com erro de medida, u ainda contém (Z − Z*), que anda com X → a hipótese vale só parcialmente, e a estimativa fica entre a ingênua e a verdadeira.</small></div>
+  <div class="ctl"><span><span class="sym">λ</span> — erro de medida do teste (na 3ª equação)</span>
+    <input type="range" id="t2err" min="0" max="4" step="0.5" value="0"><span class="val" id="t2errv">0,00</span></div>
+  <div class="botoes"><button id="t2rodar" disabled>&#9654; Rodar</button>
+    <button id="t2nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t2saida">Configure e aperte Rodar. (Para variar β₂ e δ, use o <a href="laboratorio-vies-webr.html">Laboratório do Viés</a>.)</div>
+  <div id="t2graf"></div>
+</div>
+
+<!-- ============ T3 GÊMEOS / EF ============ -->
+<div class="painel" id="t3">
+  <div class="box"><b>O mundo:</b> um <b>painel</b>: 200 escolas observadas em <b>2 anos</b>. Cada
+  escola tem um fator fixo <span class="sym">α</span><sub>i</sub> (gestão, comunidade) que aumenta a
+  nota <b>e</b> as horas de tutoria em todos os anos. O que muda de um ano para o outro é o que o
+  método usa. <i>(Gêmeos são o caso especial: a "unidade" é a família, vista duas vezes.)</i></div>
+  <div class="eq">Y<sub>it</sub> = 5 + 0,5·X<sub>it</sub> + <b>φ</b>·α<sub>i</sub> + <b>ρ</b>·w<sub>it</sub> + e<sub>it</sub>
+    <div class="leg"><b>Lendo:</b> nota da escola i no ano t = base + <b>0,5 por hora de tutoria</b> (X) + o fator fixo da escola α<sub>i</sub> (igual nos 2 anos, com força φ) + o choque do ano w<sub>it</sub> (com força ρ — a quebra) + sorte.</div></div>
+  <div class="eq">X<sub>it</sub> = 8 + α<sub>i</sub> + w<sub>it</sub> + η<sub>it</sub>
+    <div class="leg"><b>Lendo:</b> a tutoria também sobe com o fator fixo (escola boa faz mais tutoria <i>sempre</i>) e com o choque do ano — por isso comparar escolas diferentes contamina.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> com <b>todas as escolas juntas</b> ("entre escolas") — o b̂ carrega o fator fixo.<br>
+    <b class="ok">Painel / efeitos fixos</b> → estima <span class="f">ΔY = b·ΔX</span> — a regressão das <b>variações</b> (ano 2 − ano 1); o α<sub>i</sub> já saiu antes de estimar.
+    <small>No R: <code>lm(Y ~ X)</code> vs. <code>lm(I(Y2−Y1) ~ I(X2−X1))</code> — com muitos períodos, o equivalente é incluir um efeito fixo por escola.</small></div>
+  <div class="hip"><b>Quando o painel funciona?</b> Comparar cada escola <b>com ela mesma</b> no
+    ano seguinte <b>apaga tudo o que é fixo</b> — o α<sub>i</sub> é igual nos 2 anos e some na subtração.<br>
+    <b class="ok">Com ρ = 0: vale</b> — a variação de tutoria de um ano para o outro é "limpa", e a variação de nota mede o 0,5.<br>
+    <b class="no">Com ρ &gt; 0: falha</b> — o choque do ano (ex.: um gestor novo) aumenta a tutoria <b>e</b> a nota por outros canais; ele não é fixo, não cancela, e o problema volta dentro do painel.
+    <small><b>No formal:</b> na diferença, ΔY = 0,5·ΔX + ρ·Δw + Δe; a hipótese é E(ρ·Δw + Δe | ΔX) = 0 — verdadeira só se ρ = 0, porque Δw entra em ΔX.</small></div>
+  <div class="ctl"><span><span class="sym">φ</span> — força do fator fixo da escola (α<sub>i</sub>)</span>
+    <input type="range" id="t3fam" min="0" max="4" step="0.5" value="2"><span class="val" id="t3famv">2,00</span></div>
+  <div class="ctl"><span><span class="sym">ρ</span> — quebra: choque do ano afeta X e Y juntos</span>
+    <input type="range" id="t3viol" min="0" max="2" step="0.25" value="0"><span class="val" id="t3violv">0,00</span></div>
+  <div class="botoes"><button id="t3rodar" disabled>&#9654; Rodar</button>
+    <button id="t3nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t3saida">Configure e aperte Rodar.</div>
+  <div id="t3graf"></div>
+</div>
+
+<!-- ============ T4 IV ============ -->
+<div class="painel" id="t4">
+  <div class="box"><b>O mundo:</b> escolaridade com efeito verdadeiro 0,5; habilidade afeta salário
+  e escolaridade. O instrumento: um <b>sorteio de bolsa</b> Z<sub>b</sub> que empurra a escolaridade
+  em <span class="sym">π</span> anos. A "quebra" <span class="sym">κ</span> faz a bolsa afetar o
+  salário <b>por fora</b> (violação da exclusão).</div>
+  <div class="eq">X<sub>i</sub> = 8 + <b>π</b>·Z<sub>b,i</sub> + 2·hab<sub>i</sub> + η<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> escolaridade = base + <b>π anos a mais para quem ganhou a bolsa</b> (Z<sub>b</sub> = 1, sorteada) + habilidade + acaso. O π é a força do "empurrão".</div></div>
+  <div class="eq">Y<sub>i</sub> = 5 + 0,5·X<sub>i</sub> + 3·hab<sub>i</sub> + <b>κ</b>·Z<sub>b,i</sub> + e<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>0,5 por ano de estudo</b> + habilidade + sorte. O termo <b>κ·Z<sub>b</sub></b> é a trapaça que você controla: com κ ≠ 0, a bolsa afeta o salário <b>por fora</b> da escolaridade (ex.: entra no currículo) — violando a exclusão.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·X</span> — usa <b>toda</b> a variação de X, a limpa (bolsa) e a suja (habilidade).<br>
+    <b class="ok">IV / 2SLS</b> → estima em <b>2 passos</b>: (1º estágio) <span class="f">X = a₀ + π·Z<sub>b</sub></span> e guarda o previsto X̂; (2º estágio) <span class="f">Y = a₁ + b·X̂</span> — só a variação <b>que veio da bolsa</b>.
+    <small>Equivalente à conta de Wald: b̂ = (Ȳ<sub>bolsa</sub> − Ȳ<sub>sem</sub>) / (X̄<sub>bolsa</sub> − X̄<sub>sem</sub>) — a inclinação da reta verde que liga as duas médias no gráfico.</small></div>
+  <div class="hip"><b>Quando o IV funciona?</b> A ideia: usar <b>só o pedaço da escolaridade causado
+    pela bolsa</b> — como a bolsa foi sorteada, esse pedaço é limpo de habilidade.<br>
+    Precisa de duas coisas: (i) a bolsa <b>mexer mesmo</b> na escolaridade (π ≠ 0 — dá para checar no 1º estágio); (ii) a bolsa <b>não mexer no salário por nenhum outro caminho</b> (κ = 0 — <b>não dá para checar</b>: é uma promessa, defendida por argumento).<br>
+    <b class="ok">Com κ = 0: vale.</b> <b class="no">Com κ ≠ 0: falha — e o IV erra sem avisar.</b>
+    <small><b>No formal:</b> relevância Cov(Z<sub>b</sub>, X) ≠ 0 e exclusão Cov(Z<sub>b</sub>, u) = 0, onde u = 3·hab + e. Com κ ≠ 0, o termo κ·Z<sub>b</sub> entra no "u" e a exclusão cai.</small></div>
+  <div class="ctl"><span><span class="sym">π</span> — força do instrumento (1º estágio)</span>
+    <input type="range" id="t4pi" min="0.1" max="3" step="0.1" value="1.5"><span class="val" id="t4piv">1,50</span></div>
+  <div class="ctl"><span><span class="sym">κ</span> — quebra da exclusão (na equação de Y)</span>
+    <input type="range" id="t4viol" min="0" max="3" step="0.5" value="0"><span class="val" id="t4violv">0,00</span></div>
+  <div class="botoes"><button id="t4rodar" disabled>&#9654; Rodar</button>
+    <button id="t4nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t4saida">Configure e aperte Rodar.</div>
+  <div id="t4graf"></div>
+</div>
+
+<!-- ============ T5 RDD ============ -->
+<div class="painel" id="t5">
+  <div class="box"><b>O mundo:</b> uma bolsa dada a quem tira <b>60 ou mais</b> numa prova. A nota
+  também melhora o salário por si (quem tira 90 é diferente de quem tira 30). Comparar bolsistas
+  com não-bolsistas mistura tudo; comparar <b>vizinhos do corte</b>, não.</div>
+  <div class="eq">Y<sub>i</sub> = 10 + <b>τ</b>·(bolsa se nota ≥ 60) + 0,1·nota<sub>i</sub> + u<sub>i</sub>
+    <div class="leg"><b>Lendo:</b> salário = base + <b>τ para quem ganhou a bolsa</b> (nota 60 ou mais) + 0,1 por ponto de nota (a nota também paga por si: mede habilidade) + resto.</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Método ingênuo</b> → estima <span class="f">Y = a + b·T</span> com <b>todos</b>: a diferença de médias bolsista × não-bolsista (mistura bolsa e nota).<br>
+    <b class="ok">RDD</b> → estima, só na janela |nota − 60| ≤ h, <b>uma reta de cada lado</b>: <span class="f">Y = a<sub>e</sub> + b<sub>e</sub>·(nota−60)</span> à esquerda e <span class="f">Y = a<sub>d</sub> + b<sub>d</sub>·(nota−60)</span> à direita. O efeito é o <b>salto</b> no corte: a<sub>d</sub> − a<sub>e</sub>.
+    <small>Os dois interceptos são os valores previstos exatamente em 60 — a distância entre as pontas das retas vermelha e verde no gráfico.</small></div>
+  <div class="hip"><b>Quando comparar no corte funciona?</b> Quem tirou 59 e quem tirou 61 são
+    <b>praticamente a mesma pessoa</b> — a única coisa que muda ao cruzar o 60 é a bolsa.<br>
+    Comparar <b>todos</b> os bolsistas com todos os não-bolsistas mistura a bolsa com a nota (bolsistas têm nota muito maior). Comparar só os <b>vizinhos do corte</b> isola a bolsa.<br>
+    A janela <span class="sym">h</span> é o dilema prático: <b>estreita</b> = pessoas mais parecidas, porém poucas; <b>larga</b> = mais gente, porém menos parecida.
+    <small><b>No formal:</b> a hipótese é continuidade: E(u | nota) não dá salto em 60 — só o tratamento salta. Nada além da bolsa pode mudar exatamente no 60 (nem manipulação de nota, nem outra política com o mesmo corte).</small></div>
+  <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da bolsa (na equação)</span>
+    <input type="range" id="t5tau" min="0" max="6" step="0.5" value="3"><span class="val" id="t5tauv">3,00</span></div>
+  <div class="ctl"><span><span class="sym">h</span> — janela em torno do corte (± pontos)</span>
+    <input type="range" id="t5h" min="3" max="30" step="1" value="10"><span class="val" id="t5hv">10</span></div>
+  <div class="botoes"><button id="t5rodar" disabled>&#9654; Rodar</button>
+    <button id="t5nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t5saida">Configure e aperte Rodar.</div>
+  <div id="t5graf"></div>
+</div>
+
+<!-- ============ T6 DiD ============ -->
+<div class="painel" id="t6">
+  <div class="box"><b>O mundo:</b> a rede A sofre uma greve (efeito verdadeiro
+  <span class="sym">τ</span>, negativo); a rede B, não. A é melhor desde sempre (+8 de nível) e as
+  duas sobem <span class="sym">g</span> pontos no período (tendência comum). A "quebra"
+  <span class="sym">δ</span><sub>A</sub> dá à rede A uma tendência extra — não-paralela.</div>
+  <div class="eq">Rede B: &nbsp;nota = 20 + <b>g</b>·pós + e
+    <div class="leg"><b>Lendo:</b> a rede B parte de 20 e sobe <b>g</b> pontos no período (a "tendência da época" — melhora que aconteceria de qualquer jeito).</div></div>
+  <div class="eq">Rede A: &nbsp;nota = 28 + (<b>g</b> + <b>δ</b><sub>A</sub> + <b>τ</b>)·pós + e
+    <div class="leg"><b>Lendo:</b> a rede A parte de 28 (melhor desde sempre: +8 de nível) e, no período, soma três coisas: a mesma tendência da época (<b>g</b>), uma eventual tendência <b>própria</b> (<b>δ</b><sub>A</sub> — a quebra) e o efeito da greve (<b>τ</b>, negativo).</div></div>
+  <div class="est"><b>O que cada método estima:</b><br>
+    <b class="no">Ingênuo 1</b> → <span class="f">média(A) − média(B)</span>, só no pós — carrega o <b>nível</b> (+8).<br>
+    <b class="no">Ingênuo 2</b> → <span class="f">média(depois) − média(antes)</span>, só na A — carrega a <b>tendência</b> (g).<br>
+    <b class="ok">DiD</b> → a dupla diferença: <span class="f">[Ā<sub>dep</sub> − Ā<sub>ant</sub>] − [B̄<sub>dep</sub> − B̄<sub>ant</sub>]</span> — subtrai a tendência e o nível de uma vez.
+    <small>Em forma de regressão: <span class="f">Y = a + b·A + c·pós + τ<sub>DiD</sub>·(A×pós)</span> — o coeficiente da interação é o DiD; é assim que os papers estimam.</small></div>
+  <div class="hip"><b>Quando o DiD funciona?</b> Ele subtrai a variação de B da variação de A — com isso
+    <b>cancela o nível</b> (os +8, que não mudam) e <b>cancela a tendência da época</b> (o g, comum às duas). Sobra o que só aconteceu com A no período.<br>
+    <b class="ok">Com δ<sub>A</sub> = 0: vale</b> — sem a greve, A teria subido igual a B; o que sobra é só o τ.<br>
+    <b class="no">Com δ<sub>A</sub> ≠ 0: falha</b> — A tinha uma melhora (ou piora) própria, e o DiD entrega τ + δ<sub>A</sub>: erra <b>exatamente em δ<sub>A</sub></b>. Teste no slider!
+    <small><b>No formal:</b> a hipótese de tendências paralelas é E(ΔY sem greve | A) = E(ΔY | B) — sobre as <i>variações</i>, não sobre os níveis. Verificação parcial na prática: as tendências eram paralelas <i>antes</i> do choque?</small></div>
+  <div class="ctl"><span><span class="sym">τ</span> — efeito verdadeiro da greve</span>
+    <input type="range" id="t6tau" min="-8" max="0" step="0.5" value="-4"><span class="val" id="t6tauv">-4,00</span></div>
+  <div class="ctl"><span><span class="sym">g</span> — tendência da época (comum às duas)</span>
+    <input type="range" id="t6trend" min="0" max="6" step="0.5" value="3"><span class="val" id="t6trendv">3,00</span></div>
+  <div class="ctl"><span><span class="sym">δ</span><sub>A</sub> — quebra: tendência extra só da rede A</span>
+    <input type="range" id="t6viol" min="-3" max="3" step="0.5" value="0"><span class="val" id="t6violv">0,00</span></div>
+  <div class="botoes"><button id="t6rodar" disabled>&#9654; Rodar</button>
+    <button id="t6nova" class="sec">Sortear nova amostra</button></div>
+  <div class="saida" id="t6saida">Configure e aperte Rodar.</div>
+  <div id="t6graf"></div>
+</div>
+
+<footer>
+  Companheiras: <a href="laboratorio-vies-webr.html">Laboratório do Viés</a> ·
+  <a href="revisao-estatistica-webr.html">Revisão Estatística</a> ·
+  <a href="vies-variavel-omitida-webr.html">versão editor</a>.
+  Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a>.
+</footer>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+let seeds = { t1: 123, t2: 123, t3: 123, t4: 123, t5: 123, t6: 123 };
+
+document.querySelectorAll(".abas button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".abas button").forEach(x => x.classList.remove("ativa"));
+    document.querySelectorAll(".painel").forEach(x => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    $(b.dataset.aba).classList.add("ativa");
+  });
+});
+
+// labels vivos (sliders só configuram)
+[["t1tau","t1tauv"],["t1sel","t1selv"],["t2err","t2errv"],["t3fam","t3famv"],["t3viol","t3violv"],
+ ["t4pi","t4piv"],["t4viol","t4violv"],["t5tau","t5tauv"],["t6tau","t6tauv"],["t6trend","t6trendv"],["t6viol","t6violv"]]
+  .forEach(([i, o]) => $(i).addEventListener("input", () => $(o).textContent = fmt(parseFloat($(i).value))));
+$("t5h").addEventListener("input", () => $("t5hv").textContent = $("t5h").value);
+
+function aviso(txt) {
+  if ($("status").className === "erro") return;
+  $("status").textContent = txt; $("status").className = "aviso";
+}
+
+const P = id => parseFloat($(id).value);
+
+const CODIGOS = {
+t1: () => `set.seed(${seeds.t1})
+n <- 600
+tau <- ${P("t1tau")}; gama <- ${P("t1sel")}
+Z <- rnorm(n)
+T_vol <- as.numeric(gama * Z + rnorm(n, 0, 0.8) > 0)
+Y_vol <- 10 + tau * T_vol + 3 * Z + rnorm(n, 0, 2)
+T_rct <- rbinom(n, 1, 0.5)
+Y_rct <- 10 + tau * T_rct + 3 * Z + rnorm(n, 0, 2)
+naive <- mean(Y_vol[T_vol==1]) - mean(Y_vol[T_vol==0])
+rct   <- mean(Y_rct[T_rct==1]) - mean(Y_rct[T_rct==0])
+cores <- c("#8ecae6", "#f4a261", "#b02a37")[cut(Z, quantile(Z, c(0,1/3,2/3,1)), include.lowest=TRUE, labels=FALSE)]
+pos <- c(1, 2, 3.6, 4.6)[1 + T_vol + 0]  # placeholder
+x_vol <- ifelse(T_vol==1, 2, 1) + runif(n, -0.28, 0.28)
+x_rct <- ifelse(T_rct==1, 4.6, 3.6) + runif(n, -0.28, 0.28)
+par(mar = c(3.6, 4.2, 2.6, 0.8))
+plot(NULL, xlim = c(0.5, 5.2), ylim = range(c(Y_vol, Y_rct)),
+     xaxt = "n", xlab = "", ylab = "salario",
+     main = "Cada ponto e uma pessoa (cor = habilidade Z)")
+axis(1, at = c(1, 2, 3.6, 4.6), labels = c("vol: C", "vol: T", "sort: C", "sort: T"), cex.axis = 0.9)
+abline(v = 2.8, col = "gray70", lty = 2)
+points(x_vol, Y_vol, pch = 16, col = adjustcolor(cores, 0.55), cex = 0.62)
+points(x_rct, Y_rct, pch = 16, col = adjustcolor(cores, 0.55), cex = 0.62)
+segments(0.75, mean(Y_vol[T_vol==0]), 1.25, mean(Y_vol[T_vol==0]), lwd = 4)
+segments(1.75, mean(Y_vol[T_vol==1]), 2.25, mean(Y_vol[T_vol==1]), lwd = 4)
+segments(3.35, mean(Y_rct[T_rct==0]), 3.85, mean(Y_rct[T_rct==0]), lwd = 4)
+segments(4.35, mean(Y_rct[T_rct==1]), 4.85, mean(Y_rct[T_rct==1]), lwd = 4)
+legend("topleft", bty = "n", pch = 16, col = c("#8ecae6", "#f4a261", "#b02a37"),
+       legend = c("Z baixo", "Z medio", "Z alto"), cex = 0.85)
+text(1.5, max(Y_vol) * 1.0, paste0("dif = ", sprintf("%.2f", naive)), font = 2, col = "#b02a37")
+text(4.1, max(Y_rct) * 1.0, paste0("dif = ", sprintf("%.2f", rct)), font = 2, col = "#157347")
+cat("RES", naive, rct, mean(Z[T_vol==1]) - mean(Z[T_vol==0]), mean(Z[T_rct==1]) - mean(Z[T_rct==0]), "\\n")`,
+
+t2: () => `set.seed(${seeds.t2})
+n <- 1000
+lambda <- ${P("t2err")}
+X <- rnorm(n, 10, 4)
+Z <- 0.5 * X + rnorm(n, 0, 2)
+Y <- 2 + 0.5 * X + 1 * Z + rnorm(n, 0, 5)
+Zobs <- Z + lambda * rnorm(n)
+m_err <- lm(Y ~ X); m_ctl <- lm(Y ~ X + Zobs)
+terc <- cut(Z, quantile(Z, c(0,1/3,2/3,1)), include.lowest=TRUE, labels=FALSE)
+cores <- c("#8ecae6", "#f4a261", "#b02a37")[terc]
+par(mar = c(4.2, 4.2, 2.6, 0.8))
+plot(X, Y, pch = 16, col = adjustcolor(cores, 0.5), cex = 0.62,
+     main = "Cada ponto e uma pessoa (cor = habilidade Z)",
+     xlab = "escolaridade", ylab = "salario")
+abline(m_err, col = "red", lwd = 3.5, lty = 2)
+abline(a = mean(Y) - coef(m_ctl)[2] * mean(X), b = coef(m_ctl)[2], col = "forestgreen", lwd = 3.5)
+abline(a = mean(Y) - 0.5 * mean(X), b = 0.5, col = "blue", lwd = 2, lty = 3)
+legend("topleft", bty = "n", lwd = 3, lty = c(2, 1, 3), col = c("red", "forestgreen", "blue"),
+       legend = c(sprintf("ingenuo: %.2f", coef(m_err)[2]),
+                  sprintf("controlando Z*: %.2f", coef(m_ctl)[2]),
+                  "verdadeiro: 0.50"), cex = 0.9)
+cat("RES", coef(m_err)[2], coef(m_ctl)[2], "\\n")`,
+
+t3: () => `set.seed(${seeds.t3})
+np <- 200
+fi <- ${P("t3fam")}; rho <- ${P("t3viol")}
+alfa <- rnorm(np, 0, 2)
+w1 <- rnorm(np, 0, 0.8); w2 <- rnorm(np, 0, 0.8)
+X1 <- 8 + alfa + w1 + rnorm(np, 0, 0.6); X2 <- 8 + alfa + w2 + rnorm(np, 0, 0.6)
+Y1 <- 5 + 0.5 * X1 + fi * alfa + rho * w1 + rnorm(np, 0, 1)
+Y2 <- 5 + 0.5 * X2 + fi * alfa + rho * w2 + rnorm(np, 0, 1)
+pool <- lm(c(Y1, Y2) ~ c(X1, X2))
+fe <- lm(I(Y2 - Y1) ~ I(X2 - X1))
+cor_f <- colorRampPalette(c("#8ecae6", "#f4a261", "#b02a37"))(np)[rank(alfa)]
+par(mfrow = c(1, 2), mar = c(4.2, 4.2, 2.6, 0.8))
+plot(c(X1, X2), c(Y1, Y2), pch = 16, col = adjustcolor(c(cor_f, cor_f), 0.55), cex = 0.6,
+     main = sprintf("Entre escolas: inclinacao %.2f", coef(pool)[2]),
+     xlab = "horas de tutoria", ylab = "nota")
+segments(X1, Y1, X2, Y2, col = adjustcolor(cor_f, 0.35))
+abline(pool, col = "red", lwd = 3.5, lty = 2)
+plot(X2 - X1, Y2 - Y1, pch = 16, col = adjustcolor(cor_f, 0.6), cex = 0.7,
+     main = sprintf("Dentro da escola: inclinacao %.2f (alvo 0.50)", coef(fe)[2]),
+     xlab = "variacao de tutoria (ano 2 - ano 1)", ylab = "variacao de nota")
+abline(fe, col = "forestgreen", lwd = 3.5)
+abline(a = 0, b = 0.5, col = "blue", lwd = 2, lty = 3)
+cat("RES", coef(pool)[2], coef(fe)[2], "\\n")`,
+
+t4: () => `set.seed(${seeds.t4})
+n <- 1500
+pi_ <- ${P("t4pi")}; kap <- ${P("t4viol")}
+hab <- rnorm(n)
+Zb <- rbinom(n, 1, 0.5)
+X <- 8 + pi_ * Zb + 2 * hab + rnorm(n)
+Y <- 5 + 0.5 * X + 3 * hab + kap * Zb + rnorm(n, 0, 2)
+m_err <- lm(Y ~ X)
+wald <- (mean(Y[Zb==1]) - mean(Y[Zb==0])) / (mean(X[Zb==1]) - mean(X[Zb==0]))
+mx0 <- mean(X[Zb==0]); my0 <- mean(Y[Zb==0]); mx1 <- mean(X[Zb==1]); my1 <- mean(Y[Zb==1])
+par(mar = c(4.2, 4.2, 2.6, 0.8))
+plot(X, Y, pch = 16, col = ifelse(Zb==1, adjustcolor("#1a4f8b", 0.35), adjustcolor("gray50", 0.3)), cex = 0.6,
+     main = "Cada ponto e uma pessoa (azul = sorteado p/ bolsa)",
+     xlab = "escolaridade", ylab = "salario")
+abline(m_err, col = "red", lwd = 3, lty = 2)
+points(c(mx0, mx1), c(my0, my1), pch = 21, bg = c("gray30", "#1a4f8b"), cex = 2.6, lwd = 2)
+b_iv <- wald; a_iv <- my0 - b_iv * mx0
+abline(a = a_iv, b = b_iv, col = "forestgreen", lwd = 3.5)
+abline(a = mean(Y) - 0.5*mean(X), b = 0.5, col = "blue", lwd = 2, lty = 3)
+legend("topleft", bty = "n", lwd = 3, lty = c(2, 1, 3), col = c("red", "forestgreen", "blue"),
+       legend = c(sprintf("ingenuo: %.2f", coef(m_err)[2]),
+                  sprintf("IV (reta entre as medias dos grupos): %.2f", b_iv),
+                  "verdadeiro: 0.50"), cex = 0.88)
+cat("RES", coef(m_err)[2], b_iv, mx1 - mx0, "\\n")`,
+
+t5: () => `set.seed(${seeds.t5})
+n <- 2500
+tau <- ${P("t5tau")}; h <- ${P("t5h")}
+nota <- runif(n, 0, 100)
+T <- as.numeric(nota >= 60)
+Y <- 10 + tau * T + 0.1 * nota + rnorm(n, 0, 1.5)
+naive <- mean(Y[T==1]) - mean(Y[T==0])
+esq <- nota >= 60 - h & nota < 60; dir <- nota >= 60 & nota <= 60 + h
+m_e <- lm(Y[esq] ~ I(nota[esq] - 60)); m_d <- lm(Y[dir] ~ I(nota[dir] - 60))
+salto <- coef(m_d)[1] - coef(m_e)[1]
+cor_p <- rep(adjustcolor("gray70", 0.35), n)
+cor_p[esq] <- adjustcolor("#b02a37", 0.55); cor_p[dir] <- adjustcolor("#157347", 0.55)
+par(mar = c(4.2, 4.2, 2.6, 0.8))
+plot(nota, Y, pch = 16, col = cor_p, cex = 0.55,
+     main = sprintf("RDD: salto no corte = %.2f (janela de ±%d)", salto, h),
+     xlab = "nota na prova (corte em 60)", ylab = "salario")
+abline(v = 60, lty = 2, col = "gray40")
+xe <- seq(60 - h, 60, length.out = 10); xd <- seq(60, 60 + h, length.out = 10)
+lines(xe, coef(m_e)[1] + coef(m_e)[2] * (xe - 60), col = "#b02a37", lwd = 4.5)
+lines(xd, coef(m_d)[1] + coef(m_d)[2] * (xd - 60), col = "#157347", lwd = 4.5)
+legend("topleft", bty = "n", cex = 0.9,
+       legend = c(sprintf("ingenuo (todos): %.2f", naive),
+                  sprintf("RDD (vizinhos do corte): %.2f", salto),
+                  sprintf("verdadeiro: %.2f", tau)))
+cat("RES", naive, salto, "\\n")`,
+
+t6: () => `set.seed(${seeds.t6})
+nA <- 250; nB <- 250
+tau <- ${P("t6tau")}; g <- ${P("t6trend")}; dA <- ${P("t6viol")}
+A0 <- 28 + rnorm(nA, 0, 2);            A1 <- 28 + g + dA + tau + rnorm(nA, 0, 2)
+B0 <- 20 + rnorm(nB, 0, 2);            B1 <- 20 + g + rnorm(nB, 0, 2)
+naive1 <- mean(A1) - mean(B1); naive2 <- mean(A1) - mean(A0)
+did <- (mean(A1) - mean(A0)) - (mean(B1) - mean(B0))
+par(mar = c(3.6, 4.2, 2.6, 6.5), xpd = TRUE)
+plot(NULL, xlim = c(-0.25, 1.25), ylim = range(c(A0, A1, B0, B1)),
+     xaxt = "n", xlab = "", ylab = "nota",
+     main = sprintf("Cada ponto e uma escola: DiD = %.2f (verdadeiro %.2f)", did, tau))
+axis(1, at = c(0, 1), labels = c("antes", "depois"))
+points(jitter(rep(0, nA), amount = 0.06), A0, pch = 16, col = adjustcolor("#b02a37", 0.3), cex = 0.55)
+points(jitter(rep(1, nA), amount = 0.06), A1, pch = 16, col = adjustcolor("#b02a37", 0.3), cex = 0.55)
+points(jitter(rep(0, nB), amount = 0.06), B0, pch = 16, col = adjustcolor("#1a4f8b", 0.3), cex = 0.55)
+points(jitter(rep(1, nB), amount = 0.06), B1, pch = 16, col = adjustcolor("#1a4f8b", 0.3), cex = 0.55)
+lines(c(0, 1), c(mean(A0), mean(A1)), lwd = 4, col = "#b02a37", type = "b", pch = 19, cex = 1.3)
+lines(c(0, 1), c(mean(B0), mean(B1)), lwd = 4, col = "#1a4f8b", type = "b", pch = 19, cex = 1.3)
+lines(c(0, 1), c(mean(A0), mean(A0) + mean(B1) - mean(B0)), lty = 3, lwd = 3.5, col = "#b02a37")
+text(1.03, mean(A1), "A (greve)", col = "#b02a37", adj = 0, font = 2, cex = 0.85)
+text(1.03, mean(B1), "B", col = "#1a4f8b", adj = 0, font = 2, cex = 0.85)
+text(1.03, mean(A0) + mean(B1) - mean(B0), "A sem greve\\n(contrafactual)", col = "#b02a37", adj = 0, cex = 0.72)
+cat("RES", naive1, naive2, did, "\\n")`
+};
+
+const INTERPRETA = {
+t1: r => `Ingênuo (voluntários) = <b>${fmt(r[0])}</b> · sorteio = <b>${fmt(r[1])}</b> · verdadeiro = ${fmt(P("t1tau"))}.
+Diferença de habilidade média T−C: voluntários = <b>${fmt(r[2])}</b> (grupos já nascem diferentes) · sorteio = <b>${fmt(r[3])}</b> (≈ 0: iguais até no que ninguém vê).`,
+t2: r => `Ingênuo = <b>${fmt(r[0])}</b> · controlando Z* = <b>${fmt(r[1])}</b> · verdadeiro = 0,50.
+Com λ = ${fmt(P("t2err"))}: quanto pior a régua, mais a linha verde se aproxima da vermelha — controle imperfeito só remove parte do viés.`,
+t3: r => `Entre escolas = <b>${fmt(r[0])}</b> · dentro da escola (Δ) = <b>${fmt(r[1])}</b> · verdadeiro = 0,50.
+As linhas finas ligam os 2 anos da mesma escola: a nuvem inclina pelo fator fixo; a variação ano a ano o cancela.`,
+t4: r => `Ingênuo = <b>${fmt(r[0])}</b> · IV = <b>${fmt(r[1])}</b> · verdadeiro = 0,50. 1º estágio: a bolsa elevou a escolaridade em <b>${fmt(r[2])}</b> ano (relevância — testável).
+A reta verde liga as médias dos 2 grupos do sorteio — o IV é literalmente essa inclinação.`,
+t5: r => `Ingênuo (todos) = <b>${fmt(r[0])}</b> · RDD (vizinhos) = <b>${fmt(r[1])}</b> · verdadeiro = ${fmt(P("t5tau"))}.
+Aperte a janela h e veja o trade-off: mais comparável × menos dados.`,
+t6: r => `Ingênuo A×B no pós = <b>${fmt(r[0])}</b> (nível) · antes×depois de A = <b>${fmt(r[1])}</b> (tendência) · DiD = <b>${fmt(r[2])}</b> · verdadeiro = ${fmt(P("t6tau"))}.
+Com δ<sub>A</sub> ≠ 0, o DiD erra exatamente em δ<sub>A</sub> — teste!`
+};
+
+let webR, shelter;
+async function iniciar() {
+  try {
+    const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    $("status").textContent = "pronto! Configure e aperte Rodar.";
+    $("status").className = "pronto";
+    Object.keys(CODIGOS).forEach(t => $(t + "rodar").disabled = false);
+  } catch (e) {
+    $("status").textContent = "falha ao carregar o R: " + e.message + " — verifique a conexão e recarregue.";
+    $("status").className = "erro";
+  }
+}
+
+async function rodar(t) {
+  const btn = $(t + "rodar");
+  btn.disabled = true;
+  $("status").textContent = "executando…"; $("status").className = "";
+  $(t + "graf").innerHTML = "";
+  try {
+    const captura = await shelter.captureR(CODIGOS[t](), {
+      withAutoprint: false, captureStreams: true, captureConditions: true,
+      captureGraphics: { width: 800, height: 460, bg: "white", pointsize: 13 }
+    });
+    let res = null;
+    for (const l of captura.output)
+      if (l.type === "stdout" && l.data.startsWith("RES"))
+        res = l.data.trim().split(/\s+/).slice(1).map(parseFloat);
+    if (res) $(t + "saida").innerHTML = INTERPRETA[t](res);
+    for (const img of captura.images) {
+      const cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext("2d").drawImage(img, 0, 0);
+      $(t + "graf").appendChild(cv);
+    }
+    $("status").textContent = "pronto!"; $("status").className = "pronto";
+  } catch (e) {
+    $(t + "saida").textContent = "Erro do R: " + e.message;
+    $("status").textContent = "erro na execução."; $("status").className = "erro";
+  } finally {
+    if (shelter) await shelter.purge();
+    btn.disabled = false;
+  }
+}
+
+Object.keys(CODIGOS).forEach(t => {
+  $(t + "rodar").addEventListener("click", () => rodar(t));
+  $(t + "nova").addEventListener("click", () => {
+    seeds[t] = Math.floor(Math.random() * 1e5);
+    aviso("nova amostra sorteada — aperte Rodar.");
+  });
+});
+
+iniciar();
+</script>
+</body>
+</html>
