@@ -1,0 +1,96 @@
+Copyright (c) 2026 Marcio Gold Firmo
+https://marciofirmo.github.io
+
+Este repositório contém dois tipos de obra, sob licenças diferentes.
+This repository contains two kinds of work, under different licenses.
+
+═══════════════════════════════════════════════════════════════════════
+1. MATERIAL DIDÁTICO · TEACHING MATERIAL
+   Creative Commons Atribuição-NãoComercial 4.0 (CC BY-NC 4.0)
+   Em duas palavras: cite o autor, e não venda.
+═══════════════════════════════════════════════════════════════════════
+
+Abrange textos, exercícios, roteiros, slides, notas de aula, PDFs e os
+laboratórios interativos por inteiro — página, enunciados e código R.
+
+Covers texts, exercises, problem sets, slides, lecture notes, PDFs and the
+interactive labs in full — page, prompts and R code.
+
+Você pode compartilhar e adaptar, para fins NÃO COMERCIAIS, desde que dê
+crédito e indique se houve alteração. A atribuição pedida é:
+
+  Marcio Gold Firmo — https://marciofirmo.github.io
+
+Texto completo: https://creativecommons.org/licenses/by-nc/4.0/legalcode.pt
+
+───────────────────────────────────────────────────────────────────────
+PERMISSÃO ADICIONAL — ENSINO
+ADDITIONAL PERMISSION — TEACHING
+───────────────────────────────────────────────────────────────────────
+
+Para afastar dúvida sobre o alcance de "não comercial", o autor concede
+expressamente, além do que a licença já permite:
+
+  Professores e estudantes podem usar, exibir, adaptar e distribuir este
+  material em atividade de ensino, em QUALQUER instituição — pública ou
+  privada, com ou sem cobrança de mensalidade — bastando citar a autoria
+  e indicar o que foi alterado.
+
+To remove doubt about the scope of "non-commercial", the author expressly
+grants, beyond what the license already permits:
+
+  Teachers and students may use, display, adapt and distribute this material
+  in teaching activity, at ANY institution — public or private, tuition-
+  charging or not — provided they cite the authorship and indicate changes.
+
+Esta permissão NÃO alcança, e continuam dependendo de autorização escrita:
+vender o material ou versão derivada dele; incluí-lo em produto, curso ou
+assinatura pagos cujo valor esteja no material; e usá-lo em publicidade.
+
+This permission does NOT extend to, and written authorization remains required
+for: selling the material or a derivative of it; including it in a paid
+product, course or subscription whose value lies in the material; and using it
+in advertising.
+
+Autorização para esses usos: marciogoldfirmo@gmail.com
+
+═══════════════════════════════════════════════════════════════════════
+2. INFRAESTRUTURA DO SITE · SITE TOOLING
+   Licença MIT
+═══════════════════════════════════════════════════════════════════════
+
+Abrange apenas o que não carrega conteúdo de ensino: os scripts Python em
+`_gerar/`, o diretório `copa/` e o CSS de apresentação do site.
+
+Covers only what carries no teaching content: the Python scripts in `_gerar/`,
+the `copa/` directory, and the site's presentation CSS.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+═══════════════════════════════════════════════════════════════════════
+3. FORA DESTAS LICENÇAS · NOT COVERED
+═══════════════════════════════════════════════════════════════════════
+
+Não estão licenciados aqui: o currículo (cv-marcio-firmo-*.pdf), a fotografia
+(photo.jpg), artigos cujos direitos patrimoniais foram cedidos a periódicos,
+e qualquer material de terceiros citado, que permanece com seus detentores.
+
+Not licensed here: the CV files, the photograph, papers whose rights were
+assigned to journals, and any third-party material quoted, which remains with
+its respective rights holders.
