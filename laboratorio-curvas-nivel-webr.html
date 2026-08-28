@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório das Curvas de Nível — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 880px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.28rem; color: var(--azul); margin-bottom: 4px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  .eq { background: #fff; border: 1px solid var(--borda); border-radius: 8px;
+        padding: 8px 12px; margin: 6px 0; font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.0rem; overflow-x: auto; }
+  .eq .leg { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+             font-size: .84rem; color: #5a6573; margin-top: 3px; white-space: normal; }
+  .hip small { display: block; margin-top: 6px; color: #5a6573; }
+  .hip { background: #eef6ee; border: 1px solid #bcd9bc; border-radius: 10px;
+         padding: 10px 12px; margin: 10px 0; font-size: .92rem; }
+  .hip b.ok { color: var(--verde); } .hip b.no { color: var(--verm); }
+  #status { font-weight: 600; }
+  #status.pronto { color: var(--verde); }
+  #status.aviso { color: #9a6b00; }
+  #status.erro { color: var(--verm); }
+  .abas { display: flex; gap: 5px; margin: 14px 0 0; flex-wrap: wrap; }
+  .abas button { border: 1px solid var(--borda); border-bottom: 0; background: #eef1f5;
+                 border-radius: 10px 10px 0 0; padding: 9px 13px; font-size: .9rem;
+                 font-weight: 600; cursor: pointer; color: #4a5563; }
+  .abas button.ativa { background: #fff; color: var(--azul);
+                       outline: 2px solid var(--azul); outline-offset: -2px; }
+  .painel { border: 1px solid var(--borda); border-radius: 0 10px 10px 10px;
+            padding: 14px; display: none; }
+  .painel.ativa { display: block; }
+  .ctl { display: grid; grid-template-columns: minmax(240px, 420px) 1fr 74px; gap: 10px;
+         align-items: center; font-size: .9rem; margin: 6px 0; }
+  .ctl input[type=range] { width: 100%; height: 34px; accent-color: var(--azul); }
+  @media (max-width: 640px) {
+    .ctl { grid-template-columns: 1fr 64px; row-gap: 2px; margin: 10px 0; }
+    .ctl span:first-child { grid-column: 1 / -1; }
+  }
+  .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700; text-align: right; }
+  .ctl .sym { font-family: Georgia, serif; font-style: italic; }
+  .fsel { font-size: .95rem; margin: 10px 0; }
+  .fsel select { font-size: .95rem; padding: 7px 10px; border: 1px solid var(--borda);
+                 border-radius: 8px; background: #fff; font-family: Georgia, serif; }
+  .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
+  .botoes button { border: 0; border-radius: 8px; padding: 11px 20px; font-size: .98rem;
+           font-weight: 600; cursor: pointer; background: var(--azul); color: #fff; }
+  .botoes button:disabled { background: #9fb3cb; cursor: wait; }
+  .botoes button.sec { background: #e8ebef; color: #1c2430; }
+  .saida { font-family: ui-monospace, Consolas, monospace; font-size: .85rem;
+           background: #f8fafc; border: 1px solid var(--borda); border-radius: 8px;
+           padding: 8px 10px; margin-top: 8px; white-space: pre-wrap; }
+  canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+           border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Laboratório das Curvas de Nível</h1>
+<p class="sub">Uma função z = f(x, y) é uma <b>superfície</b> — um morro sobre o plano xy. A curva
+de nível do valor c é o corte horizontal { (x, y) : f(x, y) = c } projetado no plano — o <b>mapa</b>
+do morro, como as linhas de altitude num mapa de trilha. Aba 1: escolha a função e <b>veja</b>
+superfície e mapa lado a lado. Aba 2: receba só o mapa e <b>estime</b> a superfície antes de
+revelar. Nada roda até você apertar <b>Rodar</b>.</p>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<div class="abas">
+  <button data-aba="t1" class="ativa">1 · Ver o mapa</button>
+  <button data-aba="t2">2 · Estimar pelo mapa</button>
+</div>
+
+<!-- ============ T1 VER ============ -->
+<div class="painel ativa" id="t1">
+  <div class="box"><b>O cardápio:</b> as superfícies clássicas do cálculo. Os coeficientes
+  <span class="sym">a</span> e <span class="sym">b</span> estão nos sliders — inclusive com sinal
+  trocado (uma quadrática "somando" com a &gt; 0 e b &lt; 0 vira, na prática, a que subtrai).</div>
+  <div class="eq">z = a·x + b·y &nbsp;·&nbsp; z = a·x² + b·y² &nbsp;·&nbsp; z = a·x² − b·y² &nbsp;·&nbsp; z = a·x·y &nbsp;·&nbsp; z = a·√(x²+y²) &nbsp;·&nbsp; z = a·e^(−(x²+y²)/2)
+    <div class="leg"><b>Lendo:</b> plano · parabolóide (quadrática somando) · sela (quadrática subtraindo) · produto x·y · cone · sino gaussiano. Domínio: x, y ∈ [−3, 3].</div></div>
+  <div class="hip"><b>Como ler o mapa?</b> Três regras, as mesmas do mapa de trilha:<br>
+    <b class="ok">Andar sobre a curva</b> → z não muda: a curva de nível é o caminho "de altitude constante".<br>
+    <b class="ok">Cruzar curvas</b> → z muda: cruzar para uma curva de valor maior é subir a superfície. A subida mais rápida é <b>perpendicular</b> à curva (a direção do gradiente).<br>
+    <b class="ok">Curvas juntas</b> → região íngreme; curvas espaçadas → região quase plana.
+    <small><b>O formato denuncia a função:</b> retas paralelas = plano · elipses/círculos = tigela ou morro · hipérboles = sela (as duas retas que se cruzam são o nível z = 0) · círculos igualmente espaçados = cone (inclinação constante) · círculos cada vez mais juntos ao afastar do centro = parabolóide (fica mais íngreme).</small></div>
+  <div class="fsel"><b>Função:</b>&nbsp;
+    <select id="t1f">
+      <option value="somaq" selected>z = a·x² + b·y² — quadrática somando</option>
+      <option value="difq">z = a·x² − b·y² — quadrática subtraindo</option>
+      <option value="plano">z = a·x + b·y — plano</option>
+      <option value="prod">z = a·x·y — produto</option>
+      <option value="cone">z = a·√(x² + y²) — cone</option>
+      <option value="sino">z = a·e^(−(x²+y²)/2) — sino gaussiano</option>
+    </select></div>
+  <div class="ctl"><span><span class="sym">a</span> — coeficiente (na equação escolhida)</span>
+    <input type="range" id="t1a" min="-2" max="2" step="0.25" value="1"><span class="val" id="t1av">1,00</span></div>
+  <div class="ctl"><span><span class="sym">b</span> — coeficiente (o cone e o sino não usam)</span>
+    <input type="range" id="t1b" min="-2" max="2" step="0.25" value="1"><span class="val" id="t1bv">1,00</span></div>
+  <div class="botoes"><button id="t1rodar" disabled>&#9654; Rodar</button></div>
+  <div class="saida" id="t1saida">Escolha a função, ajuste a e b, e aperte Rodar.</div>
+  <div id="t1graf"></div>
+</div>
+
+<!-- ============ T2 ESTIMAR ============ -->
+<div class="painel" id="t2">
+  <div class="box"><b>O jogo:</b> o R sorteia uma função do cardápio (com coeficientes sorteados)
+  e desenha <b>só o mapa</b>. Sua tarefa, antes de revelar: <b>estimar a superfície</b> — qual das
+  seis funções é? O coeficiente é positivo ou negativo? Onde a superfície é mais íngreme? Onde
+  fica o máximo/mínimo, se houver?</div>
+  <div class="hip"><b>Roteiro de estimação</b> (o que um topógrafo perguntaria ao mapa):<br>
+    <b class="ok">1. Formato das curvas</b> — retas? elipses? hipérboles? círculos?<br>
+    <b class="ok">2. Os valores nos rótulos</b> — crescem para onde? (é morro ou tigela? sobe para que lado?)<br>
+    <b class="ok">3. O espaçamento</b> — curvas igualmente espaçadas (inclinação constante) ou acumulando (cada vez mais íngreme)?
+    <small>Só então aperte <b>Revelar</b> e confira sua superfície estimada contra o 3D.</small></div>
+  <div class="botoes"><button id="t2novo" disabled>&#127922; Novo desafio</button>
+    <button id="t2rodar" class="sec" disabled>Revelar</button></div>
+  <div class="saida" id="t2saida">Aperte "Novo desafio" para receber um mapa.</div>
+  <div id="t2graf"></div>
+</div>
+
+<footer>
+  Companheiros: <a href="laboratorio-tentativas-webr.html">Laboratório das Seis Tentativas</a> ·
+  <a href="laboratorio-vies-webr.html">Laboratório do Viés</a> ·
+  <a href="revisao-estatistica-webr.html">Revisão Estatística</a>.
+  Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a>.
+</footer>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+
+document.querySelectorAll(".abas button").forEach(b => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll(".abas button").forEach(x => x.classList.remove("ativa"));
+    document.querySelectorAll(".painel").forEach(x => x.classList.remove("ativa"));
+    b.classList.add("ativa");
+    $(b.dataset.aba).classList.add("ativa");
+  });
+});
+
+[["t1a","t1av"],["t1b","t1bv"]]
+  .forEach(([i, o]) => $(i).addEventListener("input", () => $(o).textContent = fmt(parseFloat($(i).value))));
+
+const P = id => parseFloat($(id).value);
+
+// ---- as funções do cardápio ----
+const FN = {
+  plano: { nome: "plano",                 tex: (a,b) => `z = ${a}·x + ${b}·y`,        r: "a * x + b * y",              usaB: true  },
+  somaq: { nome: "quadrática somando",    tex: (a,b) => `z = ${a}·x² + ${b}·y²`,      r: "a * x^2 + b * y^2",          usaB: true  },
+  difq:  { nome: "quadrática subtraindo", tex: (a,b) => `z = ${a}·x² − ${b}·y²`,      r: "a * x^2 - b * y^2",          usaB: true  },
+  prod:  { nome: "produto x·y",           tex: (a,b) => `z = ${a}·x·y`,               r: "a * x * y",                  usaB: false },
+  cone:  { nome: "cone",                  tex: (a,b) => `z = ${a}·√(x² + y²)`,        r: "a * sqrt(x^2 + y^2)",        usaB: false },
+  sino:  { nome: "sino gaussiano",        tex: (a,b) => `z = ${a}·e^(−(x²+y²)/2)`,    r: "a * exp(-(x^2 + y^2)/2)",    usaB: false }
+};
+
+function codigoR(f, a, b, painel) {
+  // painel: "ambos" (3D + mapa) ou "mapa" (só o mapa, para o jogo)
+  const corpo = `
+a <- ${a}; b <- ${b}
+f <- function(x, y) ${FN[f].r}
+x <- seq(-3, 3, length.out = 61)
+y <- seq(-3, 3, length.out = 61)
+z <- outer(x, y, f)
+niv <- pretty(range(z), 9)`;
+  const mapa = (asp) => `
+image(x, y, z, col = hcl.colors(28, "YlGnBu", rev = TRUE),
+      xlab = "x", ylab = "y", main = "O mapa: curvas de nivel"${asp ? ", asp = 1" : ""})
+if (diff(range(z)) > 1e-9) contour(x, y, z, levels = niv, add = TRUE, lwd = 2, labcex = 0.9, col = "#1c2430")
+abline(h = 0, v = 0, lty = 3, col = "gray55")`;
+  if (painel === "mapa")
+    return corpo + `
+par(mar = c(4.2, 4.2, 2.6, 0.8), pty = "s")` + mapa(true) + `
+cat("RES", min(z), max(z), "\\n")`;
+  return corpo + `
+par(mfrow = c(1, 2), mar = c(2.0, 2.4, 2.6, 0.6))
+persp(x, y, z, theta = 40, phi = 26, expand = 0.62,
+      col = "#dbe7f5", border = "#9db4cf",
+      xlab = "x", ylab = "y", zlab = "z",
+      main = "A superficie z = f(x, y)", cex.axis = 0.6, cex.lab = 0.8)
+par(mar = c(4.2, 4.2, 2.6, 0.8))` + mapa(false) + `
+cat("RES", min(z), max(z), "\\n")`;
+}
+
+// leitura do mapa, por função e sinais
+function leitura(f, a, b) {
+  const s = v => v > 0;
+  if (f === "plano") {
+    if (a === 0 && b === 0) return "Com a = b = 0 a superfície é o plano z = 0: nenhuma curva para desenhar — o mapa é uma cor só.";
+    return `Plano ⇒ curvas de nível <b>retas, paralelas e igualmente espaçadas</b> (inclinação constante em toda parte). z cresce na direção do vetor (a, b) = (${fmt(a)}, ${fmt(b)}) — perpendicular às retas.`;
+  }
+  if (f === "somaq" || f === "difq") {
+    const bb = (f === "difq") ? -b : b;
+    if (a === 0 || bb === 0) return "Com um dos coeficientes em zero a quadrática vira um <b>calha</b>: curvas de nível retas (z não depende de uma das variáveis).";
+    if (s(a) === s(bb)) return `Coeficientes de <b>mesmo sinal</b> ⇒ <b>elipses</b> em torno da origem (círculos se |a| = |b|) — ${s(a) ? "tigela: mínimo" : "morro: máximo"} no centro. Curvas se <b>acumulam</b> ao afastar do centro: parabolóide fica mais íngreme.`;
+    return `Coeficientes de <b>sinais opostos</b> ⇒ <b>sela</b>: curvas de nível são <b>hipérboles</b>; o nível z = 0 são as duas retas que se cruzam na origem (as assíntotas). A origem é ponto de sela: mínimo numa direção, máximo na outra.`;
+  }
+  if (f === "prod") return `z = a·x·y é uma <b>sela girada 45°</b>: hipérboles com os <b>eixos</b> como nível z = 0. Sinais de x e y iguais dão z ${s(a) ? "positivo" : "negativo"}; trocados, o contrário.`;
+  if (f === "cone") return `Cone ⇒ <b>círculos igualmente espaçados</b>: a inclinação é a mesma em toda parte (|∇z| constante). Compare com o parabolóide, onde os círculos vão se juntando. ${s(a) ? "Ponta para baixo (mínimo na origem)." : "Ponta para cima (máximo na origem)."}`;
+  return `Sino ⇒ <b>círculos</b>, mas com espaçamento que conta a história: no ${s(a) ? "topo" : "fundo"} (centro) e longe dele, curvas <b>afastadas</b> (quase plano); na encosta, curvas <b>juntas</b> (íngreme).`;
+}
+
+const INTERPRETA = {
+  t1: r => {
+    const f = $("t1f").value, a = P("t1a"), b = P("t1b");
+    return `${FN[f].tex(fmt(a), fmt(b))} em [−3, 3]²: z vai de ${fmt(r[0])} a ${fmt(r[1])}.\n` + leitura(f, a, b);
+  },
+  t2: r => segredo.revelado
+    ? `Era: <b>${FN[segredo.f].tex(fmt(segredo.a), fmt(segredo.b))}</b> (${FN[segredo.f].nome}).\n` + leitura(segredo.f, segredo.a, segredo.b)
+    : `Mapa na mesa (z vai de ${fmt(r[0])} a ${fmt(r[1])}). Estime: qual função? sinais de a e b? onde é íngreme? Depois aperte <b>Revelar</b>.`
+};
+
+// ---- estado do jogo ----
+let segredo = { f: "somaq", a: 1, b: 1, revelado: false };
+function sorteia() {
+  const chaves = Object.keys(FN);
+  const f = chaves[Math.floor(Math.random() * chaves.length)];
+  const coef = () => [-2, -1.5, -1, 1, 1.5, 2][Math.floor(Math.random() * 6)];
+  segredo = { f, a: coef(), b: FN[f].usaB ? coef() : 0, revelado: false };
+}
+
+const CODIGOS = {
+  t1: () => codigoR($("t1f").value, P("t1a"), P("t1b"), "ambos"),
+  t2: () => codigoR(segredo.f, segredo.a, segredo.b, segredo.revelado ? "ambos" : "mapa")
+};
+
+let webR, shelter;
+async function iniciar() {
+  try {
+    const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    $("status").textContent = "pronto! Configure e aperte Rodar.";
+    $("status").className = "pronto";
+    ["t1rodar", "t2novo", "t2rodar"].forEach(id => $(id).disabled = false);
+  } catch (e) {
+    $("status").textContent = "falha ao carregar o R: " + e.message + " — verifique a conexão e recarregue.";
+    $("status").className = "erro";
+  }
+}
+
+async function rodar(t) {
+  const btn = $(t + "rodar");
+  btn.disabled = true;
+  $("status").textContent = "executando…"; $("status").className = "";
+  $(t + "graf").innerHTML = "";
+  try {
+    const captura = await shelter.captureR(CODIGOS[t](), {
+      withAutoprint: false, captureStreams: true, captureConditions: true,
+      captureGraphics: { width: 800, height: 430, bg: "white", pointsize: 13 }
+    });
+    let res = null;
+    for (const l of captura.output)
+      if (l.type === "stdout" && l.data.startsWith("RES"))
+        res = l.data.trim().split(/\s+/).slice(1).map(parseFloat);
+    if (res) $(t + "saida").innerHTML = INTERPRETA[t](res);
+    for (const img of captura.images) {
+      const cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext("2d").drawImage(img, 0, 0);
+      $(t + "graf").appendChild(cv);
+    }
+    $("status").textContent = "pronto!"; $("status").className = "pronto";
+  } catch (e) {
+    $(t + "saida").textContent = "Erro do R: " + e.message;
+    $("status").textContent = "erro na execução."; $("status").className = "erro";
+  } finally {
+    if (shelter) await shelter.purge();
+    btn.disabled = false;
+  }
+}
+
+$("t1rodar").addEventListener("click", () => rodar("t1"));
+$("t2novo").addEventListener("click", () => { sorteia(); rodar("t2"); });
+$("t2rodar").addEventListener("click", () => {
+  if (!segredo.revelado) { segredo.revelado = true; rodar("t2"); }
+});
+
+iniciar();
+</script>
+</body>
+</html>
