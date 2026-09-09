@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratório dos Intervalos de Confiança — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 820px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.3rem; color: var(--azul); margin-bottom: 4px; }
+  h2 { font-size: 1.02rem; color: var(--azul); margin: 18px 0 6px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  #status { font-weight: 600; }
+  #status.pronto { color: var(--verde); }
+  #status.erro { color: var(--verm); }
+  .cenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+              gap: 8px; margin: 8px 0 4px; }
+  .cenarios button { border: 1px solid var(--borda); border-radius: 8px;
+              padding: 10px; font-size: .88rem; cursor: pointer; background: #fff;
+              text-align: left; line-height: 1.35; }
+  .cenarios button b { color: var(--azul); }
+  .cenarios button.ativo { outline: 3px solid var(--azul); background: #eef3fa; }
+  .controles { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 10px 0; }
+  .ctl { display: grid; grid-template-columns: 250px 1fr 74px; gap: 10px; align-items: center;
+         font-size: .92rem; }
+  .ctl input[type=range] { width: 100%; }
+  .ctl .val { font-family: ui-monospace, Consolas, monospace; font-weight: 700;
+              text-align: right; }
+  .previsao { font-size: .95rem; background: #fffbe8; border: 1px solid #e8ddb0;
+              border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+  .botoes { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+  .botoes button { border: 0; border-radius: 8px; padding: 12px 22px; font-size: 1rem;
+           font-weight: 600; cursor: pointer; }
+  #rodar { background: var(--azul); color: #fff; }
+  #rodar:disabled { background: #9fb3cb; cursor: wait; }
+  #amostra { background: #e8ebef; color: #1c2430; }
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+  .card { border: 2px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+  .card h3 { margin: 0 0 4px; font-size: .9rem; }
+  .card .big { font-size: 1.7rem; font-weight: 800; font-family: ui-monospace, Consolas, monospace; }
+  .card.captura { border-color: var(--verde); } .card.captura h3 { color: var(--verde); }
+  .card.largura { border-color: var(--azul); } .card.largura h3 { color: var(--azul); }
+  .card .nota { font-size: .8rem; color: #5a6573; }
+  #verifica { font-size: .92rem; margin-top: 8px; }
+  #graficos canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+                     border-radius: 10px; margin-top: 12px; background: #fff; }
+  details { margin-top: 12px; font-size: .88rem; }
+  details pre { background: #10151c; color: #d7e3f0; border-radius: 10px; padding: 12px;
+                font-size: .8rem; overflow-x: auto; white-space: pre-wrap; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+  @media (max-width: 640px) { .ctl { grid-template-columns: 1fr; gap: 2px; }
+                              .cards { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<h1>Laboratório dos Intervalos de Confiança</h1>
+<p class="sub">Estatística — UERJ. Cem pesquisas amostrais do mesmo mundo, cada uma com seu intervalo — e a pergunta: o que os "95% de confiança" prometem, exatamente?</p>
+
+<div class="box">
+  <b>O mundo simulado:</b> a nota média <i>verdadeira</i> de todos os alunos de uma rede é
+  <b>μ = 50</b> (ninguém no mundo real a observa — aqui, sim). Cada uma das <b>100 pesquisas</b>
+  sorteia <b>n</b> alunos e calcula seu intervalo de <b>nível</b> escolhido, por
+  <code>t.test</code>. O gráfico empilha os 100 intervalos: os que <span style="color:var(--verm)"><b>erram μ</b></span>
+  aparecem em vermelho.
+</div>
+
+<h2>1. Escolha um cenário (ou monte o seu nos controles)</h2>
+<div class="cenarios" id="cenarios"></div>
+
+<h2>2. Ajuste a pesquisa, se quiser</h2>
+<div class="controles">
+  <div class="ctl"><span>n — alunos por pesquisa</span>
+    <input type="range" id="n" min="10" max="500" step="10" value="30">
+    <span class="val" id="nv">30</span></div>
+  <div class="ctl"><span>nível de confiança</span>
+    <input type="range" id="nc" min="0" max="3" step="1" value="2">
+    <span class="val" id="ncv">95%</span></div>
+  <div class="ctl"><span>σ — dispersão das notas na população</span>
+    <input type="range" id="sg" min="2" max="20" step="1" value="10">
+    <span class="val" id="sgv">10</span></div>
+</div>
+
+<div class="previsao" id="previsao"></div>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+<div class="botoes">
+  <button id="rodar" disabled>&#9654; Rodar as 100 pesquisas</button>
+  <button id="amostra">Sortear outras 100 pesquisas</button>
+</div>
+
+<div class="cards">
+  <div class="card captura"><h3>CAPTURARAM μ</h3>
+    <div class="big" id="res_captura">—</div>
+    <div class="nota">de 100 intervalos, quantos contêm a média verdadeira</div></div>
+  <div class="card largura"><h3>LARGURA MÉDIA DO INTERVALO</h3>
+    <div class="big" id="res_largura">—</div>
+    <div class="nota">o preço da confiança: mais nível ou menos n → intervalo mais largo</div></div>
+</div>
+<div id="verifica"></div>
+<div id="graficos"></div>
+
+<details><summary>Ver o código R que está rodando (muda com os controles)</summary>
+<pre id="codigoview"></pre></details>
+
+<section class="box">
+  <h2 style="margin-top:0">Como citar esta página</h2>
+  <p style="margin:.3rem 0">
+    FIRMO, Marcio Gold. <i>Laboratório dos Intervalos de Confiança</i>. 2026.
+    Disponível em: https://marciofirmo.github.io/laboratorio-intervalos-webr.html
+  </p>
+  <p style="margin:.3rem 0 0">
+    Uso livre para ensino, com citação da autoria; uso comercial não autorizado
+    (<a href="https://github.com/marciofirmo/marciofirmo.github.io/blob/main/LICENSE">licença</a>).
+    Se adaptar o material, indique o que foi alterado.
+  </p>
+</section>
+
+<footer>
+  Companheiras desta página: o <a href="laboratorio-vies-webr.html">Laboratório do Viés</a>
+  (cenários certo × errado), a
+  <a href="revisao-estatistica-webr.html">Revisão Estatística Interativa</a> (grandes números,
+  correlações e correlação parcial), o <a href="laboratorio-tentativas-webr.html">Laboratório das
+  Tentativas</a> (cada método consertando o viés) e a
+  <a href="vies-variavel-omitida-webr.html">versão editor</a> (código livre). Tecnologia:
+  <a href="https://docs.r-wasm.org/latest/">webR</a> (R em WebAssembly).
+  <p style="margin:.7rem 0 0">
+    © Marcio Gold Firmo · Uso livre para ensino, sob
+    <a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">CC BY-NC 4.0</a>
+    — cite a autoria; uso comercial não autorizado.
+    <a href="https://github.com/marciofirmo/marciofirmo.github.io/blob/main/LICENSE">Detalhes</a>.
+  </p>
+</footer>
+
+<script type="module">
+const NIVEIS = [80, 90, 95, 99];
+const ZS     = { 80: 1.282, 90: 1.645, 95: 1.960, 99: 2.576 };
+
+const CENARIOS = [
+  { nome: "O padrão da pesquisa: 95%, n = 30", desc: "cerca de 95 dos 100 intervalos devem conter μ", n: 30, nc: 2, sg: 10 },
+  { nome: "Confiança barata: 80%", desc: "intervalos curtos — e ~20 pesquisas erram a média", n: 30, nc: 0, sg: 10 },
+  { nome: "Confiança cara: 99%", desc: "quase nenhuma erra — mas veja a largura que isso custa", n: 30, nc: 3, sg: 10 },
+  { nome: "Pesquisa pequena: n = 10", desc: "intervalos largos e instáveis; a taxa de captura continua ~95%", n: 10, nc: 2, sg: 10 },
+  { nome: "Pesquisa grande: n = 500", desc: "intervalos estreitíssimos — e a taxa continua ~95%. n muda a largura, não a promessa", n: 500, nc: 2, sg: 10 },
+  { nome: "População mais desigual: σ = 20", desc: "mesma pesquisa, notas mais dispersas — intervalos alargam", n: 30, nc: 2, sg: 20 },
+];
+
+const $ = id => document.getElementById(id);
+const fmt = x => (Math.round(x * 100) / 100).toFixed(2).replace(".", ",");
+let seed = 123;
+const MU = 50;
+
+function estado() {
+  return { n: parseInt($("n").value), nc: NIVEIS[parseInt($("nc").value)], sg: parseFloat($("sg").value) };
+}
+
+function codigoR() {
+  const { n, nc, sg } = estado();
+  return `set.seed(${seed})
+mu <- ${MU}; sigma <- ${sg}
+n <- ${n}; nivel <- ${nc / 100}; K <- 100
+
+ic <- t(sapply(1:K, function(k) {
+  notas <- rnorm(n, mean = mu, sd = sigma)   # a k-esima pesquisa
+  t.test(notas, conf.level = nivel)$conf.int  # o intervalo dela
+}))
+capturou <- ic[, 1] <= mu & mu <= ic[, 2]
+
+cat("RES", sum(capturou), mean(ic[, 2] - ic[, 1]), "\\n")
+
+cores <- ifelse(capturou, rgb(0.08, 0.45, 0.28, 0.85), "red")
+plot(NULL, xlim = range(c(ic, mu)), ylim = c(0, K + 1),
+     main = paste0("100 pesquisas, nivel ", ${nc}, "% - ",
+                   sum(capturou), " capturaram a media verdadeira"),
+     xlab = "nota media", ylab = "pesquisa (1 a 100)")
+segments(ic[, 1], 1:K, ic[, 2], 1:K, col = cores,
+         lwd = ifelse(capturou, 1.6, 2.6))
+abline(v = mu, col = "blue", lwd = 3)
+legend("topright", bty = "n", lwd = c(3, 2, 2), col = c("blue", rgb(0.08, 0.45, 0.28), "red"),
+       legend = c(expression(mu ~ "verdadeiro (50)"), "capturou", "errou"))`;
+}
+
+function atualizaPainel() {
+  const { n, nc, sg } = estado();
+  $("nv").textContent = n; $("ncv").textContent = nc + "%"; $("sgv").textContent = fmt(sg);
+  const larg = 2 * ZS[nc] * sg / Math.sqrt(n);
+  $("previsao").innerHTML =
+    `<b>Previsão</b> (antes de rodar): dos 100 intervalos, <b>≈ ${nc}</b> devem capturar μ — ` +
+    `essa é a promessa do nível, e <b>n não muda essa taxa</b>. O que n e σ mudam é a largura: ` +
+    `≈ 2 × ${fmt(ZS[nc])} × ${fmt(sg)}/√${n} = <b>${fmt(larg)}</b> (aprox. normal).`;
+  $("codigoview").textContent = codigoR();
+  document.querySelectorAll(".cenarios button").forEach(b => b.classList.remove("ativo"));
+  $("res_captura").textContent = "—"; $("res_largura").textContent = "—"; $("verifica").textContent = "";
+}
+
+// monta os botões de cenário
+const elC = $("cenarios");
+CENARIOS.forEach((c, i) => {
+  const b = document.createElement("button");
+  b.innerHTML = `<b>${i + 1}. ${c.nome}</b><br>${c.desc}<br><span style="color:#5a6573">n=${c.n} · nível=${NIVEIS[c.nc]}% · σ=${c.sg}</span>`;
+  b.addEventListener("click", () => {
+    $("n").value = c.n; $("nc").value = c.nc; $("sg").value = c.sg;
+    atualizaPainel();
+    b.classList.add("ativo");
+    if (!$("rodar").disabled) { $("status").textContent = "cenário configurado — aperte Rodar."; $("status").className = ""; }
+  });
+  elC.appendChild(b);
+});
+
+["n", "nc", "sg"].forEach(id => $(id).addEventListener("input", atualizaPainel));
+$("amostra").addEventListener("click", () => { seed = Math.floor(Math.random() * 100000); atualizaPainel(); if (!$("rodar").disabled) { $("status").textContent = "novas 100 pesquisas sorteadas — aperte Rodar."; $("status").className = ""; } });
+
+let webR, shelter;
+async function iniciar() {
+  try {
+    const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
+    webR = new WebR();
+    await webR.init();
+    shelter = await new webR.Shelter();
+    $("status").textContent = "pronto! Escolha um cenário ou aperte Rodar.";
+    $("status").className = "pronto";
+    $("rodar").disabled = false;
+  } catch (e) {
+    $("status").textContent = "falha ao carregar o R: " + e.message + " — verifique a conexão e recarregue.";
+    $("status").className = "erro";
+  }
+}
+
+async function rodar() {
+  $("rodar").disabled = true;
+  $("status").textContent = "executando…"; $("status").className = "";
+  $("graficos").innerHTML = "";
+  try {
+    const captura = await shelter.captureR(codigoR(), {
+      withAutoprint: false, captureStreams: true, captureConditions: true,
+      captureGraphics: { width: 700, height: 470, bg: "white", pointsize: 14 }
+    });
+    let res = null;
+    for (const linha of captura.output) {
+      if (linha.type === "stdout" && linha.data.startsWith("RES")) {
+        const p = linha.data.trim().split(/\s+/);
+        res = { capt: parseInt(p[1]), larg: parseFloat(p[2]) };
+      }
+    }
+    const { nc } = estado();
+    if (res) {
+      $("res_captura").textContent = res.capt + " de 100";
+      $("res_largura").textContent = fmt(res.larg);
+      $("verifica").innerHTML =
+        `<b>Lendo o resultado:</b> o nível de ${nc}% é a nota do <b>procedimento</b>, não de um ` +
+        `intervalo específico — cada um dos 100, sozinho, <b>ou capturou μ ou não capturou</b>; ` +
+        `não existe "95% de chance" para um intervalo já calculado. Nesta rodada o procedimento ` +
+        `acertou <b>${res.capt}</b> vezes (esperado: ≈ ${nc}). Sorteie outras 100 pesquisas e ` +
+        `veja o número balançar em torno da promessa.`;
+    }
+    for (const img of captura.images) {
+      const cv = document.createElement("canvas");
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext("2d").drawImage(img, 0, 0);
+      $("graficos").appendChild(cv);
+    }
+    $("status").textContent = "pronto! Mude os controles e rode de novo.";
+    $("status").className = "pronto";
+  } catch (e) {
+    $("status").textContent = "erro na execução: " + e.message;
+    $("status").className = "erro";
+  } finally {
+    if (shelter) await shelter.purge();
+    $("rodar").disabled = false;
+  }
+}
+
+$("rodar").addEventListener("click", rodar);
+atualizaPainel();
+iniciar();
+</script>
+</body>
+</html>
