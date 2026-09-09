@@ -148,7 +148,10 @@ def pagina_curso(c, itens_ok):
 
     a('<hr>')
     a('<footer>Material em revisão contínua — esta página guarda sempre a '
-      'versão mais recente. Dúvidas e correções são bem-vindas.</footer>')
+      'versão mais recente. Dúvidas e correções são bem-vindas.<br>'
+      '© Marcio Gold Firmo · Uso livre para ensino, sob '
+      '<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">'
+      'CC BY-NC 4.0</a> — cite a autoria; uso comercial não autorizado.</footer>')
     a('</div>')
     a('</body>')
     a('</html>')
