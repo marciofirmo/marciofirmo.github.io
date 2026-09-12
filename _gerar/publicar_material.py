@@ -147,11 +147,18 @@ def pagina_curso(c, itens_ok):
         a('<p class="secao-nota">Em preparação.</p>')
 
     a('<hr>')
-    a('<footer>Material em revisão contínua — esta página guarda sempre a '
-      'versão mais recente. Dúvidas e correções são bem-vindas.<br>'
-      '© Marcio Gold Firmo · Uso livre para ensino, sob '
-      '<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">'
-      'CC BY-NC 4.0</a> — cite a autoria; uso comercial não autorizado.</footer>')
+    if any(itens for _, itens in itens_ok):
+        a('<footer>Material em revisão contínua — esta página guarda sempre a '
+          'versão mais recente. Dúvidas, correções e sugestões são bem-vindas: '
+          'marciogoldfirmo [at] gmail [dot] com.<br>'
+          '© Marcio Gold Firmo · Uso livre para ensino, sob '
+          '<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">'
+          'CC BY-NC 4.0</a> — cite a autoria; uso comercial não autorizado.</footer>')
+    else:
+        a('<footer>Página em construção — o material está sendo preparado.<br>'
+          '© Marcio Gold Firmo · Uso livre para ensino, sob '
+          '<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">'
+          'CC BY-NC 4.0</a> — cite a autoria; uso comercial não autorizado.</footer>')
     a('</div>')
     a('</body>')
     a('</html>')

@@ -118,7 +118,7 @@ CURSOS = [
                      "titulo": "Revisão estatística interativa",
                      "desc": "Lei dos grandes números, correlação e correlação parcial, construídas na mão."},
                     {"link": "../laboratorio-tentativas-webr.html",
-                     "titulo": "Laboratório das tentativas — inferência causal",
+                     "titulo": "Laboratório das seis ferramentas — inferência causal",
                      "desc": "Cada método consertando o viés de seleção, ao vivo."},
                     {"link": "../vies-variavel-omitida-webr.html",
                      "titulo": "Editor de código livre (webR)",
