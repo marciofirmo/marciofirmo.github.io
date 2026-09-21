@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tema 12 — Gasto por aluno × IDEB municipal — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 780px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.3rem; color: var(--azul); margin-bottom: 4px; }
+  h2 { font-size: 1.02rem; color: var(--azul); margin: 18px 0 6px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 14px 0; font-size: .92rem; }
+  .box table { border-collapse: collapse; margin-top: 6px; }
+  .box td { padding: 2px 10px 2px 0; vertical-align: top; }
+  .box td:first-child { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+  #status { font-weight: 600; }
+  #status.pronto { color: #157347; }
+  #status.erro { color: #b02a37; }
+  textarea { width: 100%; min-height: 420px; font-family: ui-monospace, Menlo,
+             Consolas, monospace; font-size: .84rem; border: 1px solid var(--borda);
+             border-radius: 10px; padding: 10px; background: #fbfcfe;
+             white-space: pre; resize: vertical; }
+  .botoes { display: flex; gap: 10px; margin: 10px 0 18px; flex-wrap: wrap; }
+  button { border: 0; border-radius: 8px; padding: 12px 22px; font-size: 1rem;
+           font-weight: 600; cursor: pointer; }
+  #rodar { background: var(--azul); color: #fff; }
+  #rodar:disabled { background: #9fb3cb; cursor: wait; }
+  #restaurar, #baixar { background: #e8ebef; color: #1c2430; }
+  #saida { background: #10151c; color: #d7e3f0; border-radius: 10px;
+           padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+           font-size: .82rem; white-space: pre-wrap; overflow-x: auto;
+           min-height: 40px; }
+  #saida .err { color: #ffb3b8; }
+  #graficos canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+                     border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Tema 12 — Municípios que gastam mais por aluno têm IDEB maior?</h1>
+<p class="sub">Kit da Trilha B — Economia da Educação, UERJ. R rodando no navegador (webR), sem instalar nada.</p>
+
+<div class="box">
+  <b>O mandato:</b> uma secretaria estadual pergunta se os municípios que gastam mais por
+  aluno têm IDEB maior — e o que essa relação permite, e não permite, concluir. Os passos
+  2 a 4 do roteiro já vêm prontos; as regressões dos passos 5 e 6 estão em
+  <b>esqueleto, com lacunas para você completar</b> (o esqueleto geral está no Guia da
+  Trilha B; o <code>lm()</code> está no handout de econometria). O anexo do parecer leva o
+  seu script — roteiro completado <b>+ análise-espelho</b>, definida no passo final desta página.
+</div>
+
+<div class="box">
+  <b>A base:</b> <code>base_municipios_rj.csv</code> — os <b>92 municípios do Rio de
+  Janeiro</b>, uma linha por município, já carregada nesta página. Dicionário:
+  <table>
+    <tr><td>municipio</td><td>nome do município</td></tr>
+    <tr><td>ideb</td><td>IDEB 2025 dos anos iniciais, <b>rede municipal</b> (Inep)</td></tr>
+    <tr><td>nota_saeb</td><td>a parte de aprendizagem do IDEB — nota média padronizada do SAEB 2025 (o "N" da fórmula IDEB = N × P)</td></tr>
+    <tr><td>rendimento</td><td>a parte de fluxo do IDEB — indicador de rendimento, de 0 a 1 (o "P")</td></tr>
+    <tr><td>matriculas</td><td>matrículas da rede municipal na educação básica inteira, 2024 (Censo Escolar)</td></tr>
+    <tr><td>gasto_aluno</td><td>gasto do município na função Educação por aluno da rede municipal, 2024, em reais</td></tr>
+    <tr><td>gasto_ensino</td><td>o mesmo, mas contando só as subfunções de <b>ensino</b> — sem administração geral nem ensino superior</td></tr>
+    <tr><td>pct_ensino</td><td>quanto por cento da função Educação é ensino (mediana 98%; em Niterói, 40%)</td></tr>
+    <tr><td>pib_pc</td><td>PIB per capita do município, 2023, em reais (IBGE)</td></tr>
+    <tr><td>populacao</td><td>população do município (Siconfi/Tesouro)</td></tr>
+  </table>
+  <b>Como o gasto por aluno foi construído:</b> despesa <i>liquidada</i> na função 12
+  (Educação) da prefeitura em 2024, declarada ao Tesouro Nacional (Siconfi), dividida pela
+  matrícula da rede municipal na <b>educação básica inteira</b> — creche, pré-escola e
+  fundamental (o denominador é a rede toda porque a despesa declarada também é).
+  <b>Há duas medidas de gasto na base</b>, e a diferença entre elas é um exercício do
+  trabalho: <code>gasto_aluno</code> usa a função Educação inteira, que inclui administração
+  geral e, em alguns municípios, ensino superior; <code>gasto_ensino</code> conta só as
+  subfunções de ensino. Na maioria dos municípios as duas quase coincidem (mediana: 98% da
+  função é ensino), mas em Niterói só 40% é ensino — e o gasto por aluno cai de R$ 26.968
+  para R$ 10.712.
+</div>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<textarea id="codigo" spellcheck="false"></textarea>
+
+<div class="botoes">
+  <button id="rodar" disabled>&#9654; Rodar</button>
+  <button id="restaurar">Restaurar código</button>
+  <button id="baixar">Baixar a base (.csv)</button>
+</div>
+
+<div id="saida">A saída do R aparecerá aqui.</div>
+<div id="graficos"></div>
+
+<footer>
+  Passos do roteiro: Guia por Trilha (Trilha B), no Classroom. Para revisar regressão e
+  viés de variável omitida: handout de econometria e Laboratório do Viés, também no
+  Classroom. Fontes: Inep (IDEB 2025 e Censo Escolar 2024), Tesouro Nacional/Siconfi
+  (despesa municipal por função, 2024) e IBGE (PIB municipal 2023). Base preparada pelo
+  professor; o script de preparo está disponível.
+  Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a> (R em WebAssembly).
+</footer>
+
+<script type="module">
+const CODIGO_INICIAL = `# ===================================================================
+# Tema 12 - "Municipios que gastam mais por aluno tem IDEB maior?"
+# Base: 92 municipios do Rio de Janeiro - 1 linha por municipio
+# Os numeros dos passos seguem o roteiro do Guia da Trilha B.
+#
+# COMO USAR: os passos 2 a 4 ja rodam. Os passos 5 e 6 estao em
+# esqueleto: complete as lacunas (______), apague o "#" do inicio
+# dessas linhas e rode de novo.
+# ===================================================================
+
+# PASSO 2 - abrir a base e conhecer os dados
+dados <- read.csv("base_municipios_rj.csv")
+head(dados)
+nrow(dados)
+summary(dados[, c("ideb", "gasto_aluno", "pib_pc")])
+# Repare na distancia entre o menor e o maior gasto por aluno.
+# Quantas vezes um e maior que o outro?
+
+# PASSO 3 - descritivas: IDEB medio por quartil de gasto
+dados$quartil_gasto <- cut(dados$gasto_aluno,
+                           breaks = quantile(dados$gasto_aluno, 0:4/4),
+                           labels = c("1 (menor gasto)", "2", "3", "4 (maior gasto)"),
+                           include.lowest = TRUE)
+round(tapply(dados$ideb, dados$quartil_gasto, mean), 2)
+table(dados$quartil_gasto)
+# Quanto o municipio tipico de cada quartil gasta por aluno:
+round(tapply(dados$gasto_aluno, dados$quartil_gasto, median))
+# PERGUNTA QUE IMPORTA: o ganho de IDEB de um quartil para o
+# seguinte e sempre do mesmo tamanho? Calcule as diferencas.
+# Se o ganho encolhe la em cima, a reta do PASSO 5 - que supoe
+# efeito constante - esta escondendo retorno decrescente.
+# Guarde essa observacao: ela vale uma frase no parecer.
+
+# PASSO 4 - grafico central: dispersao gasto x IDEB
+# TODO do grupo: escreva o titulo e os nomes dos eixos (com unidade)
+# - regra do passo 4 do Guia: titulo, eixos nomeados, unidade e fonte.
+plot(dados$gasto_aluno / 1000, dados$ideb,
+     pch = 16, col = "#1a4f8b",
+     main = "TODO: titulo que diga a conclusao",
+     xlab = "TODO: eixo x",
+     ylab = "TODO: eixo y")
+abline(lm(ideb ~ I(gasto_aluno/1000), data = dados), col = "red", lwd = 2)
+# Identifique os pontos extremos da direita - quem sao esses municipios?
+extremos <- dados[order(-dados$gasto_aluno), c("municipio", "gasto_aluno", "ideb")]
+head(extremos, 6)
+# Guarde essa lista: ela vai importar no PASSO 6.
+
+# PASSO 5 - regressao simples: gasto explica IDEB?
+# Complete a formula (que variavel explica o ideb?), apague o "#"
+# das linhas e rode. Esqueleto do Guia: m1 <- lm(y ~ x, data = dados)
+# ATENCAO A ESCALA: gasto_aluno esta em reais e o IDEB vai de 0 a 10.
+# Use gasto em MILHARES de reais para o coeficiente ficar legivel.
+dados$gasto_mil <- dados$gasto_aluno / 1000
+# m1 <- lm(ideb ~ ______, data = dados)
+# summary(m1)
+# Interprete EM PALAVRAS: "mil reais a mais por aluno/ano estao
+# associados a ___ ponto a mais de IDEB". Esse numero e grande ou
+# pequeno perto da distancia entre o pior e o melhor municipio?
+# E lembre do PASSO 3: a reta impoe o MESMO efeito em todo lugar -
+# em quem gasta R$ 8 mil e em quem gasta R$ 50 mil por aluno.
+# A tabela de quartis disse que isso e verdade?
+
+# PASSO 6 - controle: e se a riqueza do municipio explicar os dois?
+# Acrescente o PIB per capita (em milhares) na formula.
+dados$pib_mil <- dados$pib_pc / 1000
+# m2 <- lm(ideb ~ ______ + ______, data = dados)
+# summary(m2)
+# Compare o coeficiente do gasto em m1 e em m2. Ele subiu ou desceu?
+# Veja tambem a correlacao entre as duas variaveis explicativas:
+cor(dados$gasto_mil, dados$pib_mil)
+# Essa correlacao e a chave da sua interpretacao. No Rio, os municipios
+# de maior PIB per capita sao em boa parte municipios de royalties do
+# petroleo - receita alta que nao significa familias mais ricas.
+
+# PASSO 7 - interpretacao honesta (para escrever no parecer):
+# - o coeficiente do gasto NAO e efeito causal: falta o nivel
+#   socioeconomico das FAMILIAS (o PIB per capita e um proxy ruim disso),
+#   falta a qualidade da gestao, e ha causalidade reversa possivel
+#   (rede com mau resultado pode receber mais recurso).
+# - "gastar mais nao adianta" NAO e conclusao defensavel deste desenho:
+#   a literatura mostra que COMO se gasta pesa mais que QUANTO.
+# - diga que dado ou desenho responderia a pergunta causal.
+
+# ANALISE-ESPELHO (obrigatoria no anexo do parecer): refaca os passos
+# 5 e 6 trocando a medida de gasto - use gasto_ensino no lugar de
+# gasto_aluno. As duas medem "gasto por aluno", mas a segunda tira
+# administracao geral e ensino superior da conta.
+# dados$gasto_ens_mil <- dados$gasto_ensino / 1000
+# O coeficiente muda? A conclusao se mantem?
+# Veja tambem quais municipios mais mudam de lugar:
+# dados$dif <- dados$gasto_aluno - dados$gasto_ensino
+# head(dados[order(-dados$dif), c("municipio","gasto_aluno","gasto_ensino","pct_ensino")], 5)
+# Essa e a licao do exercicio: o resultado depende de como voce
+# DEFINIU a variavel, e isso se declara no parecer. Se o numero nao
+# muda, voce mostrou robustez - o que tambem e resultado.
+# O anexo do parecer leva o SEU script, com o roteiro completado e a
+# analise-espelho - nao o texto desta pagina.
+`;
+
+const DADOS_CSV = `municipio,ideb,nota_saeb,rendimento,matriculas,gasto_aluno,gasto_ensino,pct_ensino,pib_pc,populacao
+Angra dos Reis,6.1,6.2169,0.9807,24944,20507.0,20415.57,99.6,65665.89,181228
+Aperibé,6.3,6.3891,0.9891,1121,18618.9,18299.48,98.3,27644.27,10893
+Araruama,5.8,6.2046,0.9382,20493,25397.78,23406.27,92.2,103815.96,126726
+Areal,6.1,6.1340,0.9921,1793,14540.71,14277.25,98.2,50749.85,11765
+Armação dos Búzios,5.8,6.1946,0.9293,9260,15526.56,15148.49,97.6,128599.42,39033
+Arraial do Cabo,5.6,6.0519,0.9263,5548,39982.51,39979.8,100.0,300849.95,31030
+Barra do Piraí,5.5,6.0298,0.9150,7457,10323.61,10323.61,100.0,35437.77,91025
+Barra Mansa,6.0,6.4280,0.9332,15644,12817.98,12712.41,99.2,40989.81,166654
+Belford Roxo,4.8,5.1073,0.9318,40943,11610.37,11483.53,98.9,21682.71,446731
+Bom Jardim,5.9,6.4252,0.9111,2377,13008.94,12994.96,99.9,36175.53,28166
+Bom Jesus do Itabapoana,6.5,6.5562,0.9923,3894,14920.7,14885.51,99.8,33734.98,35797
+Cabo Frio,5.3,5.9717,0.8884,32483,11199.16,11120.2,99.3,79252.12,214057
+Cachoeiras de Macacu,5.2,5.7594,0.9016,6691,16264.33,15618.45,96.0,31592.07,53887
+Cambuci,6.0,6.0210,0.9951,1338,20934.22,20076.71,95.9,33665.71,14245
+Carapebus,5.6,5.8210,0.9550,2012,19934.29,18764.36,94.1,78265.94,13360
+Comendador Levy Gasparian,6.9,6.9966,0.9896,1530,14206.0,14188.78,99.9,72250.2,8769
+Campos dos Goytacazes,5.7,5.9299,0.9687,52935,12271.94,9373.13,76.4,90491.8,474667
+Cantagalo,5.5,5.9275,0.9293,1830,15195.72,11191.64,73.6,55305.05,19443
+Cardoso Moreira,6.0,6.0813,0.9943,2025,13024.76,9336.42,71.7,30988.89,12686
+Carmo,6.2,6.7598,0.9181,1614,15000.96,15000.96,100.0,39178.14,17149
+Casimiro de Abreu,6.2,6.3353,0.9784,7363,21078.38,17715.39,84.0,73803.8,45570
+Conceição de Macabu,5.3,5.8244,0.9184,2618,13185.69,10980.35,83.3,24214.47,20814
+Cordeiro,6.5,6.5412,0.9897,2378,13182.81,11680.14,88.6,25453.77,20843
+Duas Barras,5.5,5.9233,0.9218,1697,12473.79,12473.79,100.0,25711.4,11102
+Duque de Caxias,4.9,5.3820,0.9154,75834,13782.43,13438.65,97.5,89509.58,782799
+Engenheiro Paulo de Frontin,5.5,5.7577,0.9580,1604,17325.26,15452.17,89.2,27105.23,11822
+Guapimirim,5.7,6.1365,0.9283,8409,16358.6,15282.45,93.4,31541.65,50409
+Iguaba Grande,6.8,6.9194,0.9837,5102,20849.98,20184.75,96.8,29462.26,27651
+Itaboraí,5.2,5.6245,0.9204,28975,10674.33,10672.23,100.0,27178.72,231004
+Itaguaí,5.1,5.5998,0.9135,20086,15087.35,15072.91,99.9,85679.38,132867
+Italva,6.5,6.5150,0.9931,1636,14711.65,14256.81,96.9,31429.31,13729
+Itaocara,6.8,7.0214,0.9614,2017,18232.48,17671.12,96.9,32906.56,22989
+Itaperuna,7.4,7.4930,0.9896,8153,15192.08,14426.31,95.0,40963.11,99300
+Itatiaia,5.2,5.7107,0.9129,4852,15775.52,14316.44,90.8,227156.11,30766
+Japeri,4.7,5.1314,0.9064,13014,9508.87,9508.87,100.0,19408.85,96595
+Laje do Muriaé,6.0,5.9620,1.0,1021,15055.41,14943.86,99.3,30826.51,6767
+Macaé,5.9,6.3493,0.9350,39909,20152.72,18635.7,92.5,85251.4,262692
+Macuco,6.4,6.6398,0.9666,910,14970.72,14957.58,99.9,51896.07,5446
+Magé,5.0,5.5487,0.9057,38194,9250.93,9249.87,100.0,21358.74,248208
+Mangaratiba,5.3,5.7395,0.9282,7358,19092.31,19092.31,100.0,88405.51,38953
+Maricá,6.4,6.4608,0.9945,29281,37335.36,30089.86,80.6,598790.89,223938
+Mendes,6.1,6.2014,0.9815,2012,18298.15,15256.41,83.4,25471.85,17461
+Mesquita,5.5,5.7495,0.9563,14879,12961.34,12961.0,100.0,17939.15,168849
+Miguel Pereira,6.2,6.3942,0.9645,3679,13869.86,13864.91,100.0,32211.63,26301
+Miracema,7.2,7.2337,0.9895,3209,12395.29,12395.29,100.0,27851.56,26644
+Natividade,6.0,6.0214,0.9949,1424,16419.93,15932.33,97.0,27342.08,14938
+Nilópolis,5.9,5.9640,0.9813,11101,10482.8,10415.23,99.4,22223.49,150281
+Niterói,5.5,5.8038,0.9491,26920,26967.52,10711.72,39.7,145643.02,523664
+Nova Friburgo,6.6,7.1203,0.9339,17689,13197.55,13197.55,100.0,36005.21,204625
+Nova Iguaçu,5.0,5.3353,0.9405,63312,8093.03,7526.93,93.0,25049.17,819134
+Paracambi,5.9,6.3366,0.9343,4529,12895.08,10455.1,81.1,26381.4,41146
+Paraíba do Sul,5.6,6.0254,0.9330,5658,11243.64,11121.08,98.9,33483.87,41786
+Paraty,5.9,6.0809,0.9758,6160,22115.26,20952.76,94.7,125007.75,50592
+Paty do Alferes,6.3,6.5669,0.9569,4506,10895.3,10895.3,100.0,29354.88,29390
+Petrópolis,5.6,5.9368,0.9498,34045,12188.03,12082.29,99.1,65321.78,304758
+Pinheiral,5.7,6.1423,0.9279,3448,11972.92,11932.44,99.7,48372.79,24553
+Piraí,5.8,6.0592,0.9605,4254,16130.75,16130.75,100.0,121043.97,27996
+Porciúncula,5.9,5.9665,0.9845,2001,15507.78,15507.78,100.0,32978.71,16958
+Porto Real,6.9,6.9261,1.0,3237,17840.56,16687.57,93.5,157329.18,20375
+Quatis,6.0,6.1561,0.9804,2198,20074.84,20074.84,100.0,31692.31,12646
+Queimados,5.1,5.2301,0.9690,13394,10412.68,7503.74,72.1,35481.5,139194
+Quissamã,6.4,6.5414,0.9806,4426,29861.86,28252.4,94.6,260685.27,21749
+Resende,6.3,6.3951,0.9907,13048,16698.82,16304.15,97.6,95498.18,128460
+Rio Bonito,5.3,5.6545,0.9312,8004,12587.43,12370.01,98.3,37017.25,55068
+Rio Claro,5.7,5.9507,0.9595,2553,16220.52,15929.88,98.2,31138.43,18544
+Rio das Flores,6.8,6.8958,0.9901,1618,17777.13,13747.79,77.3,36081.28,9387
+Rio das Ostras,6.2,6.4771,0.9548,22430,11664.83,11540.53,98.9,70872.94,149562
+Rio de Janeiro,6.2,6.2345,0.9951,604173,11514.29,10828.06,94.0,63156.04,6625849
+Santa Maria Madalena,5.7,6.6666,0.8500,1256,18969.84,18687.73,98.5,28348.93,9704
+Santo Antônio de Pádua,6.6,6.6602,0.9856,5023,11724.17,11724.17,100.0,41261.0,40870
+São Francisco de Itabapoana,5.2,5.7925,0.9060,8170,12654.15,12654.15,100.0,32963.95,44939
+São Fidélis,5.2,5.7117,0.9153,4500,12144.62,11854.51,97.6,25469.19,38711
+São Gonçalo,4.9,5.5646,0.8765,42971,12033.18,10017.11,83.2,24814.45,929446
+São João da Barra,5.9,6.3627,0.9213,8470,22870.99,18270.06,79.9,382993.37,36518
+São João de Meriti,5.3,5.5174,0.9685,28377,9703.59,8806.2,90.8,29291.11,393773
+São José de Ubá,7.3,7.3063,1.0,711,20674.0,19739.51,95.5,32917.96,7070
+São José do Vale do Rio Preto,5.9,6.2347,0.9491,3237,11673.65,10874.98,93.2,42560.23,22125
+São Pedro da Aldeia,6.0,6.2662,0.9631,13968,10873.64,10867.01,99.9,32838.12,102290
+São Sebastião do Alto,5.8,6.4528,0.9015,1042,16240.33,16008.45,98.6,35402.23,7707
+Sapucaia,5.8,6.0141,0.9673,2481,11763.72,11763.72,100.0,66059.78,18585
+Saquarema,6.5,6.7053,0.9639,18849,53553.09,40590.66,75.8,728985.86,88755
+Seropédica,5.2,5.5236,0.9417,12777,12545.97,12545.97,100.0,44050.14,85359
+Silva Jardim,5.4,6.0707,0.8970,3974,18452.1,17464.14,94.6,32819.38,21509
+Sumidouro,6.1,6.3455,0.9558,2121,16160.08,16136.2,99.9,40131.3,18286
+Tanguá,5.2,5.7120,0.9165,5381,11181.76,9855.0,88.1,27553.5,31169
+Teresópolis,5.9,6.0457,0.9841,20836,10753.42,10745.61,99.9,37583.03,189036
+Trajano de Moraes,6.8,6.9508,0.9752,1140,21395.29,20463.09,95.6,28189.75,10303
+Três Rios,6.4,6.4225,0.9917,9325,15580.03,12790.15,82.1,78365.86,76789
+Valença,5.7,6.0431,0.9387,8700,12847.76,12847.76,100.0,42960.38,72264
+Varre-Sai,6.0,6.0387,0.9880,1415,13393.29,12896.47,96.3,39956.41,10209
+Vassouras,5.8,6.0788,0.9545,3668,13668.9,13668.9,100.0,38677.56,38081
+Volta Redonda,6.3,6.7046,0.9387,33679,10067.96,9988.62,99.2,56581.08,270543`;
+
+const elCodigo = document.getElementById('codigo');
+const elStatus = document.getElementById('status');
+const elSaida  = document.getElementById('saida');
+const elGraf   = document.getElementById('graficos');
+const btnRodar = document.getElementById('rodar');
+const btnRest  = document.getElementById('restaurar');
+const btnBaixar = document.getElementById('baixar');
+
+elCodigo.value = CODIGO_INICIAL;
+btnRest.addEventListener('click', () => { elCodigo.value = CODIGO_INICIAL; });
+btnBaixar.addEventListener('click', () => {
+  const blob = new Blob([DADOS_CSV], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'base_municipios_rj.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+let webR, shelter;
+
+async function iniciar() {
+  try {
+    const { WebR } = await import('https://webr.r-wasm.org/latest/webr.mjs');
+    webR = new WebR();
+    await webR.init();
+    await webR.FS.writeFile('/home/web_user/base_municipios_rj.csv',
+                            new TextEncoder().encode(DADOS_CSV));
+    await webR.evalRVoid('setwd("/home/web_user")');
+    shelter = await new webR.Shelter();
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+    btnRodar.disabled = false;
+  } catch (e) {
+    elStatus.textContent = 'falha ao carregar o R: ' + e.message +
+      ' — verifique sua conexão e recarregue a página.';
+    elStatus.className = 'erro';
+  }
+}
+
+async function rodar() {
+  btnRodar.disabled = true;
+  elStatus.textContent = 'executando…';
+  elStatus.className = '';
+  elSaida.textContent = '';
+  elGraf.innerHTML = '';
+  try {
+    const captura = await shelter.captureR(elCodigo.value, {
+      withAutoprint: true,
+      captureStreams: true,
+      captureConditions: true,
+      captureGraphics: { width: 680, height: 470, bg: 'white', pointsize: 14 }
+    });
+    let texto = '';
+    for (const linha of captura.output) {
+      if (linha.type === 'stdout') texto += linha.data + '\n';
+      else if (linha.type === 'stderr') texto += linha.data + '\n';
+      else if (linha.type === 'error' || linha.type === 'warning' ||
+               linha.type === 'message') {
+        const msg = (linha.data && linha.data.message) ? linha.data.message : '';
+        if (msg) texto += '[' + linha.type + '] ' + msg + '\n';
+      }
+    }
+    elSaida.textContent = texto || '(sem saída de texto)';
+    for (const img of captura.images) {
+      const cv = document.createElement('canvas');
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      elGraf.appendChild(cv);
+    }
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+  } catch (e) {
+    elSaida.innerHTML = '<span class="err">Erro do R: ' +
+      String(e.message).replace(/</g, '&lt;') + '</span>';
+    elStatus.textContent = 'erro na execução — corrija o código e rode de novo.';
+    elStatus.className = 'erro';
+  } finally {
+    if (shelter) await shelter.purge();
+    btnRodar.disabled = false;
+  }
+}
+
+btnRodar.addEventListener('click', rodar);
+iniciar();
+</script>
+</body>
+</html>
