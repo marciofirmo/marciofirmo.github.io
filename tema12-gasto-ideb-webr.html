@@ -111,9 +111,14 @@ const CODIGO_INICIAL = `# ======================================================
 # Base: 92 municipios do Rio de Janeiro - 1 linha por municipio
 # Os numeros dos passos seguem o roteiro do Guia da Trilha B.
 #
-# COMO USAR: os passos 2 a 4 ja rodam. Os passos 5 e 6 estao em
-# esqueleto: complete as lacunas (______), apague o "#" do inicio
-# dessas linhas e rode de novo.
+# COMO USAR - leia estas cinco linhas, elas explicam tudo:
+# Todo o roteiro esta nesta caixa, e voce pode editar a vontade.
+# O botao "Rodar" executa o que NAO esta comentado - hoje, os passos
+# 2 a 4, que ja saem prontos. Os passos 5, 6, 7 e a analise-espelho
+# estao comentados: apague o "#" do inicio da linha, preencha as
+# lacunas (______) e aperte Rodar de novo. Ele roda tudo outra vez,
+# agora incluindo o que voce acabou de habilitar. Errou? "Restaurar
+# codigo" traz esta pagina de volta ao estado original.
 # ===================================================================
 
 # PASSO 2 - abrir a base e conhecer os dados
@@ -134,19 +139,21 @@ table(dados$quartil_gasto)
 # Quanto o municipio tipico de cada quartil gasta por aluno:
 round(tapply(dados$gasto_aluno, dados$quartil_gasto, median))
 # PERGUNTA QUE IMPORTA: o ganho de IDEB de um quartil para o
-# seguinte e sempre do mesmo tamanho? Calcule as diferencas.
-# Se o ganho encolhe la em cima, a reta do PASSO 5 - que supoe
-# efeito constante - esta escondendo retorno decrescente.
-# Guarde essa observacao: ela vale uma frase no parecer.
+# seguinte e sempre do mesmo tamanho? Calcule as tres diferencas
+# (2o menos 1o, 3o menos 2o, 4o menos 3o) e compare.
+# Se elas NAO forem parecidas, o que isso diz sobre uma reta que
+# supoe o mesmo efeito em todo lugar - como a do PASSO 5?
+# Anote sua resposta: voce vai voltar a ela no PASSO 7.
 
 # PASSO 4 - grafico central: dispersao gasto x IDEB
-# TODO do grupo: escreva o titulo e os nomes dos eixos (com unidade)
-# - regra do passo 4 do Guia: titulo, eixos nomeados, unidade e fonte.
+# Os rotulos abaixo ja funcionam - o grafico sai pronto para o parecer.
+# Sua tarefa e trocar o TITULO por uma frase que diga a SUA conclusao
+# (nao o nome das variaveis), e citar a fonte na legenda do parecer.
 plot(dados$gasto_aluno / 1000, dados$ideb,
      pch = 16, col = "#1a4f8b",
-     main = "TODO: titulo que diga a conclusao",
-     xlab = "TODO: eixo x",
-     ylab = "TODO: eixo y")
+     main = "Gasto por aluno e IDEB nos 92 municipios do RJ",
+     xlab = "Gasto por aluno (R$ mil por ano, 2024)",
+     ylab = "IDEB 2025 - anos iniciais")
 abline(lm(ideb ~ I(gasto_aluno/1000), data = dados), col = "red", lwd = 2)
 # Identifique os pontos extremos da direita - quem sao esses municipios?
 extremos <- dados[order(-dados$gasto_aluno), c("municipio", "gasto_aluno", "ideb")]
@@ -180,7 +187,31 @@ cor(dados$gasto_mil, dados$pib_mil)
 # de maior PIB per capita sao em boa parte municipios de royalties do
 # petroleo - receita alta que nao significa familias mais ricas.
 
-# PASSO 7 - interpretacao honesta (para escrever no parecer):
+# PASSO 7 - e se o efeito nao for constante?
+# A reta do PASSO 5 impoe o MESMO efeito em todo lugar: o mesmo ganho
+# para quem gasta R$ 8 mil e para quem gasta R$ 50 mil por aluno.
+# O modelo abaixo deixa o efeito mudar ao longo da escala.
+# Apague o "#" das duas linhas e rode.
+# m3 <- lm(ideb ~ gasto_mil + I(gasto_mil^2), data = dados)
+# summary(m3)
+#
+# Agora responda, por escrito, olhando a saida (sao quatro perguntas
+# curtas - as respostas viram um paragrafo do seu parecer):
+# (a) O coeficiente do termo ao quadrado, I(gasto_mil^2), deu positivo
+#     ou negativo? E ele e estatisticamente distinguivel de zero?
+# (b) Se o efeito de cada mil reais MUDA conforme o municipio ja gasta
+#     muito ou pouco, ele esta crescendo ou encolhendo? Por que voce
+#     conclui isso a partir do sinal que viu em (a)?
+# (c) Volte a tabela de quartis do PASSO 3. Ela conta a mesma historia
+#     que o m3, ou uma historia diferente?
+# (d) Compare o R-quadrado do m1 com o do m3. Qual dos dois descreve
+#     melhor ESTES dados - e isso significa que ele e "mais correto"?
+#
+# Se travar em (b), nao precisa de formula: pense em quanto o IDEB
+# subiu do 1o para o 2o quartil de gasto, e quanto subiu do 3o para o
+# 4o. A resposta esta ali.
+
+# PASSO 8 - interpretacao honesta (para escrever no parecer):
 # - o coeficiente do gasto NAO e efeito causal: falta o nivel
 #   socioeconomico das FAMILIAS (o PIB per capita e um proxy ruim disso),
 #   falta a qualidade da gestao, e ha causalidade reversa possivel

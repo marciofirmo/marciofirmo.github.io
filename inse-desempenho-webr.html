@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSE × desempenho — escolas do RJ — R no navegador</title>
+<style>
+  :root { --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         margin: 0; padding: 16px; max-width: 780px; margin-inline: auto;
+         color: #1c2430; line-height: 1.5; }
+  h1 { font-size: 1.3rem; color: var(--azul); margin-bottom: 4px; }
+  h2 { font-size: 1.02rem; color: var(--azul); margin: 18px 0 6px; }
+  .sub { color: #5a6573; font-size: .92rem; margin-top: 0; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 14px 0; font-size: .92rem; }
+  .box table { border-collapse: collapse; margin-top: 6px; }
+  .box td { padding: 2px 10px 2px 0; vertical-align: top; }
+  .box td:first-child { font-family: ui-monospace, Consolas, monospace; font-weight: 600; }
+  #status { font-weight: 600; }
+  #status.pronto { color: #157347; }
+  #status.erro { color: #b02a37; }
+  textarea { width: 100%; min-height: 420px; font-family: ui-monospace, Menlo,
+             Consolas, monospace; font-size: .84rem; border: 1px solid var(--borda);
+             border-radius: 10px; padding: 10px; background: #fbfcfe;
+             white-space: pre; resize: vertical; }
+  .botoes { display: flex; gap: 10px; margin: 10px 0 18px; flex-wrap: wrap; }
+  button { border: 0; border-radius: 8px; padding: 12px 22px; font-size: 1rem;
+           font-weight: 600; cursor: pointer; }
+  #rodar { background: var(--azul); color: #fff; }
+  #rodar:disabled { background: #9fb3cb; cursor: wait; }
+  #restaurar, #baixar { background: #e8ebef; color: #1c2430; }
+  #saida { background: #10151c; color: #d7e3f0; border-radius: 10px;
+           padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+           font-size: .82rem; white-space: pre-wrap; overflow-x: auto;
+           min-height: 40px; }
+  #saida .err { color: #ffb3b8; }
+  #graficos canvas { width: 100%; height: auto; border: 1px solid var(--borda);
+                     border-radius: 10px; margin-top: 12px; background: #fff; }
+  footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
+           border-top: 1px solid var(--borda); padding-top: 12px; }
+</style>
+</head>
+<body>
+
+<h1>As escolas com nota baixa são escolas ruins — ou escolas de alunos pobres?</h1>
+<p class="sub">Laboratório em R no navegador · 1.393 escolas públicas do Rio de Janeiro com 9º ano ·
+SAEB 2023 e INSE 2023 (Inep). Nada para instalar: espere o R carregar e aperte <b>Rodar</b>.</p>
+
+<div class="box">
+  <b>A base</b> — uma linha por escola.
+  <table>
+    <tr><td>nome_escola, municipio, rede</td><td>identificação (rede Municipal, Estadual ou Federal)</td></tr>
+    <tr><td>nota_mt, nota_lp</td><td>proficiência média da escola no SAEB 2023, 9º ano — Matemática e Língua Portuguesa (escala SAEB)</td></tr>
+    <tr><td>inse</td><td>Indicador de Nível Socioeconômico médio dos alunos da escola, 2023 (Inep) — vai de 4,2 a 6,3</td></tr>
+    <tr><td>ideb, rendimento</td><td>IDEB 2023 dos anos finais e o indicador de rendimento (aprovação) que entra nele</td></tr>
+  </table>
+  Escolas com menos de 10 alunos avaliados ou sem INSE calculado não estão na base. A rede privada
+  não faz o SAEB censitário e por isso não aparece.
+</div>
+
+<p>Status do R: <span id="status">carregando o R no navegador… (10–30 segundos)</span></p>
+
+<textarea id="codigo" spellcheck="false"></textarea>
+
+<div class="botoes">
+  <button id="rodar" disabled>&#9654; Rodar</button>
+  <button id="restaurar">Restaurar código</button>
+  <button id="baixar">Baixar a base (.csv)</button>
+</div>
+
+<div id="saida">A saída do R aparecerá aqui.</div>
+<div id="graficos"></div>
+
+<footer>
+  Passos do roteiro: Guia por Trilha (Trilha B), no Classroom. Para revisar regressão e
+  viés de variável omitida: handout de econometria e Laboratório do Viés, também no
+  Classroom. Fontes: Inep — planilha do IDEB por escola (anos finais, edição 2023) e
+  Indicador de Nível Socioeconômico por escola (2023). Base preparada pelo professor; o
+  script de preparo está disponível.
+  Tecnologia: <a href="https://docs.r-wasm.org/webr/latest/">webR</a> (R em WebAssembly).
+</footer>
+
+<script type="module">
+const CODIGO_INICIAL = `# ===================================================================
+# "As escolas com nota baixa sao escolas ruins ou escolas de alunos pobres?"
+# Base: 1.393 escolas publicas do Rio de Janeiro com 9o ano - 1 linha por escola
+# Nota do SAEB 2023 (escala SAEB) e INSE 2023 (nivel socioeconomico medio da escola).
+# Os numeros dos passos seguem o roteiro do Guia da Trilha B.
+#
+# COMO USAR: os passos 2 a 4 ja rodam. Os passos 5 a 7 estao em
+# esqueleto: complete as lacunas (______), apague o "#" do inicio
+# dessas linhas e rode de novo.
+# ===================================================================
+
+# PASSO 2 - abrir a base e conhecer os dados
+dados <- read.csv("base_escolas_rj.csv")
+head(dados)
+nrow(dados)
+table(dados$rede)
+summary(dados[, c("nota_mt", "nota_lp", "inse")])
+# O INSE vai de 4,2 a 6,3: e uma escala apertada. Guarde isso para
+# ler o coeficiente do PASSO 5 - "um ponto de INSE" e uma distancia enorme.
+
+# PASSO 3 - descritivas: nota media por quartil de INSE
+dados$quartil_inse <- cut(dados$inse,
+                          breaks = quantile(dados$inse, 0:4/4),
+                          labels = c("1 (INSE mais baixo)", "2", "3", "4 (INSE mais alto)"),
+                          include.lowest = TRUE)
+round(tapply(dados$nota_mt, dados$quartil_inse, mean), 1)
+round(tapply(dados$nota_mt, dados$quartil_inse, sd), 1)
+# Duas leituras: a media sobe de quartil em quartil (o gradiente). E o
+# desvio padrao DENTRO de cada quartil e quase do tamanho da distancia
+# entre o primeiro e o ultimo quartil. Ou seja: escolas com alunos
+# igualmente pobres tem notas muito diferentes entre si.
+
+# PASSO 4 - grafico central: dispersao INSE x nota
+# TODO: escreva o titulo e os nomes dos eixos (com unidade) -
+# regra do passo 4 do Guia: titulo, eixos nomeados, unidade e fonte.
+plot(dados$inse, dados$nota_mt, pch = 16, cex = .6,
+     col = ifelse(dados$rede == "Estadual", "#b02a37", "#1a4f8b"),
+     main = "TODO: titulo que diga a conclusao",
+     xlab = "TODO: eixo x", ylab = "TODO: eixo y")
+abline(lm(nota_mt ~ inse, data = dados), col = "black", lwd = 2)
+legend("topleft", c("Municipal / Federal", "Estadual"), pch = 16,
+       col = c("#1a4f8b", "#b02a37"), bty = "n")
+# Quem esta longe da reta, para cima e para baixo? Isso e o PASSO 6.
+
+# PASSO 5 - regressao simples: o INSE explica a nota da escola?
+# Complete a formula, apague o "#" e rode. Esqueleto: m1 <- lm(y ~ x, data = dados)
+# m1 <- lm(nota_mt ~ ______, data = dados)
+# summary(m1)
+# Interprete EM PALAVRAS - mas cuidado com a escala. O coeficiente diz
+# quantos pontos de nota acompanham UM ponto de INSE, e um ponto de INSE
+# e quatro desvios padrao. Traduza para "um decimo de INSE":
+# coef(m1)["inse"] / 10
+# E olhe o R quadrado: que fracao da diferenca entre escolas o INSE
+# explica? E o resto - de onde vem?
+
+# PASSO 6 - o ranking "descontado": quem faz mais do que a clientela prevê
+# O residuo e a distancia de cada escola ate a reta: nota observada menos
+# nota prevista pelo INSE. Positivo = acima do esperado.
+# dados$prevista <- predict(m1)
+# dados$residuo  <- dados$nota_mt - dados$prevista
+# acima <- dados[order(-dados$residuo), c("nome_escola","municipio","rede","inse","nota_mt","residuo")]
+# head(acima, 10)
+# abaixo <- dados[order(dados$residuo), c("nome_escola","municipio","rede","inse","nota_mt","residuo")]
+# head(abaixo, 10)
+# Compare com o ranking bruto (por nota_mt): as mesmas escolas estao no topo?
+# cor(rank(dados$nota_mt), rank(dados$residuo))
+# Uma correlacao de postos alta significa que descontar o INSE muda pouco
+# a ordem; baixa, que muda muito. Qual das duas voce achou - e o que isso
+# diz ao gestor que usa o ranking bruto para premiar ou cobrar escolas?
+
+# PASSO 7 - rede: a mesma clientela, redes diferentes
+# As escolas estaduais e municipais com 9o ano tem INSE medio quase igual.
+# E a nota?
+# round(tapply(dados$inse, dados$rede, mean), 2)
+# round(tapply(dados$nota_mt, dados$rede, mean), 1)
+# m2 <- lm(nota_mt ~ inse + rede, data = dados)
+# summary(m2)
+# A categoria de referencia e "Estadual" (ordem alfabetica): o coeficiente
+# de "redeMunicipal" e a diferenca entre uma escola municipal e uma
+# estadual COM O MESMO INSE. Isso e efeito da rede? Pense em que
+# tipo de escola estadual ainda oferece 9o ano no RJ, e em quem chega la.
+
+# INTERPRETACAO HONESTA (para escrever no parecer):
+# - O INSE explica uma parte da diferenca entre escolas; a maior parte
+#   fica sem explicacao nesta base. "Sem explicacao" nao quer dizer
+#   "e a escola": falta o INSE de cada aluno, falta quem deixou a escola
+#   antes do 9o ano, falta o que a escola era em anos anteriores.
+# - O residuo NAO e uma medida de qualidade da escola. E o que sobra
+#   depois de uma unica variavel. Serve para fazer perguntas, nao para
+#   dar notas.
+# - Correlacao entre INSE e nota nao e efeito do INSE: familias escolhem
+#   escola, escolas selecionam alunos, professores escolhem onde trabalhar.
+
+# ANALISE-ESPELHO (obrigatoria no anexo do parecer): refaca os passos
+# 5 e 6 com nota_lp no lugar de nota_mt. O gradiente e parecido? As
+# mesmas escolas ficam acima da reta nas duas provas? Se sim, o que
+# elas tem nao e coisa de uma disciplina so.
+
+# O anexo do parecer leva o SEU script, com o roteiro completado e a
+# analise-espelho - nao o texto desta pagina.
+`;
+
+const DADOS_CSV = `id_escola,nome_escola,municipio,rede,nota_mt,nota_lp,inse,ideb,rendimento
+33036594,CE NAZIRA SALOMAO,Angra dos Reis,Estadual,243.59,257.87,4.85,4.1,0.821921
+33036640,CE DOUTOR ARTUR VARGAS,Angra dos Reis,Estadual,223.37,235.51,4.95,3.7,0.864591
+33036713,CE HONORIO LIMA,Angra dos Reis,Estadual,225.26,238.81,5.19,4.2,0.945572
+33036748,E M ALEXINA LOWNDES,Angra dos Reis,Municipal,255.19,262.02,5.32,4.8,0.906886
+33036764,ESCOLA MUNICIPAL BENEDITO DOS SANTOS BARBOSA,Angra dos Reis,Municipal,245.43,260.16,5.01,5.0,0.972709
+33036772,E M PROF AMELIA ARAUJO LAGE,Angra dos Reis,Municipal,254.01,255.66,5.2,4.9,0.958346
+33037000,E M BRIGADEIRO NOBREGA,Angra dos Reis,Municipal,248.81,251.31,4.62,4.8,0.959443
+33037027,CE ANTONIO DIAS LIMA,Angra dos Reis,Estadual,235.52,240.85,5.24,4.3,0.933355
+33037060,EM AUREA PIRES DA GAMA,Angra dos Reis,Municipal,248.1,253.44,4.96,4.7,0.944612
+33037078,E M CACIQUE CUNHABEBE,Angra dos Reis,Municipal,247.86,245.23,4.94,4.4,0.901902
+33037086,E M DOM PEDRO I,Angra dos Reis,Municipal,216.73,225.52,4.76,4.0,0.993371
+33037132,E M MAURO SERGIO DA CUNHA,Angra dos Reis,Municipal,218.86,218.78,4.84,3.7,0.93
+33037175,E M PROF CLEUSA FORTES DE PINHO JORDAO,Angra dos Reis,Municipal,239.23,262.71,4.95,4.6,0.921741
+33037221,E M TEREZA PINHEIRO DE ALMEIDA,Angra dos Reis,Municipal,235.91,243.46,4.8,4.2,0.895602
+33037272,E M CEL JOAO PEDRO ALMEIDA,Angra dos Reis,Municipal,248.94,258.42,4.98,4.6,0.903459
+33037337,CE ROBERTO MONTENEGRO,Angra dos Reis,Estadual,250.23,260.11,5.3,3.9,0.74441
+33037418,E M GAL SILVESTRE TRAVASSOS,Angra dos Reis,Municipal,254.69,266.55,4.45,4.6,0.850187
+33037450,E M PEDRO SOARES,Angra dos Reis,Municipal,252.76,251.79,4.24,5.1,1.0
+33098069,E M PROF TANIA RITA DE O TEIXEIRA,Angra dos Reis,Municipal,225.55,235.6,4.74,4.0,0.914098
+33098077,CIEP 302 CHARLES DICKENS,Angra dos Reis,Estadual,236.02,232.91,5.11,3.8,0.846876
+33187312,ESCOLA MUNICIPAL JULIO CESAR DE ALMEIDA LARANGEIRA,Angra dos Reis,Municipal,251.06,265.12,5.15,5.1,0.961211
+33191328,ESCOLA MUNICIPAL MARIA THERESA NASCIMENTO GARCIA,Angra dos Reis,Municipal,249.4,269.94,4.87,4.7,0.878411
+33191360,ESCOLA MUNICIPAL PREFEITO JOAO GREGORIO GALINDO,Angra dos Reis,Municipal,210.83,229.91,4.8,3.8,0.95916
+33004749,CE LOURENCA GUIMARAES,Aperibé,Estadual,247.54,260.22,5.19,5.0,0.980413
+33095647,CIEP 419 BENIGNO BAIRRAL,Aperibé,Estadual,288.83,285.61,5.23,5.8,0.92859
+33166323,ESCOLA MUNICIPAL CASIMIRO MOREIRA DA FONSECA,Aperibé,Municipal,251.65,237.57,5.01,4.6,0.958941
+33026467,COLEGIO MUNICIPAL PROFESSORA NAIR VALLADARES,Araruama,Municipal,249.28,261.31,5.01,3.7,0.722245
+33026548,E M CELINA MESQUITA PEDROSA,Araruama,Municipal,264.79,272.71,5.3,4.1,0.734493
+33026661,E M PROF CARLOS LEAL,Araruama,Municipal,257.81,257.23,5.15,4.7,0.897418
+33026696,E M VEREADOR MOYSES RAMALHO,Araruama,Municipal,259.87,274.81,5.24,5.4,0.969203
+33026815,COLEGIO MUNICIPAL HONORINO COUTINHO,Araruama,Municipal,258.98,253.49,4.89,4.0,0.758665
+33027030,COL MUN PROF PEDRO PAULO DE B PIMENTEL,Araruama,Municipal,238.56,238.74,4.44,3.8,0.812465
+33132151,E M JOAO BRITO DE SOUZA,Araruama,Municipal,238.93,240.2,4.78,3.9,0.847005
+33136700,E M ANDRE GOMES DOS SANTOS,Araruama,Municipal,284.67,282.59,5.09,5.2,0.843087
+33142149,COMP ED E ESP DE EXC E Q DE ENS PROF DARCY RIBEIRO,Araruama,Municipal,269.84,279.3,5.19,4.5,0.780496
+33145822,ESCOLA MUNICIPAL TONINHO SENRA,Araruama,Municipal,252.43,252.42,4.61,4.2,0.830721
+33150141,E M AGOSTINHO FRANCESCHI,Araruama,Municipal,238.51,237.72,4.89,3.6,0.776538
+33152756,E M BRUNNO BARRETO NAMETALA,Araruama,Municipal,253.35,254.18,5.16,4.2,0.829179
+33158363,VEREADOR EDEMUNDO PEREIRA DE SA CARVALHO,Araruama,Municipal,256.83,261.31,4.51,4.0,0.759641
+33184909,ESCOLA BILINGUE MUNICIPAL SUELI AMARAL,Araruama,Municipal,329.24,313.38,5.32,7.1,0.969129
+33189030,PRACA ESCOLA MUNICIPAL PREFEITO AFRANIO VALLADARES,Araruama,Municipal,251.86,268.24,4.73,3.9,0.737733
+33439591,PRACA ESCOLA COMANDANTE SERGIO RIBEIRO DE VASCONCELLOS,Araruama,Municipal,264.59,264.18,5.29,4.4,0.794902
+33016917,E E M JOAQUIM VITAL VIEIRA,Areal,Municipal,241.54,240.85,5.13,3.0,0.637377
+33183716,CE JOAQUIM VITAL VIEIRA,Areal,Estadual,257.04,261.08,5.42,5.1,0.959617
+33167397,INSTITUTO EDUCACIONAL DE HABILITACAO PROFISSIONAL E FORMACAO INTEGRAL - INEFI,Armação dos Búzios,Municipal,245.13,254.52,4.94,4.4,0.883585
+33027099,CIEP BRIZOLAO MUNICIPALIZADO 147 CECILIO BARROS PESSOA,Arraial do Cabo,Municipal,262.53,261.18,4.99,4.8,0.890366
+33027110,COLEGIO MUNICIPAL FRANCISCO PORTO DE AGUIAR,Arraial do Cabo,Municipal,263.41,268.94,4.86,5.0,0.906095
+33027170,COLEGIO MUNICIPAL VERA FELIZARDO,Arraial do Cabo,Municipal,251.38,243.05,5.15,4.3,0.86852
+33034273,CIEP 287 ANGELINA TEIXEIRA NETTO SYM,Barra do Piraí,Estadual,229.07,229.13,5.22,3.9,0.903156
+33034435,ESCOLA ESTADUAL MUNICIPALIZADA CONDE MODESTO LEAL,Barra do Piraí,Municipal,220.33,248.65,4.87,3.9,0.866237
+33034443,CE DOUTOR ALVARO ROCHA,Barra do Piraí,Estadual,249.1,255.32,5.05,4.7,0.9252
+33034508,CE SENADOR PAULO FERNANDES,Barra do Piraí,Estadual,226.78,232.06,4.71,4.0,0.938328
+33034516,EE PADRE ANTONIO PINTO,Barra do Piraí,Estadual,254.7,254.01,5.03,4.8,0.940337
+33034540,CE PROFESSOR JOSE ANTONIO MAIA VINAGRE,Barra do Piraí,Estadual,243.99,247.12,5.13,4.4,0.906508
+33034818,E M MARIETA VASCONCELOS COUTINHO COELHO MUNICIPALIZADA,Barra do Piraí,Municipal,258.94,255.61,4.87,4.8,0.913108
+33034869,CE PROFESSOR ADELINO TERRA,Barra do Piraí,Estadual,233.01,242.56,4.94,3.4,0.730547
+33094411,CIEP BRIZOLAO 428 DONA MARIANA COELHO MUNICIPALIZADO,Barra do Piraí,Municipal,229.9,242.98,4.89,4.3,0.948124
+33094420,CIEP 286 MURILO PORTUGAL,Barra do Piraí,Estadual,252.71,251.84,5.3,4.0,0.792892
+33098573,CIEP 310 PROFESSORA ALICE AIEX,Barra do Piraí,Estadual,227.37,231.08,4.94,3.6,0.840284
+33175039,E E M PROFESSORA MARIA NAZARETH SANTOS SILVA,Barra do Piraí,Municipal,249.88,259.83,4.86,4.7,0.909277
+33029334,CIEP 054 PROFESSORA MARIA JOSE MACHADO DE CARVALHO,Barra Mansa,Municipal,277.22,273.31,5.01,4.9,0.842081
+33029377,CE BOA VISTA,Barra Mansa,Estadual,251.36,252.71,5.01,4.4,0.862898
+33029415,COLEGIO MUNICIPAL ANTONIO PEREIRA BRUNO,Barra Mansa,Municipal,275.7,279.07,5.52,5.6,0.952469
+33029423,COLEGIO MUNICIPAL CLECIO PENEDO,Barra Mansa,Municipal,255.02,268.02,5.2,4.9,0.903255
+33029431,COLEGIO MUNICIPAL PADRE ANCHIETA,Barra Mansa,Municipal,269.12,267.77,5.27,4.8,0.84864
+33029440,COLEGIO MUNICIPAL PREFEITO LUIZ AMARAL,Barra Mansa,Municipal,252.06,260.51,4.77,4.8,0.917188
+33029458,COLEGIO MUNICIPAL PREFEITO MARCELLO DRABLE,Barra Mansa,Municipal,262.42,259.97,5.11,4.7,0.872705
+33029466,COLEGIO MUNICIPAL VEREADOR PAULO BASILIO DE OLIVEIRA,Barra Mansa,Municipal,260.46,268.91,5.26,5.2,0.950434
+33029474,COLEGIO MUNICIPAL WASHINGTON LUIZ,Barra Mansa,Municipal,251.24,262.32,5.12,4.5,0.855898
+33029571,COLEGIO MUNICIPAL ANTONIO ROCHA,Barra Mansa,Municipal,262.36,276.06,4.94,5.2,0.924538
+33029660,CE JAYME SILVESTRE CAMARGO,Barra Mansa,Estadual,251.73,256.22,5.3,5.0,0.980827
+33029679,CE PROFESSOR LUIZ GONZAGA DE MATTOS,Barra Mansa,Estadual,250.39,248.82,5.44,5.0,0.993371
+33029725,ESCOLA MUNICIPAL SANTO ANTONIO,Barra Mansa,Municipal,244.36,256.87,5.44,4.7,0.936233
+33029849,ESCOLA MUNICIPAL DAMIAO MEDEIROS,Barra Mansa,Municipal,267.73,255.41,5.17,5.0,0.929868
+33029920,COLEGIO MUNICIPAL JOAQUIM MARIA DA SILVA,Barra Mansa,Municipal,272.61,274.47,5.23,5.0,0.866458
+33029938,COLEGIO MUNICIPAL JOAQUIM RODRIGUES PEIXOTO JUNIOR,Barra Mansa,Municipal,250.12,260.3,5.13,4.6,0.896033
+33030189,CE ROSELANDIA,Barra Mansa,Estadual,264.75,268.77,5.19,5.3,0.961466
+33030286,CE MARECHAL FLORIANO PEIXOTO,Barra Mansa,Estadual,238.72,241.49,5.29,3.6,0.771433
+33030294,ESCOLA MUNICIPAL BARTHOLOMEU ANACLETO,Barra Mansa,Municipal,273.03,281.83,5.26,4.9,0.834488
+33030316,COLEGIO MUNICIPAL DOUTOR ELVINO ALVES FERREIRA,Barra Mansa,Municipal,259.58,265.09,5.36,4.8,0.880091
+33030405,ESCOLA ESTADUAL MUNICIPALIZADA RIALTO,Barra Mansa,Municipal,270.7,265.32,4.98,5.5,0.982364
+33099057,COLEGIO MUNICIPAL DOUTOR MAURICIO AMARAL,Barra Mansa,Municipal,258.59,270.31,5.06,5.2,0.953217
+33101000,CIEP 483 ADA BOGATO,Barra Mansa,Municipal,256.65,253.72,4.75,4.8,0.91855
+33121486,CEI SATURNINA DE CARVALHO E VIEIRA DA SILVA,Barra Mansa,Municipal,260.72,272.96,5.26,4.4,0.786258
+33121516,ESCOLA MUNICIPAL JAHYRA FONSECA DRABLE,Barra Mansa,Municipal,250.8,248.82,4.84,4.7,0.936325
+33046247,CE GUSTAVO BARROSO,Belford Roxo,Estadual,231.62,232.19,4.99,4.1,0.923999
+33046514,CIEP 178 JOAO SALDANHA,Belford Roxo,Estadual,212.72,212.8,5.04,3.2,0.839117
+33046530,CIEP 316 GENERAL LADARIO PEREIRA TELLES,Belford Roxo,Estadual,207.25,209.41,4.89,3.2,0.883513
+33046557,CIEP MUNICIPALIZADO SIMONE DE BEAUVOIR 366,Belford Roxo,Municipal,233.23,266.11,4.3,3.7,0.745297
+33046565,CIEP 375 WILSON GREY,Belford Roxo,Estadual,229.67,232.17,4.7,3.3,0.760651
+33046573,CIEP 376 CLAUDIO COUTINHO,Belford Roxo,Estadual,223.97,219.42,4.65,3.5,0.864366
+33046581,CIEP 377 CARMEM DA SILVA,Belford Roxo,Estadual,203.82,210.91,4.4,3.0,0.843063
+33046590,CIEP MUNICIPALIZADO CASEMIRO MEIRELLES 074,Belford Roxo,Municipal,216.22,228.24,4.65,3.7,0.917242
+33046620,CIEP 374 AUGUSTO RODRIGUES,Belford Roxo,Estadual,198.73,196.64,4.65,2.6,0.812512
+33046646,CIEP 197 MINISTRO MARCOS DE BARROS FREIRE,Belford Roxo,Estadual,220.32,220.94,4.68,3.3,0.821391
+33046654,CIEP 112 MONSENHOR SOLANO DANTAS MENEZES,Belford Roxo,Estadual,230.35,238.31,4.94,3.5,0.778304
+33046662,CIEP 116 VILA MAIA,Belford Roxo,Estadual,218.09,221.32,4.67,3.3,0.836753
+33046743,CE ALICE PACCINI GELIO,Belford Roxo,Estadual,244.1,258.63,4.91,5.0,0.985386
+33046751,CE BAIRRO NOVA AURORA,Belford Roxo,Estadual,226.28,231.62,4.86,3.8,0.887604
+33046794,CE RICARDA LEON,Belford Roxo,Estadual,213.35,225.59,4.74,2.8,0.713751
+33046867,CE BOM PASTOR,Belford Roxo,Estadual,220.45,229.22,4.76,3.7,0.884949
+33047251,EE CASTRO ALVES,Belford Roxo,Estadual,226.66,239.04,4.79,3.8,0.869151
+33047278,CE MARCILIO DIAS,Belford Roxo,Estadual,211.85,212.96,4.6,3.4,0.912591
+33047286,CIEP 210 MARIO ALVES DE SOUZA VIEIRA,Belford Roxo,Estadual,215.57,221.32,4.72,3.5,0.893842
+33047294,CE NOVA ALVORADA,Belford Roxo,Estadual,228.44,232.21,5.02,4.0,0.911624
+33047308,CE PAULINO BARBOSA,Belford Roxo,Estadual,246.95,252.56,4.91,4.4,0.886768
+33047316,CE PRESIDENTE JOAO GOULART,Belford Roxo,Estadual,227.25,235.87,5.05,3.7,0.839517
+33047324,CE SAO BERNARDO,Belford Roxo,Estadual,231.48,233.82,4.92,4.2,0.951947
+33047340,EE VITAL BRASIL,Belford Roxo,Estadual,237.15,242.37,4.99,4.0,0.853808
+33047430,E M BELFORD ROXO,Belford Roxo,Municipal,248.17,249.64,4.72,4.2,0.851459
+33047537,E M ERNESTO PINHEIRO BARCELLOS,Belford Roxo,Municipal,226.19,223.03,4.69,3.6,0.873621
+33047553,E M HELIOPOLIS,Belford Roxo,Municipal,221.11,233.43,4.88,3.5,0.82747
+33047561,E M IMACULADA CONCEICAO,Belford Roxo,Municipal,255.18,251.05,4.84,5.0,0.976051
+33047669,E M MIGUEL ANGELO LEONE,Belford Roxo,Municipal,223.2,227.3,4.75,3.5,0.829232
+33047685,E M NOSSA SENHORA DE FATIMA,Belford Roxo,Municipal,227.33,248.76,4.77,3.4,0.742765
+33047707,E M OLIVIA VALIANGA DA SILVA,Belford Roxo,Municipal,232.31,235.2,4.53,4.0,0.899321
+33047774,E M RUDA IGUATEMI VILLANOVA,Belford Roxo,Municipal,227.57,226.09,4.63,4.0,0.936525
+33047782,E M SAO BENTO,Belford Roxo,Municipal,227.77,236.07,4.6,3.9,0.890668
+33047863,E M WALDEMIRO JOSE PEREIRA,Belford Roxo,Municipal,203.21,219.51,4.67,3.3,0.896122
+33047936,CE JARDIM IPE,Belford Roxo,Estadual,216.72,220.76,4.71,3.4,0.866232
+33096643,E M SANTA CRUZ,Belford Roxo,Municipal,234.79,245.39,4.81,3.8,0.820096
+33096996,E M SAO FRANCISCO DE ASSIS,Belford Roxo,Municipal,253.29,249.3,4.83,4.7,0.924713
+33125538,E M IRMA MARIA FILOMENA LOPES FILHA,Belford Roxo,Municipal,245.54,248.59,4.66,4.6,0.930982
+33132542,E M PROFª MARCIA DE BRITO,Belford Roxo,Municipal,234.14,241.01,4.7,3.9,0.843651
+33151652,E M JULIO CESAR DE ANDRADE GONCALVES,Belford Roxo,Municipal,233.05,239.21,4.54,4.0,0.889154
+33526257,E M MALVINO JOSE DE MIRANDA,Belford Roxo,Municipal,254.76,270.53,4.86,4.5,0.823966
+33020540,CIEP 322 MOZART CUNHA GUIMARAES,Bom Jardim,Estadual,235.07,238.35,5.1,4.2,0.918393
+33020558,CE RAMIRO BRAGA,Bom Jardim,Estadual,276.45,274.92,5.13,4.5,0.773296
+33020710,CE DOUTOR PERICLES CORREA DA ROCHA,Bom Jardim,Estadual,256.92,262.47,5.08,4.6,0.871476
+33020779,CE LEOPOLDO OSCAR STUTZ,Bom Jardim,Estadual,276.75,276.45,5.03,4.7,0.790279
+33020957,CE PROFESSOR JOAO BRASIL,Bom Jardim,Estadual,244.53,236.09,4.88,4.1,0.871475
+33000026,CE GOVERNADOR ROBERTO SILVEIRA,Bom Jesus do Itabapoana,Estadual,224.8,233.74,4.57,3.7,0.863268
+33000042,CE PADRE MELLO,Bom Jesus do Itabapoana,Estadual,237.16,239.1,4.78,4.4,0.950798
+33000115,CE ALCINDA LOPES PEREIRA PINTO,Bom Jesus do Itabapoana,Estadual,251.83,246.28,5.06,4.8,0.975584
+33000158,CE EUCLIDES FELICIANO TARDIN,Bom Jesus do Itabapoana,Estadual,252.8,256.31,4.9,4.8,0.922135
+33000360,IE EBER TEIXEIRA DE FIGUEIREDO,Bom Jesus do Itabapoana,Estadual,265.88,254.31,5.16,5.3,0.992186
+33000476,E M CEL LUIZ VIEIRA,Bom Jesus do Itabapoana,Municipal,290.43,286.7,5.01,5.8,0.928073
+33000662,CE MARCILIO DIAS,Bom Jesus do Itabapoana,Estadual,242.74,256.2,4.96,4.2,0.851017
+33000670,CE MARIA DA CONCEICAO PEREIRA PINTO,Bom Jesus do Itabapoana,Estadual,243.54,258.9,4.4,4.8,0.96167
+33000913,E M LUIZ TITO DE ALMEIDA,Bom Jesus do Itabapoana,Municipal,267.06,259.79,5.04,5.1,0.941891
+33027420,EE ASPINO ROCHA,Cabo Frio,Estadual,239.79,255.8,5.26,4.3,0.875907
+33027447,CE PROFESSOR CORDELINO TEIXEIRA PAULO,Cabo Frio,Estadual,241.46,248.47,4.72,4.1,0.839342
+33027676,ESCOLA ESTADUAL MUNICIPALIZADA TEIXEIRA E SOUZA,Cabo Frio,Municipal,227.13,230.87,4.64,3.7,0.849489
+33027960,E M EDITH CASTRO DOS SANTOS,Cabo Frio,Municipal,197.66,198.51,4.92,2.7,0.837345
+33027986,E M FRANCISCO FRANCO,Cabo Frio,Municipal,213.3,194.05,4.68,3.2,0.931816
+33112576,E M PROFª MARCIA FRANCESCONI PEREIRA,Cabo Frio,Municipal,260.83,264.08,5.38,4.9,0.911329
+33125392,E M LUIZ LINDENBERG,Cabo Frio,Municipal,268.85,251.51,4.76,4.0,0.741773
+33146721,C M PROFª ELZA MARIA SANTA ROSA BERNARDO,Cabo Frio,Municipal,239.5,242.81,4.89,3.7,0.788949
+33157650,E M PROFESSORA TALITA HERNANDES PERELLO,Cabo Frio,Municipal,236.28,243.55,4.76,3.3,0.706732
+33043515,CIEP 140 MARIO CESAR GOMES DA SILVA,Cachoeiras de Macacu,Estadual,244.53,247.77,5.0,3.9,0.801709
+33043558,C M PROF CARLOS BRANDAO,Cachoeiras de Macacu,Municipal,237.2,243.38,4.67,3.3,0.712377
+33043655,CIEP 479 DOUTOR MARIO SIMAO ASSAF,Cachoeiras de Macacu,Estadual,241.15,249.03,4.97,3.8,0.783126
+33043760,CE SOL NASCENTE,Cachoeiras de Macacu,Estadual,258.71,263.78,4.99,4.5,0.83337
+33043981,E M ALMERINDA FERREIRA DE ALMEIDA,Cachoeiras de Macacu,Municipal,238.96,243.99,4.84,3.6,0.755009
+33044007,E M FUNCHAL,Cachoeiras de Macacu,Municipal,249.39,247.96,4.87,4.8,0.96266
+33044031,E M RIO DAS PEDRAS,Cachoeiras de Macacu,Municipal,262.51,269.61,4.8,5.0,0.902345
+33044090,E M ERNESTINA FERREIRA CAMPOS,Cachoeiras de Macacu,Municipal,235.11,246.95,4.87,3.8,0.814713
+33005362,CE WALDEMIRO PITA,Cambuci,Estadual,263.39,252.53,4.6,5.3,1.0
+33005478,CE OSCAR BATISTA,Cambuci,Estadual,234.0,248.23,4.7,4.5,0.956274
+33016062,E M CENECISTA ANTONIO AUGUSTO DA PAZ,Carapebus,Municipal,229.33,242.27,4.97,4.1,0.899677
+33016100,E E M CAMBOIM,Carapebus,Municipal,274.35,274.09,5.17,5.5,0.949744
+33016976,CIEP MUNICIPALIZADO PADRE JOAQUIM CHAVES DE FIGUEIREDO,Comendador Levy Gasparian,Municipal,261.82,268.96,4.73,5.1,0.930563
+33017077,E M SALATHIEL MACHADO DA FONSECA,Comendador Levy Gasparian,Municipal,305.0,292.07,5.15,6.6,1.0
+33138095,E M SAO JOAO BATISTA,Comendador Levy Gasparian,Municipal,285.08,282.52,5.13,5.9,0.96079
+33008256,CENTRO EDUCACIONAL 29 DE MAIO,Campos dos Goytacazes,Municipal,249.68,257.51,4.69,3.8,0.743589
+33008264,EM PROFESSORA OLGA LINHARES CORREA,Campos dos Goytacazes,Municipal,257.55,287.33,5.25,5.6,0.96931
+33008442,CE JOAO PESSOA,Campos dos Goytacazes,Estadual,238.43,250.79,5.36,3.7,0.774006
+33008450,CE JOSE DO PATROCINIO,Campos dos Goytacazes,Estadual,235.02,245.87,4.93,3.5,0.737194
+33008485,CE NILO PECANHA,Campos dos Goytacazes,Estadual,216.58,223.01,4.71,3.3,0.830196
+33008728,CE CONSTANTINO FERNANDES,Campos dos Goytacazes,Estadual,232.18,226.77,5.21,3.9,0.91224
+33008736,CE DESEMBARGADOR ALVARO FERREIRA PINTO,Campos dos Goytacazes,Estadual,206.04,213.06,4.86,2.8,0.779689
+33008752,CE DOM OTAVIANO DE ALBUQUERQUE,Campos dos Goytacazes,Estadual,223.09,210.31,4.87,3.1,0.787202
+33008795,CE DOUTOR CESAR TINOCO,Campos dos Goytacazes,Estadual,214.14,197.28,4.69,2.9,0.816055
+33008817,CE DOUTOR JOAO MURILO CARNEIRO DE OLIVEIRA,Campos dos Goytacazes,Estadual,191.31,199.03,4.53,2.0,0.640757
+33008868,CE DOUTOR THIERS CARDOSO,Campos dos Goytacazes,Estadual,222.27,222.98,5.04,3.6,0.88684
+33008892,CE GENERAL DUTRA,Campos dos Goytacazes,Estadual,210.53,208.19,4.81,2.5,0.690897
+33008957,EE JOAQUIM ATAYDE,Campos dos Goytacazes,Estadual,210.62,217.67,4.8,3.5,0.923452
+33008981,CE JOSE FRANCISCO SALES,Campos dos Goytacazes,Estadual,230.58,233.2,5.07,3.7,0.838228
+33009007,CE JULIAO NOGUEIRA,Campos dos Goytacazes,Estadual,229.95,231.09,5.1,3.9,0.903526
+33009023,EM MANOEL SIMOES DE REZENDE,Campos dos Goytacazes,Municipal,234.31,230.4,4.99,4.1,0.933651
+33009120,CE ROTARY II,Campos dos Goytacazes,Estadual,242.14,241.91,4.93,3.5,0.740605
+33009279,EM FREDERICO PAES BARBOSA,Campos dos Goytacazes,Municipal,266.02,281.57,5.03,5.8,1.0
+33009317,EM INICIACAO AGRICOLA JOSE FRANCISCO MOTA VASCONCELOS,Campos dos Goytacazes,Municipal,233.1,231.57,4.91,4.1,0.919033
+33009341,EM JOSE DO PATROCINIO,Campos dos Goytacazes,Municipal,206.54,219.65,4.91,3.6,0.94552
+33009392,EM MARECHAL ARTUR DA COSTA E SILVA,Campos dos Goytacazes,Municipal,219.84,218.47,4.58,2.8,0.692445
+33009775,INSTITUTO DE EDUCACAO PROFESSOR ALDO MUYLAERT,Campos dos Goytacazes,Estadual,234.22,232.31,5.18,3.5,0.790399
+33010110,LICEU DE HUMANIDADES DE CAMPOS,Campos dos Goytacazes,Estadual,235.87,240.82,5.16,3.7,0.808918
+33010170,CE NILO FERNANDES PEREIRA,Campos dos Goytacazes,Estadual,211.89,219.52,4.77,3.5,0.920408
+33010234,EM MARIA ANTONIA PESSANHA TRINDADE,Campos dos Goytacazes,Municipal,239.96,223.71,4.67,3.9,0.877683
+33010447,EM LULO FERREIRA DE ARAUJO,Campos dos Goytacazes,Municipal,206.9,215.2,4.78,3.4,0.924118
+33010749,EM FAROL DE SAO TOME,Campos dos Goytacazes,Municipal,274.15,289.24,5.06,5.7,0.938427
+33010811,EM SANTA TEREZINHA,Campos dos Goytacazes,Municipal,238.64,249.97,4.73,4.3,0.898126
+33010854,EM SANTA MARIA,Campos dos Goytacazes,Municipal,275.82,290.89,5.19,5.9,0.959646
+33011141,EM CLAUDIA ALMEIDA PINTO DE OLIVEIRA,Campos dos Goytacazes,Municipal,234.29,227.44,4.97,4.2,0.967114
+33011168,EM MIGUEL HENRIQUE GOMES,Campos dos Goytacazes,Municipal,252.07,265.02,4.61,4.7,0.897878
+33011206,EM OLAVO ALVES SALDANHA FILHO,Campos dos Goytacazes,Municipal,224.6,226.76,4.81,4.1,0.986048
+33011303,EM NOSSA SENHORA APARECIDA,Campos dos Goytacazes,Municipal,246.35,243.07,4.68,4.7,0.976173
+33011460,CE MARIA ISABEL RANGEL DE ARAUJO,Campos dos Goytacazes,Estadual,239.71,230.23,4.73,3.0,0.677368
+33011869,EM PROFESSORA ELEONORA DA SILVA PINTO VIANA,Campos dos Goytacazes,Municipal,241.23,259.82,4.8,5.0,1.0
+33011885,EM BARTHOLOMEU LYSANDRO,Campos dos Goytacazes,Municipal,216.62,212.73,4.75,3.2,0.830872
+33011907,EM CARLOS CHAGAS,Campos dos Goytacazes,Municipal,214.8,225.08,4.7,3.3,0.836594
+33012032,EM ELOY ORNELAS,Campos dos Goytacazes,Municipal,247.97,236.95,4.82,4.3,0.901992
+33097267,EM NOSSA SENHORA DA CONCEICAO,Campos dos Goytacazes,Municipal,208.81,228.72,4.95,3.9,0.986743
+33099294,CIEP BRIZOLAO 269 FRANCISCO PORTELA,Campos dos Goytacazes,Municipal,223.93,230.34,4.78,4.1,0.961973
+33099758,CIEP 417 GINASIO PUBLICO JOSE DO PATROCINIO,Campos dos Goytacazes,Estadual,202.67,202.32,4.88,2.4,0.704929
+33151482,EM AMARO PRATA TAVARES,Campos dos Goytacazes,Municipal,226.97,230.77,4.87,3.6,0.83709
+33163049,CIEP BRIZOLAO 416 WILSON BATISTA,Campos dos Goytacazes,Municipal,258.05,265.54,4.66,5.0,0.934684
+33163057,EM CLOVIS TAVARES,Campos dos Goytacazes,Municipal,243.46,263.1,4.77,4.7,0.917119
+33018820,CE MARIA ZULMIRA TORRES,Cantagalo,Estadual,249.69,258.21,5.33,4.4,0.866144
+33019223,CE JOAO DE ABREU JUNIOR,Cantagalo,Estadual,266.84,258.82,4.87,5.4,0.988892
+33019371,E M ELESTAR CAETANO MENDES,Cantagalo,Municipal,239.18,245.94,5.06,4.5,0.951823
+33019428,CE DOUTOR FRANCISCO LEITE TEIXEIRA,Cantagalo,Estadual,267.55,252.76,5.1,4.6,0.856352
+33158576,EM LAMEIRA DE ANDRADE,Cantagalo,Municipal,218.49,217.88,5.03,3.2,0.821544
+33442371,EM MARIA BELLIENI DOLIVAL,Cantagalo,Municipal,260.66,254.69,5.02,4.1,0.786025
+33012164,ESCOLA ESTADUAL MUNICIPALIZADA AZEVEDO CRUZ,Cardoso Moreira,Municipal,268.8,281.69,4.77,4.7,0.797411
+33012261,E M MANOEL JOAQUIM DA SILVA PINTO,Cardoso Moreira,Municipal,272.06,279.79,5.16,5.4,0.914395
+33012270,E M MARIA DA PENHA MARINS SIQUEIRA,Cardoso Moreira,Municipal,245.63,239.45,4.97,4.3,0.895804
+33098662,CIEP 464 ADMAR FERREIRA DE MEDEIROS,Cardoso Moreira,Estadual,279.61,274.41,5.24,5.4,0.913682
+33019673,CIEP 280 PROFESSOR VASCO FERNANDES DA SILVA PORTO,Carmo,Estadual,264.16,267.11,5.07,5.0,0.898864
+33019789,CE FRANCISCO VARELLA,Carmo,Estadual,255.9,260.63,4.91,4.9,0.928295
+33020051,ESCOLA MUNICIPAL ANTONIO DE FARIA SALGADO,Carmo,Municipal,272.76,273.25,5.34,4.4,0.770605
+33183740,CE PRIMEIRO SARGENTO BM LUIZ CARLOS GONCALVES FISCHER,Carmo,Estadual,294.33,279.25,5.3,5.8,0.927427
+33025304,ESCOLA MUNICIPAL SANTA LUZIA,Casimiro de Abreu,Municipal,239.07,228.22,4.72,3.7,0.840524
+33025380,E M CHRISTIANE SIQUEIRA SALLES DE CARVALHO,Casimiro de Abreu,Municipal,254.26,248.24,5.06,4.9,0.980807
+33097550,CIEP BRIZ 459 MUN JOSE BICUDO JARDIM,Casimiro de Abreu,Municipal,241.25,245.66,5.07,4.5,0.942068
+33146730,CIEP BRIZ 406 MUN LUDEVIS TEIXEIRA BASTOS,Casimiro de Abreu,Municipal,273.86,278.13,5.24,5.4,0.922159
+33014817,EE JOSE DE PAULA BARRETO,Conceição de Macabu,Estadual,255.32,269.03,4.55,5.4,1.0
+33014833,CE MARIA LOBO VIANA,Conceição de Macabu,Estadual,249.01,260.38,5.09,5.1,0.985261
+33014841,E E M VICTOR SENCE,Conceição de Macabu,Municipal,237.92,250.83,4.76,4.2,0.877399
+33149402,ESCOLA MUNICIPAL FREI VALERIO,Conceição de Macabu,Municipal,226.48,234.46,4.87,3.9,0.886817
+33020116,CIEP 145 DOUTOR OSWALDO CRUZ,Cordeiro,Estadual,237.91,248.09,4.82,4.8,1.0
+33020140,CE ANTONIO PECLY,Cordeiro,Estadual,245.56,255.77,5.17,4.7,0.931102
+33020205,CE CONSTANCA SOARES TEIXEIRA,Cordeiro,Estadual,239.2,256.34,5.01,4.6,0.927203
+33020310,E M JOSE PINHO DE CARVALHO,Cordeiro,Municipal,259.06,269.32,5.32,5.2,0.946463
+33096791,E M ZULEIKA J M RODRIGUES,Cordeiro,Municipal,238.84,253.38,5.03,4.8,0.981809
+33183732,CE SEGUNDO TENENTE BM SERGIO RODRIGUES DA SILVA,Cordeiro,Estadual,292.68,303.53,5.67,6.3,0.952272
+33222207,ESCOLA MUNICIPAL NELLY DE REZENDE MARANHAO,Cordeiro,Municipal,250.24,249.54,5.0,4.8,0.970619
+33021082,CE ALMIRANTE PROTOGENES,Duas Barras,Estadual,246.73,248.9,5.13,4.7,0.948103
+33021236,CE MARIA ROSA TEIXEIRA,Duas Barras,Estadual,253.64,259.19,5.22,4.9,0.948462
+33021252,E M PEDRO JOSE DE ANDRADE,Duas Barras,Municipal,254.65,250.65,5.25,4.0,0.789324
+33115222,E M PROFESSORA LIBERALINA ALVES RIBEIRO DE SOUZA,Duas Barras,Municipal,233.19,244.94,4.99,4.3,0.918637
+33125376,E M EX COMBATENTE AMANCIO PINTO,Duas Barras,Municipal,239.46,256.65,5.23,4.1,0.835466
+33142351,CIEP 511 ALAIDE ARAUJO STORCK MELLOR MARQUES,Duas Barras,Estadual,242.49,235.97,4.97,4.3,0.927703
+33048290,CIEP BRIZOLAO MUNICIPALIZADO 097 CARLOS CHAGAS,Duque de Caxias,Municipal,238.15,246.25,4.71,3.7,0.782372
+33048312,CIEP 226 PORTO DA ESTRELA,Duque de Caxias,Estadual,225.12,227.49,4.73,3.3,0.790369
+33048347,CIEP 198 PROFESSORA ROZA FERREIRA DE MATTOS,Duque de Caxias,Estadual,235.99,242.24,4.59,4.0,0.8537
+33048444,CE ALVARO NEGROMONTE,Duque de Caxias,Estadual,224.56,228.36,4.82,3.3,0.779916
+33048452,CE AURA BARRETO,Duque de Caxias,Estadual,239.81,253.95,4.94,4.3,0.88068
+33048479,CE DUQUE DE CAXIAS,Duque de Caxias,Estadual,218.02,222.88,4.89,3.6,0.894168
+33048517,CE RUI BARBOSA,Duque de Caxias,Estadual,225.77,234.77,4.79,4.1,0.953173
+33048797,CE PROFESSORA NORMA TOOP URUGUAY,Duque de Caxias,Estadual,242.32,242.75,5.06,4.5,0.938442
+33048835,EE ARARIBOIA,Duque de Caxias,Estadual,236.95,238.17,5.04,3.7,0.796986
+33048843,EE BAIRRO SENHOR DO BONFIM,Duque de Caxias,Estadual,235.48,242.52,4.8,4.0,0.854731
+33048860,CE DOUTOR IGNACIO BEZERRA DE MENEZES,Duque de Caxias,Estadual,215.89,223.84,4.85,3.6,0.893738
+33048878,CE EUCLIDES DA CUNHA,Duque de Caxias,Estadual,251.68,261.46,5.03,4.0,0.767348
+33048886,CE EVANGELINA PORTO DA MOTTA,Duque de Caxias,Estadual,220.52,226.88,4.91,3.6,0.876662
+33048908,CE GETULIO VARGAS,Duque de Caxias,Estadual,263.27,255.87,4.73,4.4,0.833217
+33048916,EE GILBERTO FREIRE,Duque de Caxias,Estadual,256.81,255.68,4.84,4.8,0.913732
+33048932,CE HERBERT MOSES,Duque de Caxias,Estadual,221.96,209.91,5.03,3.6,0.940775
+33048940,CE LARA VILLELA,Duque de Caxias,Estadual,221.77,218.29,4.81,3.3,0.818196
+33048959,CE LIA MARCIA GONCALVES PANARO,Duque de Caxias,Estadual,265.05,262.79,4.93,4.8,0.878014
+33048975,CE MIGUEL COUTO,Duque de Caxias,Estadual,224.15,225.91,4.87,3.9,0.929906
+33048991,CE PROFESSOR JOSE DE SOUZA HERDY,Duque de Caxias,Estadual,215.56,224.79,5.04,3.5,0.868418
+33049025,CE VINICIUS DE MORAES,Duque de Caxias,Estadual,228.17,234.5,4.66,3.9,0.898764
+33049157,ESCOLA MUNICIPAL GENERAL SAMPAIO,Duque de Caxias,Municipal,213.27,236.09,4.74,3.8,0.91189
+33049165,E M HELENA AGUIAR DE MEDEIROS,Duque de Caxias,Municipal,258.65,256.57,4.72,4.5,0.858532
+33049190,E M JOAQUIM DA SILVA PECANHA,Duque de Caxias,Municipal,244.41,239.81,4.78,3.8,0.803284
+33049475,IE GOVERNADOR ROBERTO SILVEIRA,Duque de Caxias,Estadual,209.57,227.71,5.1,3.5,0.894889
+33049670,CIEP BRIZOLAO MUNICIPALIZADO 120 MONTEIRO LOBATO,Duque de Caxias,Municipal,218.22,208.09,4.85,3.5,0.929417
+33049696,CIEP 369 JORNALISTA SANDRO MOREYRA,Duque de Caxias,Estadual,238.39,243.29,5.03,3.9,0.833722
+33049726,CIEP 089 GRACILIANO RAMOS,Duque de Caxias,Estadual,210.69,215.64,4.62,3.3,0.8852
+33049734,CIEP 035 MARECHAL HENRIQUE TEIXEIRA LOTT,Duque de Caxias,Estadual,218.85,229.88,5.04,3.6,0.864551
+33049785,CE ADELINA CASTRO,Duque de Caxias,Estadual,230.61,232.47,4.86,3.8,0.876446
+33049815,CE SANTO INACIO,Duque de Caxias,Estadual,232.04,232.19,4.87,3.5,0.790163
+33049920,CE ABDALA CHAMA,Duque de Caxias,Estadual,261.09,258.9,4.93,3.9,0.739451
+33049947,EE ASSIS CHATEAUBRIAND,Duque de Caxias,Estadual,229.99,242.85,5.06,4.0,0.87649
+33049963,CE EMBAIXADOR RAUL FERNANDES,Duque de Caxias,Estadual,234.08,229.73,4.77,3.6,0.809249
+33049998,EE JOAO XXIII,Duque de Caxias,Estadual,233.11,238.71,4.64,3.8,0.847678
+33050015,CE MARECHAL RONDON,Duque de Caxias,Estadual,236.77,244.89,4.92,4.3,0.909969
+33050023,COLEGIO ESTADUAL MINAS GERAIS,Duque de Caxias,Estadual,241.32,253.97,5.1,4.4,0.88518
+33050040,EE PROFESSORA CORDELIA PAIVA,Duque de Caxias,Estadual,233.19,236.92,5.01,4.3,0.953382
+33050058,EE PROFESSORA SARAH FARIA BRAZ,Duque de Caxias,Estadual,237.02,234.85,5.03,3.9,0.850519
+33050074,E M ANTON DWORSAK,Duque de Caxias,Municipal,221.24,235.52,5.19,3.6,0.830677
+33050147,E M JAYME FICHMAN,Duque de Caxias,Municipal,230.86,233.62,4.9,4.1,0.927248
+33050244,E M NISIA VILELA FERNANDES,Duque de Caxias,Municipal,230.91,235.52,4.81,3.5,0.788514
+33050260,ESCOLA MUNICIPAL PRESIDENTE COSTA E SILVA,Duque de Caxias,Municipal,237.36,234.39,4.6,3.8,0.837143
+33050279,E M PROFESSOR JOAO FAUSTINO DE FRANCA SOBRINHO,Duque de Caxias,Municipal,220.8,210.31,5.07,3.2,0.832466
+33050406,CIEP MUNICIPALIZADO BRIZOLAO 015 HENRIQUE DE S FILHO HENFIL,Duque de Caxias,Municipal,220.75,239.52,4.79,3.7,0.849486
+33050422,CE FERNANDO FIGUEIREDO,Duque de Caxias,Estadual,207.9,203.45,4.71,3.0,0.861877
+33050430,CE PADRE ANCHIETA,Duque de Caxias,Estadual,251.64,256.34,4.99,5.1,1.0
+33050503,CE MANOEL BANDEIRA,Duque de Caxias,Estadual,226.2,230.41,4.92,3.7,0.866332
+33050511,CE NOVA AMERICA,Duque de Caxias,Estadual,208.54,220.81,4.82,3.4,0.898264
+33050562,E E M PROFESSORA MARIA DE ARAUJO DA SILVA,Duque de Caxias,Municipal,226.73,232.48,5.0,3.8,0.87708
+33050570,CE PROFESSORA MINERVINA BARBOSA DE CASTRO,Duque de Caxias,Estadual,250.45,255.62,5.09,4.7,0.913545
+33050619,E M CAPITAO FUZILEIRO NAVAL EDUARDO GOMES DE OLIVEIRA,Duque de Caxias,Municipal,240.42,267.82,4.83,4.7,0.92162
+33050635,E M GENERAL MOURAO FILHO,Duque de Caxias,Municipal,228.04,240.23,4.84,3.3,0.741785
+33050686,ESCOLA MUNICIPAL SANTA LUZIA,Duque de Caxias,Municipal,229.68,239.96,5.16,3.9,0.87473
+33050708,E M ROBERTO WEGUELIN DE ABREU,Duque de Caxias,Municipal,234.0,253.54,4.8,3.9,0.822715
+33050716,E M ROTARY,Duque de Caxias,Municipal,223.44,235.7,5.0,3.7,0.850631
+33050791,CE ALEMY TAVARES DA SILVA,Duque de Caxias,Estadual,221.79,226.93,5.1,3.4,0.811172
+33050805,CE HERVALINA DINIZ PIRES,Duque de Caxias,Estadual,235.0,241.69,5.01,4.3,0.922144
+33050813,CE MONTEIRO LOBATO,Duque de Caxias,Estadual,229.38,241.93,5.11,4.3,0.942701
+33050848,CE SANTO ANTONIO,Duque de Caxias,Estadual,232.52,242.03,5.17,3.9,0.846284
+33050880,E M BRASILIA,Duque de Caxias,Municipal,221.54,222.4,4.87,3.7,0.918243
+33050945,E M MONTESE,Duque de Caxias,Municipal,223.93,220.81,4.92,3.6,0.874881
+33050988,E M SG JOAO DELIO DOS SANTOS,Duque de Caxias,Municipal,250.19,245.89,4.82,4.6,0.928389
+33096694,CIEP 476 ELIAS LAZARONI,Duque de Caxias,Estadual,212.63,209.42,4.85,3.2,0.871134
+33097810,CIEP 348 EUGENIA MOREYRA,Duque de Caxias,Estadual,232.78,233.16,4.86,3.8,0.854451
+33097895,CIEP 404 CLARICE LISPECTOR,Duque de Caxias,Estadual,227.45,233.13,4.86,3.7,0.860902
+33099073,CIEP 199 GINASIO PUBLICO CHARLES CHAPLIN,Duque de Caxias,Estadual,227.4,234.39,4.9,3.1,0.706227
+33099200,CIEP 229 CANDIDO PORTINARI,Duque de Caxias,Estadual,223.27,229.93,4.7,3.7,0.878172
+33099227,CIEP 370 PROFESSOR SYLVIO GNECCO DE CARVALHO BRASILMEXICO,Duque de Caxias,Estadual,218.17,228.83,4.87,3.7,0.909107
+33099766,CIEP 209 ATAULFO ALVES,Duque de Caxias,Estadual,208.29,221.75,4.75,3.5,0.901923
+33099782,CIEP 338-ESCOLA MUNICIPALIZADA CELIA RABELO,Duque de Caxias,Municipal,233.25,230.88,4.83,3.1,0.712288
+33101094,CIEP 330 BRIZOLAO MUNICIPALIZADO MARIA DA GLORIA CORREA LEMOS,Duque de Caxias,Municipal,219.78,219.04,4.76,3.5,0.886405
+33101620,CIEP 176 CHICO MENDES,Duque de Caxias,Estadual,217.93,227.09,4.54,3.3,0.799506
+33104999,CIEP BRIZOLAO MUNICIPALIZADO 328 MARIE CURIE,Duque de Caxias,Municipal,230.06,245.09,4.6,4.2,0.920402
+33110220,CIEP 201 AARAO STEINBRUCH,Duque de Caxias,Estadual,233.82,239.23,4.76,4.0,0.869256
+33135240,E M DR ELY COMBAT,Duque de Caxias,Municipal,241.83,242.51,5.16,4.2,0.887649
+33144117,E M PROFESSOR ONERES NUNES OLIVEIRA,Duque de Caxias,Municipal,244.75,246.89,4.64,4.4,0.914207
+33146837,E M DR RICARDO AUGUSTO DE AZEREDO VIANNA,Duque de Caxias,Municipal,249.41,248.29,4.82,3.9,0.792799
+33146853,E M MAURO DE CASTRO,Duque de Caxias,Municipal,230.93,249.63,4.83,4.4,0.936792
+33146861,E M MARIA CLARA MACHADO,Duque de Caxias,Municipal,219.28,225.63,4.71,3.3,0.806151
+33153620,E M WILSON DE OLIVEIRA SIMOES,Duque de Caxias,Municipal,206.21,213.69,4.64,2.6,0.715313
+33177783,ESCOLA MUNICIPAL CIDADE DOS MENINOS,Duque de Caxias,Municipal,230.21,232.0,4.78,3.7,0.849823
+33186103,III COLEGIO DA POLICIA MILITAR DO RIO DE JANEIRO PERCY GERALDO BOLSONARO,Duque de Caxias,Estadual,303.8,305.91,5.86,6.7,0.97957
+33038058,COLEGIO MUNICIPAL CARLOS GRAMATICO,Engenheiro Paulo de Frontin,Municipal,253.69,242.43,5.1,4.5,0.912732
+33038066,COLEGIO MUNICIPAL JOAQUIM MENDES,Engenheiro Paulo de Frontin,Municipal,230.14,230.8,4.8,4.1,0.93183
+33171840,ESCOLA MUNICIPAL CECILIO BARBOSA DA PAIXAO,Engenheiro Paulo de Frontin,Municipal,249.05,257.69,5.12,4.7,0.918647
+33051135,ESCOLA MUNICIPAL FAZENDA SERNAMBETIBA,Guapimirim,Municipal,239.3,249.09,4.76,4.6,0.948216
+33051160,ESCOLA MUNICIPAL SIMAO DA MOTTA,Guapimirim,Municipal,250.16,260.08,4.89,4.4,0.857882
+33051186,ESCOLA MUNICIPAL CASTRO ALVES,Guapimirim,Municipal,256.42,256.94,5.24,5.1,0.972838
+33051305,ESCOLA MUNICIPAL PROFESSORA ILZA JUNGER PACHECO,Guapimirim,Municipal,255.88,261.57,5.33,4.8,0.910845
+33096910,ESCOLA MUNICIPAL ROSA DE SAROM,Guapimirim,Municipal,235.46,237.28,4.74,3.9,0.861099
+33157766,ESCOLA MUNICIPAL MAXIMINO JOSE PACHECO,Guapimirim,Municipal,244.15,255.84,5.05,4.4,0.884819
+33028656,E M NARCISO MACEDO,Iguaba Grande,Municipal,261.64,252.4,5.09,5.2,0.987085
+33125686,E M DEP CLAUDIO MOACYR DE AZEVEDO,Iguaba Grande,Municipal,278.16,268.06,5.42,5.8,1.0
+33162875,E M NEREA ESTHER BATISTA ALCOFORADO NATIVIDADE,Iguaba Grande,Municipal,260.52,259.82,4.78,4.2,0.781968
+33186871,ESCOLA MUNICIPAL PROFESSORA MARIA LUCIA DE OLIVEIRA COSTA,Iguaba Grande,Municipal,279.7,276.83,5.14,5.8,0.978707
+33218609,E M ALICE CANELLAS DA SILVEIRA,Iguaba Grande,Municipal,271.34,269.39,5.2,5.5,0.974379
+33051321,CIEP 130 DOUTOR ELIAS DE MIRANDA SARAIVA,Itaboraí,Estadual,228.4,243.47,5.06,3.7,0.816107
+33051380,CE VISCONDE DE ITABORAI,Itaboraí,Estadual,232.35,243.55,5.04,3.3,0.70798
+33051461,EM ONZE DE JUNHO,Itaboraí,Municipal,215.3,228.04,4.72,3.4,0.840438
+33051534,E M AFONSO SALLES,Itaboraí,Municipal,234.32,261.85,4.99,4.0,0.810014
+33051569,E M CLARA PEREIRA DE OLIVEIRA,Itaboraí,Municipal,227.88,241.54,4.99,3.6,0.810914
+33051607,E M MARIANA DA GLORIA,Itaboraí,Municipal,216.55,218.95,4.64,3.0,0.775799
+33051640,E M PREF MILTON RODRIGUES ROCHA,Itaboraí,Municipal,228.21,235.44,4.89,4.1,0.926938
+33051658,E M PROFª CECILIA AUGUSTA DOS SANTOS,Itaboraí,Municipal,233.36,245.34,5.0,3.9,0.841534
+33051690,E M GUILHERME DE MIRANDA SARAIVA,Itaboraí,Municipal,230.68,233.42,5.14,3.7,0.835656
+33051747,ESCOLA MUNICIPALIZADA LUCAS DA SILVA,Itaboraí,Municipal,251.45,249.72,5.02,4.2,0.838435
+33051771,E M GASTAO DIAS DE OLIVEIRA,Itaboraí,Municipal,224.72,221.42,5.03,3.5,0.853165
+33051941,E M ANTONIO ALVES VIANNA,Itaboraí,Municipal,229.88,245.78,4.82,4.1,0.890032
+33051984,E M LUZIA GOMES DE OLIVEIRA,Itaboraí,Municipal,226.44,241.64,4.86,3.8,0.857215
+33052042,E M JOSE FERREIRA,Itaboraí,Municipal,217.93,221.98,4.89,3.2,0.791965
+33052123,E M GEREMIAS DE M FONTES,Itaboraí,Municipal,219.32,224.68,5.1,2.9,0.706792
+33052255,CE JOVINA AMARAL DE OLIVEIRA,Itaboraí,Estadual,249.86,261.49,4.8,4.2,0.804713
+33052301,E M ALFREDO TORRES,Itaboraí,Municipal,233.16,250.75,5.04,4.2,0.88977
+33097194,ESCOLA MUNICIPALIZADA DE TEMPO INTEGRAL JOAQUIM PEDRO DE ANDRADE - CIEP BRIZOLAO 452,Itaboraí,Municipal,241.88,263.63,4.81,4.5,0.875843
+33097640,ESCOLA MUNICIPALIZADA DE TEMPO INTEGRAL ODILON BERNARDES - CIEP 478,Itaboraí,Municipal,225.69,248.57,4.81,3.7,0.812147
+33107939,E M JORNALISTA ALBERTO TORRES,Itaboraí,Municipal,255.21,267.5,5.14,4.8,0.889096
+33119090,E M PROMOTOR LUIZ CARLOS CAFFARO,Itaboraí,Municipal,230.78,233.56,4.97,3.6,0.806413
+33119112,E M PADRE HUGO MONTEDONIO REGO,Itaboraí,Municipal,227.95,236.2,4.85,3.3,0.756823
+33119120,E M AUTO RODRIGUES DE FREITAS,Itaboraí,Municipal,238.75,254.38,5.13,4.3,0.878805
+33129266,E M ANTONIO CARLOS DA SILVA,Itaboraí,Municipal,235.45,231.18,4.84,3.4,0.763715
+33130930,E M PROFª MARLY CID ALMEIDA DE ABREU,Itaboraí,Municipal,241.1,244.12,5.0,3.5,0.736192
+33151555,E M PROFª MARIA ANA MOREIRA,Itaboraí,Municipal,240.27,258.57,5.02,3.9,0.78946
+33157618,ESCOLA MUNICIPAL ROBERTA MARIA SODRE DE MACEDO,Itaboraí,Municipal,263.95,271.17,5.02,4.1,0.730339
+33166536,ESCOLA MUNICIPAL ANTONIO SANTOS DA SILVA,Itaboraí,Municipal,251.33,268.47,5.17,5.0,0.938048
+33166544,EM VEREADOR DIMAS MONTEIRO NOGUEIRA,Itaboraí,Municipal,246.45,249.85,4.73,4.6,0.936133
+33044856,CIEP 300 MUNICIPALIZADO PREFEITO VICENTE CICARINO,Itaguaí,Municipal,241.96,245.54,5.06,4.2,0.880077
+33044864,CIEP 496 - MUNICIPALIZADO MAESTRO FRANCISCO MIGNONE,Itaguaí,Municipal,241.27,231.92,4.95,3.6,0.793357
+33044970,COLEGIO MUNICIPAL SENADOR TEOTONIO VILELLA,Itaguaí,Municipal,251.67,256.27,5.33,4.8,0.940445
+33045143,E E M CHAPERO,Itaguaí,Municipal,216.8,219.06,4.92,3.7,0.950692
+33045151,E M DAS ACACIAS,Itaguaí,Municipal,217.21,227.26,4.69,3.5,0.855967
+33045160,ESCOLA MUNICIPAL ELMO BAPTISTA COELHO,Itaguaí,Municipal,228.37,248.22,5.1,4.6,1.0
+33045330,E E M CARMEM MENEZES DIREITO,Itaguaí,Municipal,245.47,245.67,5.0,4.5,0.920023
+33117365,E M SEVERINO SALUSTIANO DE FARIAS,Itaguaí,Municipal,233.45,248.97,4.94,4.5,0.948041
+33120420,E M PREF ABEILARD GOULART DE SOUZA,Itaguaí,Municipal,245.97,246.33,4.87,4.0,0.81941
+33127530,E M ELMIRA FIGUEIRA,Itaguaí,Municipal,224.37,221.67,4.88,3.6,0.870165
+33166447,ESCOLA MUNICIPAL PREFEITO OTONI ROCHA,Itaguaí,Municipal,244.72,253.76,4.89,4.1,0.824321
+33166455,ESCOLA MUNICIPAL VEREADOR JOSE GALLIACO PRATA,Itaguaí,Municipal,228.48,227.54,4.83,3.4,0.785603
+33228205,ESCOLA MUNICIPAL PREFEITO WILSON PEDRO FRANCISCO,Itaguaí,Municipal,227.58,236.59,4.81,4.0,0.903274
+33439281,E M JORGE FLORES DA SILVA,Itaguaí,Municipal,233.4,232.32,4.73,4.0,0.903342
+33001014,CIEP 141 VEREADOR SAID TANUS JOSE,Italva,Estadual,275.29,279.07,5.17,5.7,0.962482
+33001057,EM SEVERINO PEREIRA DA SILVA,Italva,Municipal,273.36,262.53,4.99,5.5,0.974428
+33001138,E M GLYCERIO SALLES,Italva,Municipal,282.57,293.72,4.88,5.8,0.920753
+33005990,CE FREI TOMAS,Itaocara,Estadual,296.17,297.9,5.01,6.4,0.975556
+33006296,CE LAURINDO PITA,Itaocara,Estadual,269.69,258.79,4.71,5.0,0.907038
+33006458,CE JOHENIR HENRIQUES VIEGAS,Itaocara,Estadual,283.39,276.5,4.68,5.7,0.955306
+33006571,CE JAIME QUEIROZ DE SOUZA,Itaocara,Estadual,280.97,280.51,5.19,5.8,0.956926
+33099278,CIEP 275 LENINE CORTES FALANTE,Itaocara,Estadual,286.23,287.84,5.14,6.0,0.963044
+33001286,CE DEZ DE MAIO,Itaperuna,Estadual,260.16,274.5,5.05,4.9,0.885722
+33001294,CE BUARQUE DE NAZARETH,Itaperuna,Estadual,239.36,240.57,4.91,4.2,0.906596
+33001316,CE LUIZ FERRAZ,Itaperuna,Estadual,260.47,281.96,5.05,5.7,0.995951
+33001332,CE ROMUALDO MONTEIRO DE BARROS,Itaperuna,Estadual,252.59,253.35,5.35,4.8,0.932201
+33001731,E M SITIO SAO BENEDITO,Itaperuna,Municipal,267.06,278.39,5.03,5.7,0.982186
+33001987,E M NOSSA SRA DAS GRACAS,Itaperuna,Municipal,290.37,282.67,5.39,5.9,0.947662
+33001995,E M OSCAR JERONIMO DA SILVA,Itaperuna,Municipal,278.38,288.49,4.86,5.8,0.945659
+33002053,E M FRANCISCO DE MATTOS LIGIERO,Itaperuna,Municipal,271.91,283.07,5.16,5.7,0.970319
+33002126,CE SENADOR SA TINOCO,Itaperuna,Estadual,263.94,250.52,4.76,4.7,0.896154
+33002185,E M AGUAS CLARAS,Itaperuna,Municipal,258.87,267.26,5.09,5.3,0.975907
+33002258,CE NICOLAO BASTOS FILHO,Itaperuna,Estadual,270.94,272.69,5.04,5.5,0.965461
+33002312,CE DOUTOR JOSE BASTOS FRANCA,Itaperuna,Estadual,240.76,233.39,4.79,4.3,0.934741
+33002614,CE ETELVINA ALVES DA SILVA,Itaperuna,Estadual,254.71,258.76,4.84,5.2,0.987552
+33002827,CE JOSE GARCIA DE FREITAS,Itaperuna,Estadual,252.77,261.34,4.69,5.1,0.981252
+33094756,CIEP BRIZOLAO 264 HENRIETE MORINEAU,Itaperuna,Municipal,299.43,288.73,4.99,6.4,0.99311
+33096589,E MZ CIEP BRIZOLAO 467 HENRIETT AMADO,Itaperuna,Municipal,270.18,269.22,4.9,5.4,0.96313
+33030480,C M DOM OTTORINO ZANON,Itatiaia,Municipal,247.15,243.25,5.09,4.1,0.840265
+33030545,ESCOLA MUNICIPAL LEA DUARTE JARDIM,Itatiaia,Municipal,240.75,234.75,4.76,4.0,0.873799
+33052450,ESCOLA MUNICIPAL ARY SCHIAVO,Japeri,Municipal,225.25,231.74,4.75,3.6,0.845422
+33052557,ESCOLA MUNICIPAL JOAO XXIII,Japeri,Municipal,235.99,240.61,4.75,4.0,0.867444
+33052581,ESCOLA MUNICIPAL BERNARDINO DE MELO,Japeri,Municipal,220.96,227.78,4.78,3.9,0.951467
+33052620,ESCOLA MUNICIPAL SANTOS DUMONT,Japeri,Municipal,225.43,227.18,4.75,3.9,0.932802
+33052670,ESCOLA MUNICIPAL PROFESSORA CELIA SOBREIRA,Japeri,Municipal,222.28,228.26,4.74,3.5,0.832055
+33052689,ESCOLA MUNICIPAL TANIA MARA DA SILVA CARNAVAL BASILIO,Japeri,Municipal,219.36,225.36,4.53,3.4,0.821686
+33093555,CIEP 343 PROFESSORA EMILIA DINIZ LIGIERO,Laje do Muriaé,Estadual,264.42,266.57,4.86,5.4,0.972774
+33456275,EM ARY PARREIRAS,Laje do Muriaé,Municipal,233.61,253.84,4.71,4.8,1.0
+33015473,EEM POLIVALENTE ANISIO TEIXEIRA,Macaé,Municipal,277.18,273.29,5.37,4.8,0.824914
+33015570,CM GENERINO TEOTONIO DE LUNA,Macaé,Municipal,262.41,264.03,5.05,4.1,0.749542
+33015643,CM ANCYRA GONCALVES PIMENTEL,Macaé,Municipal,261.71,263.2,5.12,4.9,0.911649
+33015686,CIEP 058 M OSCAR CORDEIRO,Macaé,Municipal,257.57,259.97,4.93,4.5,0.852133
+33015805,CM ENGENHO DA PRAIA,Macaé,Municipal,260.57,267.29,5.03,5.2,0.946364
+33015848,CM PROF SAMUEL BRUST,Macaé,Municipal,238.58,234.99,4.64,4.2,0.915889
+33016321,CM PEDRO ADAMI,Macaé,Municipal,247.62,255.58,5.12,4.1,0.809559
+33016330,CEM RAUL VEIGA,Macaé,Municipal,247.78,273.85,5.26,4.7,0.883243
+33016356,CEM CAROLINA CURVELLO BENJAMIN,Macaé,Municipal,254.74,261.3,5.16,5.3,1.0
+33016402,CM IVETE SANTANA DRUMOND DE AGUIAR,Macaé,Municipal,289.69,299.49,5.51,6.3,0.973979
+33093776,CM DR CLAUDIO MOACYR DE AZEVEDO,Macaé,Municipal,252.6,257.11,5.22,4.8,0.926115
+33100918,CIEP 455 M MARINGA,Macaé,Municipal,262.13,268.78,5.17,4.8,0.867547
+33100934,EEM LEONEL DE MOURA BRIZOLA,Macaé,Municipal,253.02,256.28,4.8,4.3,0.831204
+33139636,CM PROF MARIA LETICIA SANTOS CARVALHO,Macaé,Municipal,262.4,264.18,5.58,4.9,0.894966
+33143021,CM PROF MARIA ISABEL DAMASCENO SIMAO,Macaé,Municipal,254.57,265.15,5.08,4.7,0.879033
+33146411,CM BOTAFOGO,Macaé,Municipal,238.74,252.68,4.66,4.5,0.928683
+33156972,CM PROF ELZA IBRAHIM,Macaé,Municipal,251.84,263.61,5.0,4.2,0.803989
+33168342,CM TARCISIO PAES DE FIGUEIREDO,Macaé,Municipal,244.09,239.31,5.0,3.7,0.775314
+33171300,EM OLGA BENARIO PRESTES,Macaé,Municipal,259.83,268.16,5.28,5.1,0.94165
+33190380,EM PROF ELISABETE DE AZEVEDO D BRANDAO,Macaé,Municipal,249.98,252.57,5.03,4.2,0.830077
+33020396,CE JOSE CARLOS BOARETTO,Macuco,Estadual,242.66,239.32,5.26,4.1,0.875785
+33020434,CE FARMACEUTICO RODOLFO ALBINO,Macuco,Estadual,253.27,253.05,4.96,4.1,0.794687
+33052891,CE PROFESSORA SONIA MARIA PIEDADE DE MOURA,Magé,Estadual,249.56,256.34,5.16,4.9,0.965333
+33052964,E M COMENDADOR DELIO PEREIRA SAMPAIO,Magé,Municipal,227.43,241.35,4.76,4.0,0.884322
+33052972,E M DR FRANCISCO RONDINELLI,Magé,Municipal,231.82,238.33,4.88,4.0,0.893413
+33052980,E M DR RADAMES MARZULLO,Magé,Municipal,236.14,236.97,4.45,4.2,0.92078
+33053057,E M PARQUE BONEVILLE,Magé,Municipal,259.39,247.15,4.96,4.4,0.866344
+33053200,E M HORACIO SILVA MELLO FILHO,Magé,Municipal,241.94,253.94,4.75,4.5,0.910942
+33053219,E M JOAO ESPERIDIAO DOS SANTOS,Magé,Municipal,241.63,234.92,4.8,3.1,0.671117
+33053243,E M PROF HILDA SILVA COELHO,Magé,Municipal,229.21,229.64,5.0,3.8,0.886239
+33053456,E M DR ANTONIO DA ROCHA PARANHOS,Magé,Municipal,234.64,234.34,4.79,4.1,0.92137
+33053464,E M DR DOMINGOS BELLIZZI,Magé,Municipal,217.96,234.21,4.68,3.8,0.904518
+33053480,E M GERALDA IZAURA FERREIRA TELLES,Magé,Municipal,230.85,232.7,4.85,4.0,0.902318
+33053553,E M PROFESSORA RENATA FRANCO PEREIRA,Magé,Municipal,243.52,251.99,4.79,4.6,0.928732
+33053570,E M PROF ROSENI DOS SANTOS SILVA,Magé,Municipal,222.52,223.33,4.7,3.9,0.963685
+33053596,E M PROFº DANIEL SOARES SILVA,Magé,Municipal,233.02,241.72,4.86,4.3,0.936852
+33053618,E M TIRADENTES,Magé,Municipal,226.75,238.87,4.89,4.2,0.950938
+33053758,E M PROF RUTH TALDO FRANCA,Magé,Municipal,257.82,261.54,4.95,4.3,0.801299
+33053855,E M DR MARIO PINHEIRO,Magé,Municipal,224.36,230.65,4.87,3.6,0.835774
+33053863,E M PROFESSORA OPHELIA RIBEIRO MARTINS,Magé,Municipal,236.88,241.25,4.86,4.3,0.929621
+33128014,E M GANDUR ASSED,Magé,Municipal,232.69,248.26,4.92,3.8,0.81326
+33132780,E M PAULO FREIRE,Magé,Municipal,242.39,253.79,5.02,3.8,0.763428
+33132860,CIEP BRIZOLAO 219 NACAO YANOMAMI - E M ENY DA SILVA MUNICIPALIZADA,Magé,Municipal,226.43,234.99,4.72,3.9,0.901804
+33138338,E M COVANCA MUNICIPALIZADA,Magé,Municipal,265.19,262.22,5.01,5.1,0.934654
+33145717,E M AURELIANO COUTINHO,Magé,Municipal,238.02,244.48,4.88,4.5,0.966319
+33145733,E M DESEMBARGADOR OSWALDO PORTELLA,Magé,Municipal,239.11,251.67,5.1,4.8,0.980942
+33155011,E M PROFESSORA JUPIRA FERREIRA CORREA,Magé,Municipal,229.5,245.89,4.86,4.4,0.949265
+33164436,EM PADRE GILMAR DE CASTRO,Magé,Municipal,250.81,262.98,5.05,4.0,0.767761
+33456283,E M BRUNO RODRIGUES,Magé,Municipal,214.58,236.81,4.85,3.6,0.866771
+33045860,E M CORONEL MOREIRA DA SILVA,Mangaratiba,Municipal,234.08,252.91,5.02,4.0,0.831971
+33045976,E M MARIA HELENA DE ALMEIDA FERRAZANI,Mangaratiba,Municipal,236.03,218.78,5.56,4.0,0.939416
+33046158,C M NOSSA SENHORA DAS GRACAS,Mangaratiba,Municipal,253.08,264.08,5.14,3.4,0.636312
+33129410,C M HERMINIA DE OLIVEIRA MATTOS,Mangaratiba,Municipal,229.21,246.45,4.89,4.0,0.878251
+33053898,CEM JOANA BENEDICTA RANGEL,Maricá,Municipal,239.58,243.87,5.06,4.5,0.949067
+33054010,E M ANTONIO LOPES DA FONTOURA,Maricá,Municipal,271.15,272.34,5.26,5.0,0.874064
+33054070,E M VER JOAO DA SILVA BEZERRA,Maricá,Municipal,263.88,271.31,5.28,5.3,0.951318
+33054223,ESCOLA MUNICIPALIZADA DE INOA,Maricá,Municipal,237.11,246.54,5.17,4.6,0.96992
+33054274,ESCOLA MUNICIPAL JOAO MONTEIRO,Maricá,Municipal,261.63,260.96,5.21,4.8,0.895007
+33054304,E M VEREADOR OSDEVALDO MARINS DA MATTA,Maricá,Municipal,239.55,244.38,5.05,4.5,0.954113
+33054380,E M AMANDA PENA DE A SOARES,Maricá,Municipal,250.03,262.75,5.14,5.1,0.972557
+33054410,ESCOLA MUNICIPAL LUCIO THOME GUERRA FETEIRA,Maricá,Municipal,260.6,260.55,5.09,4.9,0.918434
+33097291,E M MARQUES DE MARICA,Maricá,Municipal,271.01,273.73,5.4,5.6,0.968039
+33143153,E M PROFESSOR DARCY RIBEIRO,Maricá,Municipal,230.38,235.69,4.74,3.5,0.786364
+33151458,CAIC ELOMIR SILVA,Maricá,Municipal,234.42,235.47,5.09,4.3,0.955505
+33181411,EM CLERIO BOECHAT DE OLIVEIRA,Maricá,Municipal,246.13,250.68,5.48,4.7,0.949502
+33183996,ESCOLA MUNICIPAL ANISIO TEIXEIRA,Maricá,Municipal,251.14,253.65,5.41,4.8,0.948644
+33038201,CIEP BRIZOLAO MUNICIPALIZADO 288 PROFESSOR RUY GONCALVES RAMOS,Mendes,Municipal,246.79,245.03,5.08,4.1,0.840965
+33038260,CE DOUTOR JOAO NERY,Mendes,Estadual,247.31,243.09,5.02,4.4,0.918948
+33061084,CIEP 364 NELSON RAMOS,Mesquita,Estadual,203.05,215.51,4.96,3.3,0.901019
+33061165,CE DOM PEDRO I,Mesquita,Estadual,221.6,226.32,4.77,3.3,0.790591
+33061173,CE PIERRE PLANCHER,Mesquita,Estadual,223.49,232.7,4.9,3.6,0.850562
+33061203,CE VILA BELA,Mesquita,Estadual,228.34,238.47,4.99,3.7,0.838071
+33061360,E M DR DEOCLECIO DIAS MACHADO FILHO,Mesquita,Municipal,233.31,239.96,4.85,4.3,0.941854
+33061394,E M PRESIDENTE CASTELO BRANCO,Mesquita,Municipal,224.4,224.16,4.84,3.7,0.886147
+33061432,E M ROTARIANO ARTHUR SILVA,Mesquita,Municipal,232.48,243.17,4.81,4.4,0.963035
+33113319,CE POETA MARIO QUINTANA,Mesquita,Estadual,209.53,210.9,4.7,2.6,0.706031
+33138893,E M CRUZEIRO DO SUL,Mesquita,Municipal,262.71,276.13,5.05,5.2,0.913801
+33138907,E M VEREADOR AMERICO DOS SANTOS,Mesquita,Municipal,234.93,236.99,4.81,3.9,0.863032
+33232202,E M IRENA SENDLER,Mesquita,Municipal,252.43,262.63,4.88,4.9,0.933197
+33519269,E M ERNESTO CHE GUEVARA,Mesquita,Municipal,201.24,212.64,4.63,3.0,0.827922
+33038589,CE VERA CRUZ,Miguel Pereira,Estadual,241.44,252.12,4.94,4.3,0.886802
+33038643,E M FRANCISCO COSTA,Miguel Pereira,Municipal,257.2,266.45,5.26,4.4,0.812558
+33038724,CE CARMEM DE LUCA ANDREIOLO,Miguel Pereira,Estadual,217.17,215.07,4.97,3.4,0.873564
+33038848,E M CEL EDMUNDO MACEDO SOARES SILVA,Miguel Pereira,Municipal,255.21,255.33,4.86,4.3,0.825315
+33130728,E M DE FORMACAO PROF GOVERNADOR PORTELA,Miguel Pereira,Municipal,317.94,317.75,5.69,7.1,0.974505
+33185042,ESCOLA MUNICIPAL PROFESSORA MARIA DA CONCEICAO MACHADO DE CARVALHO,Miguel Pereira,Municipal,260.17,265.46,5.38,4.7,0.874588
+33006644,CIEP BRIZOLAO 143 - PROFESSOR ALVARO AUGUSTO DA FONSECA LONTRA - MUNICIPALIZADA,Miracema,Municipal,314.27,304.51,5.15,7.0,1.0
+33006776,E M PRUDENTE DE MORAES,Miracema,Municipal,290.38,286.46,4.88,5.9,0.939534
+33007101,CE MANOEL RODRIGUES DE BARROS,Miracema,Estadual,239.34,237.04,4.44,4.2,0.913795
+33094063,CIEP 267 MARIA APARECIDA LIMA SOUTO TOSTES,Miracema,Estadual,227.9,195.39,4.67,3.4,0.910627
+33183422,CE PROFESSORA SONIA DO AMARAL TORRES,Miracema,Estadual,263.74,260.05,5.06,4.9,0.90311
+33003386,CIEP 468 OLGA THURLER MENDONCA DA FONSECA,Natividade,Estadual,251.28,244.87,4.93,4.9,0.983995
+33003394,CE FLAVIO RIBEIRO DE REZENDE,Natividade,Estadual,260.59,249.29,4.89,4.9,0.957513
+33003408,COLEGIO MUNICIPAL ALVORADA,Natividade,Municipal,256.33,247.09,4.95,5.0,0.991803
+33003424,CE FRANCISCO PORTELLA,Natividade,Estadual,242.1,255.5,4.85,4.6,0.926444
+33054576,CE ANTONIO FIGUEIRA DE ALMEIDA,Nilópolis,Estadual,227.8,216.72,4.99,3.9,0.955061
+33054711,CE PROFESSOR UBIRATAN REIS BARBOSA,Nilópolis,Estadual,211.03,216.48,4.94,3.3,0.869947
+33054746,ESCOLA MUNICIPAL DR NILO PECANHA,Nilópolis,Municipal,245.12,255.42,4.78,4.5,0.889057
+33054754,ESCOLA MUNICIPAL PROFESSORA EDYR RIBEIRO,Nilópolis,Municipal,228.29,238.71,4.76,4.4,0.979961
+33054762,ESCOLA MUNICIPAL MARIA DA CONCEICAO CARDOSO,Nilópolis,Municipal,229.44,246.8,4.84,4.6,1.0
+33054983,CE NUTA BARTHLET JAMES,Nilópolis,Estadual,221.06,223.44,4.89,3.8,0.934022
+33055050,ESCOLA MUNICIPAL CORONEL ANTONIO BENIGNO RIBEIRO,Nilópolis,Municipal,232.15,243.67,4.89,4.3,0.933384
+33055068,ESCOLA MUNICIPAL VEREADOR ORLANDO HUNGRIA,Nilópolis,Municipal,226.91,235.96,4.8,4.3,0.981947
+33097364,ESCOLA MUNICIPAL POETA CARLOS DRUMMOND DE ANDRADE,Nilópolis,Municipal,250.69,252.06,4.84,4.4,0.877627
+33097399,ESCOLA MUNICIPAL MARGARIDA FERNANDES SABINO,Nilópolis,Municipal,216.0,221.75,4.89,3.8,0.971303
+33099049,CIEP 230 MANOEL MALAQUIAS GURGEL DA SILVA,Nilópolis,Estadual,224.47,238.63,4.97,3.9,0.890782
+33189609,ESCOLA MUNICIPAL ANTONIO AURELIANO MEDEIROS BATISTA,Nilópolis,Municipal,235.7,247.95,4.91,4.5,0.955337
+33055483,COLEGIO UNIVERSITARIO GERALDO REIS,Niterói,Federal,272.13,273.63,5.42,5.5,0.948851
+33055670,CE FERNANDO MAGALHAES,Niterói,Estadual,235.61,249.33,5.04,4.1,0.856927
+33055734,CE MACHADO DE ASSIS,Niterói,Estadual,214.98,219.97,4.98,3.2,0.806522
+33055785,CE ZULEIKA RAPOSO VALLADARES,Niterói,Estadual,236.38,261.1,4.96,4.2,0.839679
+33056404,CE DUQUE DE CAXIAS,Niterói,Estadual,200.79,202.85,4.85,3.0,0.895695
+33056498,CE MANUEL DE ABREU,Niterói,Estadual,262.79,262.76,4.94,4.5,0.824097
+33056560,CE PINTO LIMA,Niterói,Estadual,248.52,246.52,4.95,4.2,0.848017
+33056706,EM DOUTOR ALBERTO FRANCISCO TORRES,Niterói,Municipal,232.36,233.98,4.48,3.9,0.886207
+33056730,EM HONORINA DE CARVALHO,Niterói,Municipal,221.22,233.3,5.08,3.9,0.910566
+33056757,EM JOAO BRAZIL,Niterói,Municipal,213.5,217.73,4.77,3.1,0.802084
+33056765,EM JOSE DE ANCHIETA,Niterói,Municipal,216.04,218.25,4.7,3.7,0.950621
+33056773,EM LEVI CARNEIRO,Niterói,Municipal,231.23,240.44,4.83,3.7,0.811116
+33056790,EM MAESTRO HEITOR VILLA LOBOS,Niterói,Municipal,260.63,270.13,4.85,4.5,0.821845
+33056862,EM RACHIDE DA GLORIA SALIM SAKER,Niterói,Municipal,228.03,228.26,5.18,3.8,0.901015
+33056889,EM SANTOS DUMONT,Niterói,Municipal,238.93,246.45,4.59,4.0,0.850628
+33057737,CE ALMIRANTE TAMANDARE,Niterói,Estadual,217.37,226.45,5.0,3.2,0.786074
+33057745,CE DOUTOR SOUZA SOARES,Niterói,Estadual,223.61,231.74,5.09,3.9,0.922974
+33057800,EM FRANCISCO PORTUGAL NEVES,Niterói,Municipal,245.65,245.05,4.93,4.0,0.819704
+33102490,CIEP 450 DI CAVALCANTI,Niterói,Estadual,238.18,241.2,4.91,3.9,0.836688
+33102520,CIEP 307 DJANIRA,Niterói,Estadual,236.25,251.47,4.78,4.2,0.87812
+33102554,EM ANTINEIA SILVEIRA MIRANDA,Niterói,Municipal,246.84,246.43,5.02,4.6,0.932373
+33146640,EM PAULO FREIRE,Niterói,Municipal,211.6,229.73,4.7,3.5,0.882257
+33154406,E E DE ENSINO FUNDAMENTAL HENRIQUE LAGE,Niterói,Estadual,313.46,288.59,5.72,6.5,0.97488
+33021813,CE AUGUSTO SPINELLI,Nova Friburgo,Estadual,271.83,279.23,5.44,5.1,0.879462
+33021830,CE DOUTOR GALDINO DO VALLE FILHO,Nova Friburgo,Estadual,249.99,266.38,5.01,4.2,0.80152
+33021848,CE DOUTOR JOAO BAZET,Nova Friburgo,Estadual,267.36,268.05,5.26,5.1,0.916071
+33021864,CE DOUTOR TUFFY EL JAICK,Nova Friburgo,Estadual,269.91,267.97,5.36,4.4,0.783128
+33021902,CE JULIO SALUSSE,Nova Friburgo,Estadual,266.84,274.1,5.34,4.9,0.861412
+33021929,EE MARCILIO DIAS,Nova Friburgo,Estadual,278.55,279.57,5.48,5.4,0.90722
+33021937,CE PADRE FRANCA,Nova Friburgo,Estadual,263.78,266.47,5.42,4.2,0.77093
+33021945,CE PADRE MADUREIRA,Nova Friburgo,Estadual,254.29,269.2,4.81,4.1,0.757368
+33021961,CE PROFESSOR CARLOS CORTES,Nova Friburgo,Estadual,248.49,253.77,5.23,4.3,0.852844
+33022003,CE PROFESSORA ZELIA DOS SANTOS CORTES,Nova Friburgo,Estadual,269.84,257.97,5.15,3.9,0.719678
+33022011,CE SALUSTIANO JOSE RIBEIRO SERAFIM,Nova Friburgo,Estadual,239.75,243.71,5.05,3.8,0.812707
+33022097,DERMEVAL BARBOSA MOREIRA - CM,Nova Friburgo,Municipal,227.72,236.59,5.03,3.6,0.828413
+33022100,DANTE MAGLIANO - EM,Nova Friburgo,Municipal,276.79,303.41,5.4,5.5,0.862578
+33022143,JUSCELINO KUBITSCHEK DE OLIVEIRA - EM,Nova Friburgo,Municipal,268.26,267.6,5.3,5.2,0.923391
+33022160,MAXIMILIAN FALCK - EM,Nova Friburgo,Municipal,264.59,258.7,5.16,5.2,0.956855
+33022186,ODETTE PENNA MUNIZ - CM,Nova Friburgo,Municipal,254.05,268.85,5.12,4.4,0.814521
+33022526,JOAQUIM DA SILVA XAVIER - TIRADENTES - EM,Nova Friburgo,Municipal,270.39,276.86,5.09,4.8,0.829512
+33022569,CE EDUARDO BREDER,Nova Friburgo,Estadual,252.64,259.11,5.2,4.2,0.801088
+33022658,E M CYPRIANO MENDES DA VEIGA,Nova Friburgo,Municipal,281.99,255.59,5.12,5.0,0.883312
+33022739,VEVEY LA JOLIE - EM,Nova Friburgo,Municipal,259.33,263.47,4.9,4.9,0.906371
+33022771,RUI BARBOSA - CM,Nova Friburgo,Municipal,253.67,257.78,5.14,3.4,0.661313
+33022810,CE DOUTOR VICENTE DE MORAES,Nova Friburgo,Estadual,241.33,254.23,5.04,4.1,0.829996
+33022909,UMBELINA BREDER DE QUEIROZ - EM,Nova Friburgo,Municipal,280.25,300.25,5.17,5.7,0.892617
+33022968,CE CARLOS MARIA MARCHON,Nova Friburgo,Estadual,285.39,280.31,5.15,5.4,0.885804
+33023212,CE EMILIA ROSCHEMANT,Nova Friburgo,Estadual,251.62,253.58,5.11,4.2,0.829285
+33023298,CE JOSE MARTINS DA COSTA,Nova Friburgo,Estadual,280.13,284.03,5.29,5.8,0.949395
+33102090,CE DOUTOR FELICIANO COSTA,Nova Friburgo,Estadual,233.29,248.18,4.95,4.3,0.925975
+33105022,CIEP 480 PROFESSOR LUIZ CARLOS VERONESE,Nova Friburgo,Estadual,236.1,233.9,5.05,3.8,0.842636
+33138435,FLORES DE NOVA FRIBURGO - EM FAMILIA AGRICOLA,Nova Friburgo,Municipal,277.73,292.69,5.53,5.6,0.907335
+33142190,COLEGIO MUNICIPAL CEFFA REI ALBERTO I,Nova Friburgo,Municipal,286.07,292.76,5.28,6.3,1.0
+33145920,CECILIA MEIRELES - EM,Nova Friburgo,Municipal,295.03,303.1,5.79,6.5,0.977505
+33046549,CIEP 351 MINISTRO SALGADO FILHO,Nova Iguaçu,Estadual,219.01,214.46,4.59,3.5,0.888633
+33052522,E E DE JACERUBA,Nova Iguaçu,Municipal,232.57,231.48,5.22,4.1,0.9223
+33058180,CIEP 119 AUSTIN,Nova Iguaçu,Estadual,205.37,209.82,4.55,3.0,0.848919
+33058199,CIEP 167 JARDIM PARAISO,Nova Iguaçu,Estadual,221.53,230.44,4.67,4.1,0.987082
+33058210,CIEP 216 PREFEITO JUAREZ ANTUNES,Nova Iguaçu,Estadual,222.38,223.57,4.71,3.6,0.867855
+33058237,CIEP 324 MAHATMA GANDHI,Nova Iguaçu,Estadual,220.97,222.79,4.54,3.5,0.864337
+33058245,CIEP 334 MOACYR JOSE PEREIRA GERK,Nova Iguaçu,Estadual,220.28,231.36,4.6,3.7,0.889041
+33058296,CIEP 387 HANS CRISTIAN ANDERSEN,Nova Iguaçu,Estadual,211.65,226.56,4.87,3.5,0.884152
+33058300,CIEP 390 CHAO DE ESTRELAS,Nova Iguaçu,Estadual,224.25,214.45,4.94,3.5,0.86975
+33058318,CIEP 394 VEREADOR CANDIDO AUGUSTO RIBEIRO NETO,Nova Iguaçu,Estadual,220.43,230.81,4.89,4.1,0.983635
+33058334,CIEP 166 ABILIO AUGUSTO TAVORA,Nova Iguaçu,Estadual,223.7,230.27,4.66,3.9,0.929261
+33058342,CIEP 317 AURELIO BUARQUE DE HOLANDA,Nova Iguaçu,Estadual,231.64,242.42,4.62,4.3,0.950569
+33058350,CIEP 187 BENEDITO LARANJEIRAS,Nova Iguaçu,Municipal,236.73,254.15,4.59,4.4,0.897655
+33058369,CIEP BRIZOLAO 373 BRIGADEIRO TEIXEIRA,Nova Iguaçu,Municipal,202.23,214.61,4.31,3.1,0.858488
+33058393,CIEP 025 GETULIO SALES RODRIGUES,Nova Iguaçu,Estadual,223.58,253.42,4.81,3.7,0.804144
+33058407,CIEP 395 LUIZ HENRIQUE REZENDE NOVAES,Nova Iguaçu,Estadual,202.36,190.97,4.37,3.1,0.948575
+33058415,CIEP 188 MARIANO FLOR CAVALCANTE,Nova Iguaçu,Estadual,223.8,233.99,4.59,4.0,0.928186
+33058423,CIEP BRIZOLAO 071 MAXIMIANO RIBEIRO DA SILVA,Nova Iguaçu,Municipal,251.82,263.34,4.79,4.7,0.894486
+33058431,CIEP BRIZOLAO 325 AUSTREGESILO DE ATHAYDE,Nova Iguaçu,Municipal,230.61,250.24,4.42,4.5,0.956812
+33058440,CIEP 113 PROFESSOR WALDICK PEREIRA,Nova Iguaçu,Estadual,242.14,247.22,4.89,4.4,0.912419
+33058458,CIEP 196 SAO TEODORO,Nova Iguaçu,Estadual,221.18,237.5,4.65,3.9,0.909518
+33058466,CIEP 026 SAO VICENTE DE PAULA,Nova Iguaçu,Estadual,225.21,229.13,4.84,2.8,0.659847
+33058571,CE ANTONIO DA SILVA,Nova Iguaçu,Estadual,226.85,227.68,4.73,4.0,0.954249
+33058580,CE ARRUDA NEGREIROS,Nova Iguaçu,Estadual,227.91,250.96,4.89,4.3,0.931312
+33058679,CE JARDIM ALVORADA,Nova Iguaçu,Estadual,219.31,233.56,4.94,3.7,0.880602
+33058687,CE JOSE BONIFACIO,Nova Iguaçu,Estadual,228.87,225.66,4.98,3.7,0.862223
+33058695,CE MILTON CAMPOS,Nova Iguaçu,Estadual,244.74,252.66,4.95,4.3,0.86307
+33058709,CE ABDIAS NASCIMENTO,Nova Iguaçu,Estadual,210.92,215.09,4.74,3.6,0.944383
+33058733,CE PROFESSORA EVANGELINA SOARES DE MOURA,Nova Iguaçu,Estadual,218.52,226.86,4.61,2.8,0.679056
+33058741,CE PROFESSORA MARIA JOSE RAUNHEITTI DUCCINI,Nova Iguaçu,Estadual,222.32,216.01,5.12,3.9,0.971936
+33058750,CE SAO JUDAS TADEU,Nova Iguaçu,Estadual,225.29,232.47,4.87,4.2,0.988303
+33058946,CE COMENDADOR SOARES,Nova Iguaçu,Estadual,234.02,236.63,4.79,4.0,0.885491
+33058970,E M VEREADOR HELCIO CHAMBARELLI,Nova Iguaçu,Municipal,235.88,243.58,4.78,4.2,0.891994
+33059241,CE DOUTOR MARIO GUIMARAES,Nova Iguaçu,Estadual,250.73,244.66,5.09,4.5,0.924022
+33059306,EE MACHADO DE ASSIS,Nova Iguaçu,Estadual,226.33,234.46,5.1,4.2,0.971512
+33059322,CE MARIA JUSTINIANO FERNANDES,Nova Iguaçu,Estadual,220.93,235.13,4.81,3.8,0.880958
+33059330,EE MESTRE HIRAM,Nova Iguaçu,Estadual,262.7,251.49,5.26,5.0,0.954068
+33059357,EE MONSENHOR JOAO MUSH,Nova Iguaçu,Estadual,240.74,231.24,5.2,4.4,0.974514
+33059411,EE JOAO DO VALE,Nova Iguaçu,Estadual,242.95,243.23,5.05,4.3,0.906422
+33059446,CE SAO JORGE,Nova Iguaçu,Estadual,223.03,235.99,5.08,4.2,0.98158
+33059543,E M ALTHAIR PIMENTA DE MORAES,Nova Iguaçu,Municipal,226.82,239.21,4.66,3.9,0.88643
+33059594,E M DARCILIO AYRES RAUNHEITTI,Nova Iguaçu,Municipal,239.63,252.34,4.78,4.1,0.845435
+33059624,E M DR ORLANDO MELLO,Nova Iguaçu,Municipal,249.87,253.76,4.89,4.6,0.903805
+33059748,E M HERBERT MOSES,Nova Iguaçu,Municipal,242.49,267.89,4.9,4.1,0.785032
+33059837,E M JULIO RABELLO GUIMARAES,Nova Iguaçu,Municipal,226.94,243.77,4.77,4.0,0.888498
+33059853,E M LUIZ DE LEMOS,Nova Iguaçu,Municipal,234.52,250.36,4.89,4.4,0.931138
+33059896,E M MENINOS DE DEUS,Nova Iguaçu,Municipal,246.42,243.77,4.9,4.0,0.828705
+33059934,E M NICANOR GONCALVES PEREIRA,Nova Iguaçu,Municipal,247.69,254.81,4.83,3.6,0.718924
+33059950,E M DOUGLAS FELIPE BRASIL DE PAULA,Nova Iguaçu,Municipal,236.33,235.1,4.89,4.2,0.925302
+33059969,E M PROFº AMAZOR VIEIRA BORGES,Nova Iguaçu,Municipal,244.34,261.6,4.94,4.2,0.816504
+33060002,E M PROFº MARCIO CAULINO SOARES,Nova Iguaçu,Municipal,255.96,266.08,4.94,4.9,0.914979
+33060045,E M PADRE AGOSTINHO PRETTO,Nova Iguaçu,Municipal,232.38,257.53,5.1,4.1,0.846561
+33060142,E M WALFREDO DA SILVA LESSA,Nova Iguaçu,Municipal,249.57,251.16,4.85,4.5,0.893894
+33060177,CIEP 358 ALBERTO PASQUALINI,Nova Iguaçu,Estadual,228.03,233.58,5.01,3.4,0.774069
+33060185,CIEP 383 MAXIMO GORKI,Nova Iguaçu,Estadual,209.74,212.03,4.75,3.1,0.841673
+33060711,CIEP 352 SENADOR SEVERO GOMES,Nova Iguaçu,Estadual,215.09,220.02,4.63,3.3,0.83396
+33060720,CIEP 021 GENERAL OSORIO,Nova Iguaçu,Estadual,243.08,243.35,4.79,4.4,0.917733
+33060738,CE MARECHAL JUAREZ TAVORA,Nova Iguaçu,Estadual,228.36,231.4,4.79,3.8,0.886387
+33060797,CE AMBAI,Nova Iguaçu,Estadual,250.15,246.81,4.82,4.2,0.852876
+33060827,CE FIGUEIRA,Nova Iguaçu,Estadual,233.78,242.03,4.73,4.1,0.885794
+33060843,CE MARIA EMILIA AMARAL FONTOURA,Nova Iguaçu,Estadual,238.79,237.57,4.75,4.2,0.912556
+33060860,EE NILO PECANHA,Nova Iguaçu,Estadual,245.88,242.85,5.02,4.6,0.947063
+33060916,E M BARAO DE TINGUA,Nova Iguaçu,Municipal,233.84,246.95,4.6,4.2,0.905997
+33060959,E M PROFª LUCIA VIANA CAPELLI,Nova Iguaçu,Municipal,249.84,250.17,4.77,4.1,0.826108
+33060967,E M MARCILIO DIAS,Nova Iguaçu,Municipal,230.59,238.35,4.74,3.6,0.805309
+33061769,CE SAO FRANCISCO DE PAULA,Nova Iguaçu,Estadual,227.11,228.78,4.94,4.2,0.978438
+33061890,EE HUMBERTO DE CAMPOS,Nova Iguaçu,Estadual,234.58,232.67,5.08,4.3,0.971327
+33062080,ESCOLA MUNICIPAL PERA FLOR,Nova Iguaçu,Municipal,244.48,255.0,4.65,4.4,0.878324
+33097020,CIEP 172 NELSON RODRIGUES,Nova Iguaçu,Estadual,234.72,239.33,4.74,3.8,0.841925
+33100330,CIEP 360 PROFESSORA IARA SIMAO VIEIRA,Nova Iguaçu,Municipal,231.89,235.97,4.66,3.7,0.830332
+33115257,E M VALE DO TINGUA,Nova Iguaçu,Municipal,240.56,239.1,4.77,4.1,0.886587
+33117764,CE PROFESSORA MARIA HELENA AMARAL ALARCAO,Nova Iguaçu,Estadual,227.96,222.86,4.61,3.8,0.907015
+33132399,E M PROFª ENILZA BARROS DOS SANTOS CHICONELLI,Nova Iguaçu,Municipal,245.94,250.67,4.7,4.2,0.859045
+33132402,E M PROFª IRENE DA SILVA OLIVEIRA,Nova Iguaçu,Municipal,219.31,231.57,4.68,3.4,0.804859
+33132623,E M DR JOSE FROES MACHADO,Nova Iguaçu,Municipal,237.51,245.28,4.8,4.2,0.886856
+33141959,E M PROF RUY AFRANIO PEIXOTO,Nova Iguaçu,Municipal,240.55,245.28,4.78,3.9,0.814855
+33168660,ESCOLA MUNICIPAL ALFREDO PEREIRA DE MAGALHAES,Nova Iguaçu,Municipal,230.59,242.29,4.9,4.1,0.896645
+33170843,EM PROFESSORA PRISCILLA BOUCAS VILLA NOVA,Nova Iguaçu,Municipal,241.39,241.85,4.85,4.4,0.934728
+33038880,CIEP 152 GARRINCHA ALEGRIA DO POVO,Paracambi,Estadual,233.4,239.63,4.99,3.9,0.851996
+33038899,CIEP BRIZOLAO 385 - PASTOR AUGUSTINHO VALERIO DE SOUZA,Paracambi,Municipal,251.15,264.79,5.17,4.8,0.916572
+33038902,CIEP BRIZOLAO 499 PREF NICOLA SALZANO,Paracambi,Municipal,258.31,264.56,5.01,4.9,0.904488
+33038961,E M BOA ESPERANCA,Paracambi,Municipal,254.29,261.63,5.11,5.0,0.9517
+33039070,ESCOLA MUNICIPAL HORTENCIA PHIRRO DO VALLE,Paracambi,Municipal,260.85,272.53,4.97,5.3,0.946477
+33039097,E M PROFESSORA OSERIA VIEIRA ESTEVAM,Paracambi,Municipal,256.81,262.8,4.95,4.9,0.925538
+33039143,E M TERRA DE EDUCAR,Paracambi,Municipal,242.47,250.09,4.79,4.7,0.958873
+33145598,ESC MUN PREFEITO HELIO FERREIRA DA SILVA,Paracambi,Municipal,254.62,266.84,5.35,5.3,0.992951
+33017247,E M IRMA MONTEDONIO,Paraíba do Sul,Municipal,263.96,263.4,5.2,5.2,0.944489
+33017280,EM ARCANJO ANTONINO LOPES,Paraíba do Sul,Municipal,224.12,223.18,4.86,2.8,0.684854
+33017476,E M VEREADOR ANTONIO IGNACIO COELHO,Paraíba do Sul,Municipal,271.34,279.97,5.04,5.7,0.969044
+33017492,CE LIONS CLUBE DE PARAIBA DO SUL,Paraíba do Sul,Estadual,244.41,260.71,4.8,3.9,0.773499
+33017522,CE BEZERRA DE MENEZES,Paraíba do Sul,Estadual,256.16,251.83,5.09,4.5,0.881858
+33017646,CE BARAO DE PALMEIRAS,Paraíba do Sul,Estadual,251.49,257.4,5.23,4.7,0.90666
+33093644,CIEP BRIZOLAO 442 HAROLDO MACHADO DE BARROS,Paraíba do Sul,Municipal,242.17,247.55,4.86,4.5,0.934019
+33037515,CIEP 999 DOM PEDRO DALCANTARA DE BRAGANCA PRIMEIRO IMPERADOR DO BRASIL,Paraty,Estadual,247.01,267.54,5.05,5.0,0.947575
+33037701,E M DE ENSINO FUNDAMENTAL MINISTRO SERGIO MOTA,Paraty,Municipal,245.25,263.71,4.99,4.5,0.882986
+33037965,CE ALMIRANTE ALVARO ALBERTO,Paraty,Estadual,261.79,260.65,5.26,4.7,0.869961
+33039216,ESCOLA MUNICIPAL LIDDY MIGNONE,Paty do Alferes,Municipal,272.32,269.3,4.89,5.1,0.901876
+33039232,ESCOLA MUNICIPAL VEREADOR SIDNEY DE MELLO FREITAS,Paty do Alferes,Municipal,288.77,286.65,5.06,5.7,0.918254
+33039380,ESCOLA MUNICIPAL JOSE LOPES DE MELLO FILHO,Paty do Alferes,Municipal,263.67,249.75,4.97,5.2,0.992589
+33041903,ESCOLA MUNICIPAL MANOEL RODRIGUES,Paty do Alferes,Municipal,284.35,277.59,5.03,6.0,0.988877
+33102716,ESCOLA MUNICIPAL JOSE EULALIO DE ANDRADE,Paty do Alferes,Municipal,272.27,273.63,4.95,5.1,0.883173
+33040320,ESCOLA GERMANO VALENTE,Petrópolis,Municipal,240.79,252.43,5.05,3.3,0.685029
+33040346,ESCOLA DAS COMUNIDADES SANTO ANTONIO,Petrópolis,Municipal,253.94,263.38,5.01,4.7,0.893806
+33040443,E M PEDRO AMADO,Petrópolis,Municipal,233.7,238.66,4.79,4.2,0.934264
+33040575,E M BATAILLARD,Petrópolis,Municipal,279.33,291.48,5.24,6.0,0.967636
+33040591,E M CLEMENTE FERNANDES,Petrópolis,Municipal,256.92,284.26,4.88,4.9,0.857663
+33040605,E M DR RUBENS DE CASTRO BOMTEMPO,Petrópolis,Municipal,250.95,266.8,4.96,4.9,0.922354
+33040664,E M JOAO KOPKE,Petrópolis,Municipal,242.28,247.32,5.02,4.6,0.949559
+33040702,E M ODETTE FONSECA,Petrópolis,Municipal,274.86,270.38,4.65,4.9,0.854849
+33040745,E M GOVERNADOR MARCELLO ALENCAR,Petrópolis,Municipal,252.08,261.77,4.79,4.4,0.84178
+33040770,E M STEFAN ZWEIG,Petrópolis,Municipal,232.82,248.19,4.8,4.3,0.919295
+33040800,E M ROSEMIRA DE OLIVEIRA CAVALCANTI,Petrópolis,Municipal,230.27,221.85,4.97,3.3,0.779105
+33040877,ESCOLA PAROQUIAL CARLOS DEMIA,Petrópolis,Municipal,234.27,237.7,5.08,3.6,0.804796
+33040885,ESC PAROQUIAL NOSSA SENHORA DA GLORIA,Petrópolis,Municipal,264.54,279.92,5.26,5.2,0.906707
+33040974,ESCOLA SAO JUDAS TADEU,Petrópolis,Municipal,274.46,280.54,5.37,5.5,0.92972
+33041008,ESCOLA SANTA MARIA GORETTI,Petrópolis,Municipal,259.75,264.02,5.18,5.1,0.951939
+33041245,E M HERCILIA HENRIQUES MORET - MUNICIPALIZADA EM 2012,Petrópolis,Municipal,237.0,245.61,5.06,4.5,0.946086
+33041385,E M JORGE AMADO,Petrópolis,Municipal,264.3,273.51,5.0,5.0,0.896112
+33041490,ESC PAROQUIAL DO LOTEAMENTO SAMAMBAIA,Petrópolis,Municipal,262.58,270.32,5.2,5.4,0.977945
+33041512,ESCOLA SAO GERALDO,Petrópolis,Municipal,254.83,252.83,4.94,4.9,0.948933
+33041636,ESCOLA MUNICIPAL AMELIA ANTUNES RABELLO,Petrópolis,Municipal,258.18,264.23,4.89,4.9,0.913891
+33041644,E M AUGUSTO PUGNALONI,Petrópolis,Municipal,250.94,273.78,5.12,5.1,0.948286
+33041652,E M CELINA SCHECHNER,Petrópolis,Municipal,240.02,246.58,5.01,4.2,0.878924
+33041687,ESCOLA MUNICIPAL DR PAULA BUARQUE,Petrópolis,Municipal,270.03,281.15,5.37,5.6,0.951384
+33041695,E M DR THEODORO MACHADO,Petrópolis,Municipal,248.62,269.29,5.14,5.3,1.0
+33041750,E M AVELINO DE CARVALHO,Petrópolis,Municipal,256.65,261.95,5.25,4.8,0.908168
+33041784,ESCOLA MUNICIPALIZADA SANTA TEREZINHA,Petrópolis,Municipal,276.11,287.8,5.15,5.8,0.949197
+33041792,E M AMERICO FERNANDES RIBEIRO,Petrópolis,Municipal,253.21,264.72,5.11,5.0,0.942665
+33041865,E M DR BARROS FRANCO,Petrópolis,Municipal,234.65,241.16,5.21,3.9,0.858677
+33041954,E M MOYSES FURTADO BRAVO - MUNICIPALIZADA 2012,Petrópolis,Municipal,249.88,247.1,5.06,4.7,0.947976
+33041970,ESCOLA MUNICIPAL BEATRIZ ZALESKI,Petrópolis,Municipal,256.69,275.34,5.26,5.4,0.974773
+33129355,ESCOLA MUNICIPAL SALVADOR KLING,Petrópolis,Municipal,264.14,273.85,5.26,5.4,0.950764
+33133123,ESCOLA MUNICIPAL LUIZ CARLOS SOARES,Petrópolis,Municipal,265.86,274.52,5.14,4.9,0.859044
+33133131,E M GERALDO VENTURA DIAS,Petrópolis,Municipal,241.17,266.16,4.94,4.6,0.907509
+33133298,E M FABRICA DO SABER,Petrópolis,Municipal,247.44,260.06,5.07,4.7,0.924527
+33146756,ESCOLA MUL PROF JANDIRA PEIXOTO BORDIGNON,Petrópolis,Municipal,252.09,274.89,5.1,5.1,0.933664
+33151768,E M MONSENHOR JOAO DE DEUS RODRIGUES,Petrópolis,Municipal,242.62,254.25,5.15,4.7,0.945033
+33151776,ESCOLA MUNICIPAL JOHANN NOEL,Petrópolis,Municipal,242.68,245.5,5.22,4.0,0.838597
+33151784,E M DOM MANOEL PEDRO DA CUNHA CINTRA,Petrópolis,Municipal,229.91,253.65,5.27,4.1,0.869844
+33154929,EM PAPA JOAO PAULO II,Petrópolis,Municipal,256.74,269.4,4.99,4.7,0.861532
+33163294,ESCOLA MUNICIPAL PROFESSORA MARIA CAMPOS DA SILVA,Petrópolis,Municipal,261.36,274.5,5.23,5.4,0.965066
+33175926,ESCOLA MUNICIPAL PROFESSOR NILTON COSTA PEREIRA DE SAO THIAGO,Petrópolis,Municipal,247.6,267.53,5.19,4.9,0.934242
+33031061,ESCOLA MUNICIPAL MARIA DO CARMO FADUL FERREIRA,Pinheiral,Municipal,251.19,252.68,4.88,4.2,0.825255
+33031096,E M ROSA CONCEICAO GUEDES,Pinheiral,Municipal,253.68,262.23,5.0,4.0,0.763191
+33030642,E M DE LAJES,Piraí,Municipal,297.18,290.84,5.64,6.3,0.978775
+33030707,ESCOLA MUNICIPAL ROSA CARELLI DA COSTA,Piraí,Municipal,255.9,250.86,5.17,5.1,0.99075
+33030715,E M LUIZ MARINHO VIDAL,Piraí,Municipal,257.9,263.71,4.7,4.9,0.906993
+33030812,E M EPITACIO CAMPOS,Piraí,Municipal,271.18,282.23,4.65,5.9,1.0
+33031126,COLEGIO MUNICIPAL PRESIDENTE CASTELO BRANCO,Piraí,Municipal,262.76,272.14,5.31,5.4,0.973397
+33097674,E M LUCIO DE MENDONCA,Piraí,Municipal,245.13,244.53,4.97,4.3,0.893013
+33098891,CIEP 477 PROFESSORA ROSA DA CONCEICAO GUEDES,Piraí,Municipal,234.69,235.76,5.19,3.4,0.754257
+33130957,C M DR AURELINO GONCALVES BARBOSA,Piraí,Municipal,235.77,235.94,5.0,4.2,0.922165
+33003858,CE JOSE DE LANNES DANTAS BRANDAO,Porciúncula,Estadual,223.48,225.37,4.46,3.3,0.803478
+33004030,E M JOAO FRANCISCO BRAZ,Porciúncula,Municipal,246.08,247.17,5.13,4.9,1.0
+33097216,IE ELIANA DUARTE DA SILVA BREIJAO,Porciúncula,Estadual,226.77,218.18,4.95,4.0,0.987341
+33129819,CRECHE E ESC MUN MARIA PUDDO MURUCCI,Porciúncula,Municipal,250.17,254.52,4.73,4.9,0.968835
+33032122,CIEP BRIZOLAO 487 OSWALDO LUIZ GOMES,Porto Real,Municipal,241.92,237.33,5.03,4.3,0.918572
+33032173,ESCOLA MUNICIPAL MARINA GRACIANI FONTANEZZI,Porto Real,Municipal,264.11,279.25,5.4,5.7,0.990221
+33156891,ESCOLA MUNICIPAL MARIA HORTENCIA NOGUEIRA,Porto Real,Municipal,266.92,258.73,5.44,5.3,0.98122
+33097771,ESCOLA MUNICIPAL MARIA HELENA RAFAEL DE ELIAS,Quatis,Municipal,263.56,265.66,5.17,5.3,0.965364
+33097780,CIEP 492 MUNICIPALIZADO MARCIANA MACHADO D ELIAS,Quatis,Municipal,238.05,244.27,4.77,4.2,0.894752
+33061750,CE SAO CRISTOVAO,Queimados,Estadual,269.22,267.82,4.97,5.3,0.944205
+33061874,CE DOM BOSCO,Queimados,Estadual,217.05,232.67,4.68,3.5,0.852771
+33061912,ESCOLA MUNICIPALIZADA JOSE DE ANCHIETA,Queimados,Municipal,257.2,252.33,4.82,4.4,0.854674
+33061947,E M STO EXPEDITO,Queimados,Municipal,253.29,274.35,4.77,4.7,0.854076
+33061963,ESCOLA MUNICIPAL PROFESSOR ALBERTO PIRRO,Queimados,Municipal,235.58,234.79,4.73,3.5,0.766762
+33062102,E M PROF LEOPOLDO MACHADO,Queimados,Municipal,224.13,227.73,4.9,3.4,0.802837
+33062110,E M PROF SCINTILLA EXEL,Queimados,Municipal,241.69,246.59,4.88,4.2,0.880877
+33097062,CIEP 355 ROQUETE PINTO,Queimados,Estadual,236.31,246.39,4.77,4.4,0.926371
+33099901,CIEP 335 PROFESSOR JOAQUIM DE FREITAS,Queimados,Estadual,235.44,236.9,4.81,3.8,0.829421
+33113300,ESC SENADOR NELSON CARNEIRO,Queimados,Municipal,229.19,232.93,4.71,4.2,0.95258
+33016534,CIEP BRIZOLAO 465 - DR AMILCAR PEREIRA DA SILVA,Quissamã,Municipal,253.15,258.06,5.2,4.8,0.932649
+33016666,E M DELFICA DE CARVALHO WAGNER,Quissamã,Municipal,242.77,269.77,4.9,5.1,0.969627
+33016739,E M PROF NELITA BARCELLOS DOS SANTOS,Quissamã,Municipal,270.79,272.17,5.0,5.6,0.974079
+33016771,E M PROF MARIA ILKA DE Q E ALMEIDA,Quissamã,Municipal,245.87,216.97,4.88,4.2,0.951845
+33031320,CIEP BRIZOLAO 489 AUGUSTO DE CARVALHO,Resende,Municipal,247.16,246.93,5.19,4.4,0.906364
+33031428,CE MARECHAL SOUZA DANTAS,Resende,Estadual,248.23,254.57,5.19,3.9,0.764528
+33031509,CE OLIVEIRA BOTELHO,Resende,Estadual,266.14,254.85,5.35,4.3,0.805711
+33031576,COLEGIO MUNICIPAL GETULIO VARGAS,Resende,Municipal,264.61,264.41,5.26,5.2,0.953574
+33031592,E M NOEL DE CARVALHO,Resende,Municipal,266.31,274.78,5.45,5.4,0.943193
+33031606,E M SURUBI,Resende,Municipal,242.62,242.12,5.39,4.6,0.966921
+33031630,E M JULIO VERNE,Resende,Municipal,234.24,242.67,4.72,3.9,0.836543
+33031720,CE OLAVO BILAC,Resende,Estadual,270.88,275.22,5.42,5.1,0.884256
+33031738,CE PROFESSOR JOSE MEDEIROS DE CAMARGO,Resende,Estadual,243.01,238.96,5.07,3.1,0.662831
+33031762,E M PROFESSOR OSWALDO DA ROCHA CAMOES,Resende,Municipal,264.48,269.39,5.14,5.3,0.959087
+33031843,CE ENGENHEIRO PASSOS,Resende,Estadual,259.75,264.8,5.18,5.1,0.94367
+33032041,E M HETELVINA CARNEIRO,Resende,Municipal,266.19,263.76,4.81,5.3,0.963219
+33032050,E M JARDIM DAS ACACIAS,Resende,Municipal,254.57,265.83,5.26,5.1,0.9558
+33097917,E M PROFESSOR CARLINHOS,Resende,Municipal,225.83,219.73,4.89,3.9,0.952668
+33115001,CE ANTONIO QUIRINO,Resende,Estadual,269.93,277.29,5.19,5.2,0.904779
+33167176,E M GERALDO DA CUNHA RODRIGUES,Resende,Municipal,278.87,285.79,5.44,5.9,0.972973
+33044341,COL MUN DR ASTERIO ALVES DE MENDONCA,Rio Bonito,Municipal,243.92,256.73,5.12,4.5,0.901619
+33044350,C M DUQUE DE CAXIAS,Rio Bonito,Municipal,249.15,266.16,4.77,4.9,0.929908
+33044406,EM DOUTOR ROBERTO PEREIRA DOS SANTOS,Rio Bonito,Municipal,255.96,254.86,5.0,4.8,0.932153
+33044465,E M POSSE,Rio Bonito,Municipal,225.16,208.26,4.48,3.4,0.884053
+33044589,E M CASTRO ALVES,Rio Bonito,Municipal,236.51,242.01,4.71,4.1,0.881961
+33044643,E M RAULBINO PEREIRA DE MESQUITA,Rio Bonito,Municipal,238.93,250.25,4.78,4.5,0.925228
+33044694,C M DR KINGSTON GUIMARAES DE SOUZA MOTTA,Rio Bonito,Municipal,239.5,234.94,4.77,4.1,0.90076
+33044716,E M PROF ANNITA DE SOUZA MORAES,Rio Bonito,Municipal,246.7,251.02,4.63,4.8,0.975157
+33044767,E M GOVERNADOR ROBERTO SILVEIRA,Rio Bonito,Municipal,227.46,241.13,4.71,4.4,0.987552
+33097232,CIEP 255 ESCOLA MUNICIPAL PROFESSOR HONESTO DE ALMEIDA CARVALHO,Rio Bonito,Municipal,243.87,247.17,4.99,4.3,0.894581
+33112533,ESCOLA MUNICIPAL MARIA THEREZA CHEHAB DE CARVALHO,Rio Bonito,Municipal,206.22,215.24,4.69,3.6,0.987552
+33162590,COLEGIO MUNICIPAL MAURICIO KOPKE,Rio Bonito,Municipal,239.44,253.33,5.17,3.7,0.755977
+33032327,E M GETULANDIA,Rio Claro,Municipal,252.48,262.16,4.97,5.2,0.99075
+33032386,E M AURELIANO PORTUGAL,Rio Claro,Municipal,254.78,257.39,5.29,5.0,0.964263
+33032467,E M FRANCISCO TEIXEIRA DE OLIVEIRA,Rio Claro,Municipal,264.85,290.56,5.47,5.7,0.95613
+33163456,CENTRO MUNICIPAL DE ENSINO DEPUTADO CAMARA TORRES,Rio Claro,Municipal,275.58,275.78,4.89,5.4,0.929054
+33188610,ESCOLA MUNICIPAL PREFEITO RAUL FONSECA MACHADO,Rio Claro,Municipal,243.89,249.26,5.07,4.4,0.903134
+33035156,ESCOLA MUNICIPAL SANTA TEREZA,Rio das Flores,Municipal,264.48,266.07,5.08,5.2,0.942542
+33035253,ESCOLA MUNICIPAL MANUEL DUARTE,Rio das Flores,Municipal,244.9,238.71,4.79,4.6,0.971506
+33149704,ESCOLA MUNICIPAL NEPHTALINA CARVALHO AVILA,Rio das Flores,Municipal,257.92,254.08,4.87,5.2,0.994924
+33025495,C M PROFª AMERICA ABDALLA,Rio das Ostras,Municipal,252.8,262.67,4.99,5.0,0.94906
+33025630,E E MUNICIPALIZADA FAZENDA DA PRAIA,Rio das Ostras,Municipal,277.26,277.0,5.13,4.9,0.826925
+33130680,E M PROF MARINETE COELHO DE SOUZA,Rio das Ostras,Municipal,272.16,280.45,5.16,5.4,0.911777
+33150265,E M SEBASTIAO LOUBACH,Rio das Ostras,Municipal,251.2,253.28,5.1,4.3,0.843276
+33150281,E M VEREADOR PEDRO MOREIRA DOS SANTOS,Rio das Ostras,Municipal,255.57,263.92,5.36,4.4,0.833421
+33166390,E M PROFESSORA ROSANGELA DUARTE FARIA,Rio das Ostras,Municipal,277.39,288.52,5.54,5.9,0.969469
+33166420,E M NILTON BALTHAZAR,Rio das Ostras,Municipal,280.57,289.56,5.36,5.7,0.931005
+33178755,E M ROCHA LEAO,Rio das Ostras,Municipal,249.09,277.01,4.9,5.2,0.962138
+33181390,E M MARIA GORETE VICENTE JORGE,Rio das Ostras,Municipal,255.98,266.78,4.82,5.1,0.949948
+33216827,E M PADRE JOSE DILSON DOREA,Rio das Ostras,Municipal,260.27,266.85,5.07,4.6,0.847456
+33439311,E M FRANCISCO DE ASSIS MEDEIROS RANGEL,Rio das Ostras,Municipal,252.84,265.02,4.94,4.5,0.856277
+33062420,0101004 EM BENJAMIM CONSTANT,Rio de Janeiro,Municipal,230.9,227.22,4.52,3.6,0.832005
+33062471,0101007 EM MARECHAL MASCARENHAS DE MORAES,Rio de Janeiro,Municipal,264.47,267.99,4.61,5.2,0.944451
+33062498,0101009 EM PROFESSOR WALTER CARLOS DE MAGALHAES FRAENKEL,Rio de Janeiro,Municipal,261.11,268.2,4.67,5.4,0.982467
+33062501,0101001 EM VICENTE LICINIO CARDOSO,Rio de Janeiro,Municipal,256.28,256.88,4.76,4.5,0.85978
+33062706,CPII - CAMPUS CENTRO,Rio de Janeiro,Federal,345.25,322.62,5.75,7.7,0.991402
+33062765,0102005 EM CALOUSTE GULBENKIAN,Rio de Janeiro,Municipal,248.94,266.68,4.73,5.2,0.981639
+33062773,0102001 EM CELESTINO DA SILVA,Rio de Janeiro,Municipal,270.78,276.44,4.81,5.6,0.967308
+33062790,0102004 EM RIVADAVIA CORREA,Rio de Janeiro,Municipal,248.8,273.09,4.63,5.0,0.935931
+33063150,0103006 EM JENNY GOMES,Rio de Janeiro,Municipal,250.19,263.41,4.56,4.5,0.858897
+33063184,0103004 EM PEREIRA PASSOS,Rio de Janeiro,Municipal,271.74,271.39,4.84,5.7,0.993963
+33063192,0208002 EM REVERENDO MARTIN LUTHER KING,Rio de Janeiro,Municipal,254.17,258.31,4.9,4.9,0.949852
+33063559,CPII - CAMPUS HUMAITA II,Rio de Janeiro,Federal,321.09,311.45,5.47,6.6,0.91927
+33064105,0204001 EM DEODORO,Rio de Janeiro,Municipal,278.47,281.23,4.94,6.0,1.0
+33064130,0204017 EM JOAQUIM ABILIO BORGES,Rio de Janeiro,Municipal,263.21,261.35,4.82,4.9,0.908206
+33064148,0204011 EM JOAQUIM NABUCO,Rio de Janeiro,Municipal,253.85,278.55,4.79,5.4,0.98167
+33064156,0204005 EM JOSE DE ALENCAR,Rio de Janeiro,Municipal,272.55,272.57,4.84,5.7,0.985235
+33064180,0204014 EM PRESIDENTE ARTHUR DA COSTA E SILVA,Rio de Janeiro,Municipal,281.21,290.71,5.08,6.0,0.967796
+33064199,0204015 EM JOAO SALDANHA,Rio de Janeiro,Municipal,283.86,278.76,4.84,5.4,0.890209
+33064903,0205009 EM ALENCASTRO GUIMARAES,Rio de Janeiro,Municipal,264.08,278.5,4.95,5.1,0.885464
+33064911,0206004 EM CASTELNUOVO,Rio de Janeiro,Municipal,264.03,282.26,4.83,5.3,0.922191
+33064962,0205004 EM DOUTOR COCIO BARCELLOS,Rio de Janeiro,Municipal,269.71,289.25,4.87,5.8,0.971535
+33064970,0204018 EM ESTACIO DE SA,Rio de Janeiro,Municipal,283.67,286.5,5.37,6.1,0.991278
+33064997,0204019 EM MINAS GERAIS,Rio de Janeiro,Municipal,282.33,285.7,5.06,6.1,0.986417
+33065020,0205008 EM ROMA,Rio de Janeiro,Municipal,253.11,275.02,4.81,4.8,0.880065
+33065039,0205001 EM SAO TOMAS DE AQUINO,Rio de Janeiro,Municipal,271.12,275.38,4.71,5.6,0.963817
+33065250,COLEGIO DE APLICACAO DA UNIVERSIDADE FEDERAL DO RIO DE JANEIRO,Rio de Janeiro,Federal,293.88,282.88,5.84,6.1,0.973569
+33065608,0206021 EM ALMIRANTE TAMANDARE,Rio de Janeiro,Municipal,274.7,274.1,4.48,5.5,0.940366
+33065624,0206012 EM CAMILO CASTELO BRANCO,Rio de Janeiro,Municipal,268.2,276.9,4.76,5.2,0.905087
+33065659,0206019 EM CHRISTIANO HAMANN,Rio de Janeiro,Municipal,267.75,274.33,4.69,5.5,0.973348
+33065667,0206020 EM DESEMBARGADOR OSCAR TENORIO,Rio de Janeiro,Municipal,245.03,242.66,4.62,3.6,0.757631
+33065683,0206005 EM GEORGE PFISTERER,Rio de Janeiro,Municipal,249.35,259.34,4.59,5.0,0.972184
+33065691,0206002 EM HENRIQUE DODSWORTH,Rio de Janeiro,Municipal,245.0,257.39,4.67,4.7,0.935977
+33065748,0206015 EM MANOEL CICERO,Rio de Janeiro,Municipal,268.63,281.07,4.76,5.6,0.963991
+33065756,0206003 EM MARILIA DE DIRCEU,Rio de Janeiro,Municipal,252.71,248.76,4.67,4.9,0.971197
+33066060,CPII - CAMPUS SAO CRISTOVAO II,Rio de Janeiro,Federal,298.41,300.03,5.55,6.6,1.0
+33066221,0107011 EM CARDEAL LEME,Rio de Janeiro,Municipal,261.75,273.28,4.76,5.1,0.912292
+33066264,0107001 EM GONCALVES DIAS,Rio de Janeiro,Municipal,270.38,265.2,4.73,5.3,0.955465
+33066337,0107002 EM NILO PECANHA,Rio de Janeiro,Municipal,260.08,265.54,4.9,5.3,0.977588
+33066353,0107009 EM URUGUAI,Rio de Janeiro,Municipal,254.65,263.61,4.81,4.7,0.893944
+33066523,INSTITUTO DE APLICACAO FERNANDO RODRIGUES DA SILVEIRA CAP-UERJ,Rio de Janeiro,Estadual,304.74,295.88,5.61,6.4,0.962261
+33066973,0208017 EM ARAUJO PORTO ALEGRE,Rio de Janeiro,Municipal,231.81,241.7,4.88,3.9,0.845637
+33066981,0208007 EM BARAO DE ITACURUSSA,Rio de Janeiro,Municipal,272.06,278.75,4.97,5.8,0.995438
+33067058,0208004 EM FRANCISCO CABRITA,Rio de Janeiro,Municipal,267.65,271.73,4.77,5.5,0.978337
+33067074,0208009 EM GENERAL EUCLYDES DE FIGUEIREDO,Rio de Janeiro,Municipal,265.01,264.14,4.87,5.2,0.946498
+33067139,0208003 EM LAUDIMIA TROTTA,Rio de Janeiro,Municipal,243.35,249.68,4.77,4.6,0.943607
+33067147,0208023 EM MARC FERREZ,Rio de Janeiro,Municipal,270.03,273.01,5.17,5.0,0.879828
+33067180,0208012 EM ORSINA DA FONSECA,Rio de Janeiro,Municipal,272.57,280.58,5.02,5.9,0.997481
+33067201,0208010 EM SOARES PEREIRA,Rio de Janeiro,Municipal,219.56,221.54,4.68,3.4,0.844804
+33067880,CPII - CAMPUS TIJUCA II,Rio de Janeiro,Federal,313.91,309.03,5.68,6.4,0.902367
+33068208,0209016 EM AFFONSO PENNA,Rio de Janeiro,Municipal,274.39,272.08,5.13,5.3,0.913967
+33068259,0209020 EM EPITACIO PESSOA,Rio de Janeiro,Municipal,273.54,264.12,5.04,5.6,0.988938
+33068267,0209010 EM EQUADOR,Rio de Janeiro,Municipal,240.56,249.07,4.65,4.7,0.970605
+33068283,0209013 EM FRANCISCO MANUEL,Rio de Janeiro,Municipal,276.09,275.25,5.17,5.7,0.973102
+33068305,0209014 EM GENERAL HUMBERTO DE SOUZA MELLO,Rio de Janeiro,Municipal,227.64,226.1,4.75,4.2,0.984019
+33068313,0209007 EM JORNALISTA ASSIS CHATEAUBRIAND,Rio de Janeiro,Municipal,249.37,257.55,4.56,5.1,0.99166
+33068330,0209008 EM MADRID,Rio de Janeiro,Municipal,277.33,277.1,5.13,5.6,0.955935
+33068364,0209023 EM PANAMA,Rio de Janeiro,Municipal,259.91,256.4,4.88,5.1,0.970891
+33068380,0209026 EM PROFESSOR LOURENCO FILHO,Rio de Janeiro,Municipal,270.07,268.77,4.97,5.2,0.925024
+33068399,0209009 EM REPUBLICA ARGENTINA,Rio de Janeiro,Municipal,254.87,260.09,4.8,4.7,0.893415
+33068780,0430204 CIEP OPERARIO VICENTE MARIANO,Rio de Janeiro,Municipal,241.92,250.39,4.59,4.7,0.973187
+33068798,0410501 CIEP JUSCELINO KUBITSCHEK,Rio de Janeiro,Municipal,248.1,256.4,4.56,4.2,0.821557
+33069107,0312002 EM ALCIDE DE GASPERI,Rio de Janeiro,Municipal,265.61,268.98,4.93,5.3,0.954931
+33069115,0410025 EM ANIBAL FREIRE,Rio de Janeiro,Municipal,270.73,279.9,5.17,5.6,0.958737
+33069131,0430003 EM BAHIA,Rio de Janeiro,Municipal,257.19,263.61,4.77,5.3,0.989176
+33069140,0410018 EM BERLIM,Rio de Janeiro,Municipal,269.77,270.1,5.07,5.5,0.965722
+33069158,0410021 EM BRASIL,Rio de Janeiro,Municipal,266.43,272.92,4.97,5.6,0.992938
+33069174,0410016 EM CHILE,Rio de Janeiro,Municipal,273.64,272.1,4.96,5.7,0.983802
+33069220,0410009 EM DILERMANDO CRUZ,Rio de Janeiro,Municipal,269.73,276.39,4.69,5.7,0.98297
+33069255,0312004 EM ESTADO DA GUANABARA,Rio de Janeiro,Municipal,251.97,259.69,4.64,5.2,0.99266
+33069271,0410005 EM JOAO BARBALHO,Rio de Janeiro,Municipal,254.62,260.1,4.82,4.8,0.920702
+33069310,0312006 EM MINISTRO OROSIMBO NONATO,Rio de Janeiro,Municipal,253.22,263.9,4.85,5.0,0.952906
+33069328,0410010 EM NERVAL DE GOUVEIA,Rio de Janeiro,Municipal,264.9,271.44,4.71,5.5,0.988081
+33069336,0410022 EM ODILON DE ANDRADE,Rio de Janeiro,Municipal,238.11,233.49,4.55,4.5,1.0
+33069417,0430001 EM PROFESSOR JOSUE DE CASTRO,Rio de Janeiro,Municipal,246.89,258.98,4.57,4.8,0.941822
+33069433,0410003 EM RUY BARBOSA,Rio de Janeiro,Municipal,258.16,265.83,4.71,5.3,0.989422
+33070113,0411020 EM GRECIA,Rio de Janeiro,Municipal,263.32,280.35,5.0,5.7,1.0
+33070334,0411009 EM CIENTISTA MARIO KROEFF,Rio de Janeiro,Municipal,265.44,277.47,5.02,5.3,0.924114
+33070440,0431001 EM ARY BARROSO,Rio de Janeiro,Municipal,301.72,298.66,5.11,6.6,0.992186
+33070458,0411002 EM BERNARDO DE VASCONCELLOS,Rio de Janeiro,Municipal,233.3,234.24,4.56,4.2,0.949386
+33070466,0411010 EM BRANT HORTA,Rio de Janeiro,Municipal,253.94,255.92,4.82,5.0,0.96028
+33070490,0431017 EM CARDEAL CAMARA,Rio de Janeiro,Municipal,250.38,254.91,4.58,5.0,0.982942
+33070555,0431007 EM EMBAIXADOR BARROS HURTADO,Rio de Janeiro,Municipal,280.96,277.59,4.83,5.9,0.986379
+33070580,0411013 EM FERNANDO TUDE DE SOUZA,Rio de Janeiro,Municipal,243.59,255.5,4.77,4.8,0.960733
+33070610,0431026 EM HERBERT MOSES,Rio de Janeiro,Municipal,244.39,245.75,4.93,4.5,0.940725
+33070660,0411004 EM LEONOR COELHO PEREIRA,Rio de Janeiro,Municipal,245.52,258.54,4.72,4.8,0.941445
+33070695,0431014 EM MINISTRO LAFAYETTE DE ANDRADA,Rio de Janeiro,Municipal,242.22,249.38,4.69,4.8,0.987663
+33070741,0431008 EM ODILON BRAGA,Rio de Janeiro,Municipal,267.38,269.66,4.82,5.5,0.987697
+33070768,0411005 EM PRESIDENTE EURICO DUTRA,Rio de Janeiro,Municipal,267.7,285.34,5.14,5.7,0.964154
+33070784,0411018 EM PROFESSOR ARY QUINTELLA,Rio de Janeiro,Municipal,256.24,271.71,5.13,5.4,0.996306
+33070814,0411008 EM PROFESSOR SOUZA CARNEIRO,Rio de Janeiro,Municipal,266.27,265.3,4.68,5.3,0.952584
+33070830,0431018 EM REPUBLICA DO LIBANO,Rio de Janeiro,Municipal,246.08,253.42,4.61,4.7,0.942119
+33070849,0431009 EM RORAIMA,Rio de Janeiro,Municipal,256.67,262.87,4.7,5.0,0.947282
+33070865,0411028 EM SAO PAULO,Rio de Janeiro,Municipal,241.22,243.1,4.96,4.5,0.949922
+33070890,0431027 EM ZELIA BRAUNE,Rio de Janeiro,Municipal,252.1,254.97,4.54,4.8,0.929046
+33071829,CPII - CAMPUS ENGENHO NOVO II,Rio de Janeiro,Federal,299.71,291.57,5.55,5.9,0.902884
+33072507,0313024 EM ACRE,Rio de Janeiro,Municipal,276.51,267.67,5.02,5.6,0.970785
+33072566,0313016 EM BENEVENUTA RIBEIRO,Rio de Janeiro,Municipal,259.06,266.04,4.82,4.6,0.841364
+33072574,0313020 EM BENTO RIBEIRO,Rio de Janeiro,Municipal,267.24,274.5,4.93,5.4,0.947178
+33072582,0313032 EM BOLIVAR,Rio de Janeiro,Municipal,268.59,268.76,5.07,5.5,0.981101
+33072590,0313040 EM BRIGADEIRO FARIA LIMA,Rio de Janeiro,Municipal,259.48,263.25,4.87,5.2,0.968578
+33072639,0312016 EM CEARA,Rio de Janeiro,Municipal,266.8,275.17,4.85,5.1,0.903355
+33072701,0313054 EM ENGENHEIRO ROBERTO MAGNO DE CARVALHO,Rio de Janeiro,Municipal,256.75,264.66,4.84,5.4,1.0
+33072710,0312031 EM EURICO SALLES,Rio de Janeiro,Municipal,260.65,264.7,4.82,5.1,0.935843
+33072744,0313021 EM FRANCISCO JOBIM,Rio de Janeiro,Municipal,241.32,239.75,4.8,4.4,0.947919
+33072760,0312009 EM GEORGE SUMNER,Rio de Janeiro,Municipal,254.16,254.29,4.78,5.0,0.980957
+33072779,0313042 EM GOIAS,Rio de Janeiro,Municipal,275.69,281.39,5.2,5.9,0.986281
+33072787,0312020 EM GUSTAVO ARMBRUST,Rio de Janeiro,Municipal,269.27,275.94,4.69,5.7,0.992225
+33072850,0313044 EM JOAO KOPKE,Rio de Janeiro,Municipal,247.35,244.3,4.75,4.7,0.974682
+33072868,0312023 EM JOAQUIM RIBEIRO,Rio de Janeiro,Municipal,257.09,256.69,4.93,4.5,0.858124
+33072906,0313002 EM JOSE VERISSIMO,Rio de Janeiro,Municipal,255.95,262.26,4.66,5.3,0.991721
+33072957,0312030 EM MARECHAL ESTEVAO LEITAO DE CARVALHO,Rio de Janeiro,Municipal,235.13,250.46,4.69,4.5,0.935022
+33072965,0312012 EM MANOEL BOMFIM,Rio de Janeiro,Municipal,257.88,265.04,4.85,4.9,0.905112
+33072973,0313052 EM MARANHAO,Rio de Janeiro,Municipal,252.13,258.83,4.95,5.0,0.968867
+33073031,0313013 EM MINISTRO GAMA FILHO,Rio de Janeiro,Municipal,237.96,231.38,4.61,4.4,0.979305
+33073058,0312014 EM NEREU SAMPAIO,Rio de Janeiro,Municipal,258.38,250.82,4.81,4.6,0.883754
+33073104,0313030 EM PASTOR MIRANDA PINTO,Rio de Janeiro,Municipal,277.36,281.73,5.13,5.6,0.934346
+33073112,0312011 EM PERNAMBUCO,Rio de Janeiro,Municipal,259.89,273.54,4.62,4.2,0.760185
+33073171,0313046 EM REPUBLICA DE EL SALVADOR,Rio de Janeiro,Municipal,281.73,288.57,4.99,6.0,0.966286
+33073180,0313015 EM REPUBLICA DO PERU,Rio de Janeiro,Municipal,275.58,284.25,5.08,6.0,0.997988
+33073201,0313006 EM RIO DE JANEIRO,Rio de Janeiro,Municipal,251.14,241.93,4.66,4.8,0.978421
+33073210,0313036 EM RIO GRANDE DO SUL,Rio de Janeiro,Municipal,271.29,278.78,4.96,5.5,0.942772
+33073309,0313029 EM THOMAS MANN,Rio de Janeiro,Municipal,250.67,253.61,4.87,4.9,0.970008
+33074348,0514015 EM BARCELONA,Rio de Janeiro,Municipal,245.9,259.65,4.87,5.0,0.972887
+33074364,0514002 EM CECILIA MEIRELLES,Rio de Janeiro,Municipal,258.16,261.18,4.69,5.2,0.978723
+33074380,0514025 EM CONDE PEREIRA CARNEIRO,Rio de Janeiro,Municipal,255.48,253.43,4.57,4.6,0.901697
+33074402,0515011 EM EMBAIXADOR JOAO NEVES DA FONTOURA,Rio de Janeiro,Municipal,271.49,274.14,4.83,5.6,0.975262
+33074437,0514023 EM GASPAR VIANNA,Rio de Janeiro,Municipal,261.07,259.68,5.03,5.3,0.994461
+33074461,0515002 EM ITALIA,Rio de Janeiro,Municipal,272.45,270.39,4.94,5.7,1.0
+33074496,0514020 EM JOSE DO PATROCINIO,Rio de Janeiro,Municipal,265.74,268.75,5.07,5.3,0.958322
+33074500,0515004 EM LUIS DE CAMOES,Rio de Janeiro,Municipal,246.79,253.92,4.75,4.8,0.967385
+33074526,0514003 EM MAESTRO PIXINGUINHA,Rio de Janeiro,Municipal,259.11,261.03,4.54,5.3,0.991803
+33074534,0514029 EM MALBA TAHAN,Rio de Janeiro,Municipal,266.86,269.49,4.82,5.4,0.954679
+33074550,0514008 EM MARIA BAPTISTINA DUFFLES TEIXEIRA LOTT,Rio de Janeiro,Municipal,276.13,280.98,5.38,5.8,0.980981
+33074569,0514022 EM MARIO PAULO DE BRITO,Rio de Janeiro,Municipal,274.56,282.56,5.13,5.9,0.995289
+33074585,0514032 EM MENDES VIANA,Rio de Janeiro,Municipal,243.67,246.77,4.62,4.4,0.903436
+33074607,0514021 EM NUN ALVARES PEREIRA,Rio de Janeiro,Municipal,283.17,284.08,5.07,6.0,0.986202
+33074640,0515001 EM PARA,Rio de Janeiro,Municipal,267.45,272.28,4.78,5.7,1.0
+33074712,0514018 EM RODRIGO OTAVIO FILHO,Rio de Janeiro,Municipal,247.69,258.73,4.85,4.9,0.968891
+33076014,0515052 EM AZEVEDO JUNIOR,Rio de Janeiro,Municipal,262.24,264.24,4.93,5.3,0.968613
+33076049,0515054 EM CARDEAL ARCOVERDE,Rio de Janeiro,Municipal,256.32,268.07,5.04,5.3,0.977207
+33076073,0515023 EM CONDE AFONSO CELSO,Rio de Janeiro,Municipal,245.85,255.23,4.86,4.9,0.985682
+33076090,0515028 EM EVANGELINA DUARTE BATISTA,Rio de Janeiro,Municipal,246.13,244.82,4.96,4.7,0.960469
+33076111,0515062 EM FIGUEIREDO PIMENTEL,Rio de Janeiro,Municipal,253.99,240.45,4.6,4.8,0.983792
+33076138,0515038 EM FRANCA,Rio de Janeiro,Municipal,266.58,271.53,4.95,5.5,0.977095
+33076146,0515025 EM FRANCISCO PALHETA,Rio de Janeiro,Municipal,269.04,273.61,4.97,5.6,0.988852
+33076189,0515060 EM IRMA ZELIA,Rio de Janeiro,Municipal,255.19,264.61,4.72,5.2,0.981814
+33076197,0515045 EM JAIME COSTA,Rio de Janeiro,Municipal,257.68,265.02,4.94,5.2,0.972785
+33076200,0515022 EM JOSE EMYGDIO DE OLIVEIRA,Rio de Janeiro,Municipal,254.37,259.71,4.99,5.1,0.971639
+33076251,0515055 EM MINISTRO EDGARD ROMERO,Rio de Janeiro,Municipal,236.97,246.0,4.76,4.6,0.983574
+33076260,0515021 EM MOZART LAGO,Rio de Janeiro,Municipal,247.87,254.82,4.94,5.0,0.996718
+33076278,0515041 EM OSWALDO TEIXEIRA,Rio de Janeiro,Municipal,274.8,276.45,4.98,5.8,0.984288
+33076332,0817067 EM PRESIDENTE CAFE FILHO,Rio de Janeiro,Municipal,243.22,245.58,4.77,4.7,0.975729
+33076340,0515029 EM PROFESSOR CARNEIRO FELIPE,Rio de Janeiro,Municipal,260.91,260.87,4.9,5.2,0.972876
+33076359,0515040 EM PROFESSOR SOUZA DA SILVEIRA,Rio de Janeiro,Municipal,255.6,263.46,4.93,5.2,0.975788
+33076367,0515039 EM QUINTINO BOCAIUVA,Rio de Janeiro,Municipal,251.93,269.8,4.97,5.4,1.0
+33076375,0515016 EM RAJA GABAGLIA,Rio de Janeiro,Municipal,256.09,264.89,5.04,5.0,0.935226
+33076405,0515048 EM ROSTHAM PEDRO DE FARIAS,Rio de Janeiro,Municipal,258.13,263.55,4.83,5.1,0.953952
+33076413,0515057 EM RUGENDAS,Rio de Janeiro,Municipal,261.8,264.08,4.73,5.4,0.990946
+33076464,0515020 EM WALDEMAR FALCAO,Rio de Janeiro,Municipal,259.41,263.84,5.13,4.8,0.885915
+33076898,0716501 CIEP CARLOS DRUMOND DE ANDRADE,Rio de Janeiro,Municipal,258.37,269.13,4.73,4.8,0.878007
+33077665,0716035 EM SILVEIRA SAMPAIO,Rio de Janeiro,Municipal,259.49,263.68,4.88,5.2,0.973705
+33077690,0734007 EM ALBERTO RANGEL,Rio de Janeiro,Municipal,246.45,246.44,4.73,4.7,0.972074
+33077746,0716041 EM BARAO DA TAQUARA,Rio de Janeiro,Municipal,236.94,236.73,4.97,3.9,0.861644
+33077754,0716067 EM CANDIDO CAMPOS,Rio de Janeiro,Municipal,270.82,274.2,5.21,5.7,0.988097
+33077789,0716032 EM COMPOSITOR LUIZ GONZAGA,Rio de Janeiro,Municipal,246.57,260.19,4.74,5.0,0.969629
+33077797,0724022 EM COMUNIDADE DE VARGEM GRANDE,Rio de Janeiro,Municipal,279.23,282.63,5.01,6.0,1.0
+33077860,0716040 EM EUNICE WEAVER,Rio de Janeiro,Municipal,269.96,270.38,5.07,5.6,0.995438
+33077886,0716007 EM FINLANDIA,Rio de Janeiro,Municipal,256.08,259.43,5.12,5.0,0.951361
+33077894,0716001 EM FRANCIS HIME,Rio de Janeiro,Municipal,260.4,260.64,5.4,5.2,0.970126
+33077916,0716045 EM GENERAL CARLOS CAETANO MIRAGAYA,Rio de Janeiro,Municipal,263.27,268.57,4.99,5.2,0.938191
+33077924,0716031 EM GENERAL JOAO MENDONCA LIMA,Rio de Janeiro,Municipal,265.58,271.97,4.89,4.8,0.862018
+33077940,0716047 EM GOVERNADOR CARLOS LACERDA,Rio de Janeiro,Municipal,281.36,284.61,5.24,5.7,0.941724
+33077991,0716003 EM JORNALISTA CAMPOS RIBEIRO,Rio de Janeiro,Municipal,269.03,269.5,4.77,5.1,0.895852
+33078009,0734009 EM JOSE CLEMENTE PEREIRA,Rio de Janeiro,Municipal,236.65,234.56,4.72,4.4,0.970238
+33078050,0716030 EM DORCELINA GOMES DA COSTA,Rio de Janeiro,Municipal,240.38,237.45,4.66,4.6,0.994149
+33078114,0716011 EM MARECHAL CANROBERT PEREIRA DA COSTA,Rio de Janeiro,Municipal,263.38,275.27,4.79,5.4,0.958736
+33078165,0716026 EM MENEZES CORTES,Rio de Janeiro,Municipal,262.09,270.48,4.77,5.0,0.907651
+33078190,0716048 EM NELSON RODRIGUES,Rio de Janeiro,Municipal,260.44,267.95,5.05,5.3,0.971234
+33078203,0716056 EM NOEL NUTELS,Rio de Janeiro,Municipal,257.73,251.25,4.85,5.1,0.993449
+33078220,0734010 EM PEDRO ALEIXO,Rio de Janeiro,Municipal,243.36,253.7,4.6,4.1,0.830527
+33078246,0716054 EM PIO X,Rio de Janeiro,Municipal,274.55,273.88,5.21,5.7,0.983449
+33078270,0716046 EM PROFESSORA FELICIDADE DE MOURA CASTRO,Rio de Janeiro,Municipal,274.5,275.58,5.36,5.6,0.968046
+33078327,0716033 EM RIO DAS PEDRAS,Rio de Janeiro,Municipal,263.86,275.23,4.6,5.4,0.962804
+33078351,0716063 EM SOBRAL PINTO,Rio de Janeiro,Municipal,264.92,269.08,4.73,5.1,0.920525
+33078360,0716012 EM VICTOR HUGO,Rio de Janeiro,Municipal,262.5,273.65,4.72,5.5,0.990148
+33080054,0817041 EM ABRAHAO JABOUR,Rio de Janeiro,Municipal,252.01,255.11,4.8,4.7,0.915585
+33080070,0817056 EM ANNA AMELIA QUEIROZ CARNEIRO DE MENDONCA,Rio de Janeiro,Municipal,274.77,274.47,5.12,5.7,0.983292
+33080143,0833039 EM ATILA NUNES,Rio de Janeiro,Municipal,266.35,253.63,4.76,5.2,0.979177
+33080194,0833010 EM CAMPO DOS AFONSOS,Rio de Janeiro,Municipal,282.4,277.91,5.16,5.7,0.955746
+33080275,0817014 EM COMENIUS,Rio de Janeiro,Municipal,249.09,249.61,4.77,4.5,0.910196
+33080321,0833033 EM DALVA DE OLIVEIRA,Rio de Janeiro,Municipal,241.01,238.11,4.83,3.8,0.82041
+33080372,0817048 EM ENGENHEIRO JOAO THOME,Rio de Janeiro,Municipal,264.59,275.61,4.98,5.5,0.973452
+33080437,0817043 EM EVARISTO DE MORAES,Rio de Janeiro,Municipal,265.11,258.5,4.99,5.2,0.969636
+33080470,0817075 EM GENERAL TASSO FRAGOSO,Rio de Janeiro,Municipal,263.02,266.28,4.79,5.4,0.975589
+33080488,0817016 EM GETULIO VARGAS,Rio de Janeiro,Municipal,251.87,254.12,4.96,5.0,0.980242
+33080496,0833025 EM GIL VICENTE,Rio de Janeiro,Municipal,250.39,253.65,4.6,4.8,0.948449
+33080518,0833017 EM GUIMARAES ROSA,Rio de Janeiro,Municipal,246.34,254.39,5.13,4.6,0.92374
+33080534,0817027 EM HENRIQUE DE MAGALHAES,Rio de Janeiro,Municipal,255.35,265.7,4.96,5.3,0.993631
+33080542,0833030 EM JACQUES RAIMUNDO,Rio de Janeiro,Municipal,261.31,257.39,4.98,5.3,0.99371
+33080593,0817054 EM PROFESSOR JOAQUIM DA COSTA RIBEIRO,Rio de Janeiro,Municipal,264.56,267.98,5.15,5.4,0.976218
+33080640,0817009 EM JOSE MARIA BELLO,Rio de Janeiro,Municipal,257.79,256.33,4.79,4.9,0.943902
+33080674,0817062 EM JOSE PIQUET CARNEIRO,Rio de Janeiro,Municipal,259.19,275.82,4.73,5.4,0.961712
+33080682,0817022 EM PROFESSOR JULIO DE MESQUITA,Rio de Janeiro,Municipal,253.71,256.68,4.8,5.1,0.993371
+33080712,0817018 EM LEONIDAS SOBRINHO PORTO,Rio de Janeiro,Municipal,274.9,282.71,5.24,6.0,1.0
+33080720,0833019 EM LIMA BARRETO,Rio de Janeiro,Municipal,236.33,254.66,4.62,4.8,0.98593
+33080747,0817074 EM MARECHAL ALCIDES ETCHEGOYEN,Rio de Janeiro,Municipal,239.76,241.44,4.69,4.6,0.977562
+33080771,0833016 EM MARIO CASASANTA,Rio de Janeiro,Municipal,282.59,269.03,4.66,5.7,0.976982
+33080798,0833041 EM MIGUEL RAMALHO NOVO,Rio de Janeiro,Municipal,245.6,245.16,4.8,4.8,0.987112
+33080801,0817019 EM MILTON CAMPOS,Rio de Janeiro,Municipal,248.06,255.34,4.97,5.0,0.982738
+33080828,0817020 EM NACOES UNIDAS,Rio de Janeiro,Municipal,253.77,261.88,5.0,5.1,0.964612
+33080836,0833022 EM NICARAGUA,Rio de Janeiro,Municipal,287.93,277.6,5.13,6.1,1.0
+33080852,0817076 EM ORESTES BARBOSA,Rio de Janeiro,Municipal,230.06,228.58,4.71,4.2,0.982033
+33080941,0817066 EM PRACINHA JOAO DA SILVA,Rio de Janeiro,Municipal,245.7,242.66,4.83,4.4,0.910228
+33080950,0817084 EM PREFEITO JUAREZ ANTUNES,Rio de Janeiro,Municipal,261.66,266.34,4.92,5.3,0.978186
+33080968,0833018 EM PRESIDENTE HUMBERTO DE ALENCAR CASTELO BRANCO,Rio de Janeiro,Municipal,265.55,270.65,5.16,5.5,0.990132
+33080976,0817028 EM PRESIDENTE MEDICI,Rio de Janeiro,Municipal,259.41,266.64,4.97,5.3,0.983153
+33080984,0833024 EM PRESIDENTE ROOSEVELT,Rio de Janeiro,Municipal,253.41,254.84,4.77,5.1,0.986566
+33081077,0833026 EM RAMIZ GALVAO,Rio de Janeiro,Municipal,246.33,253.62,4.78,5.0,0.991541
+33081093,0817070 EM ROBERTO SIMONSEN,Rio de Janeiro,Municipal,251.88,255.15,4.85,5.0,0.976207
+33081107,0833040 EM RONDON,Rio de Janeiro,Municipal,239.92,246.06,4.73,4.7,0.976637
+33081123,0833007 EM ROSA DA FONSECA,Rio de Janeiro,Municipal,272.97,275.5,4.95,5.4,0.937928
+33081131,0817071 EM RUBEM BERTA,Rio de Janeiro,Municipal,242.41,241.74,4.69,4.5,0.955749
+33081182,0833031 EM TASSO DA SILVEIRA,Rio de Janeiro,Municipal,272.62,281.53,5.08,5.7,0.963058
+33081239,0833011 EM VISCONDE DE PORTO SEGURO,Rio de Janeiro,Municipal,253.54,255.8,5.31,5.1,0.995951
+33082456,0918019 EM JOAO PROENCA,Rio de Janeiro,Municipal,255.77,256.9,4.98,5.2,1.0
+33082545,0918001 EM ALBA CANIZARES DO NASCIMENTO,Rio de Janeiro,Municipal,244.31,258.76,4.93,5.1,1.0
+33082588,0918028 EM ALMIRANTE SALDANHA DA GAMA,Rio de Janeiro,Municipal,249.51,253.09,4.91,4.9,0.979494
+33082596,0918078 EM ALZIRA ARAUJO,Rio de Janeiro,Municipal,264.89,272.93,5.23,5.6,0.986635
+33082600,0918061 EM AMAZONAS,Rio de Janeiro,Municipal,264.61,271.62,5.26,5.6,1.0
+33082650,0918054 EM BALTAZAR LISBOA,Rio de Janeiro,Municipal,263.84,264.7,5.2,5.3,0.959431
+33082669,0918010 EM BARAO DE SANTA MARGARIDA,Rio de Janeiro,Municipal,252.43,253.52,4.94,5.0,0.98994
+33082731,0918071 EM CHARLES DICKENS,Rio de Janeiro,Municipal,263.94,268.49,5.14,5.5,1.0
+33082774,0918081 EM CORA CORALINA,Rio de Janeiro,Municipal,244.99,249.57,4.64,4.9,0.991861
+33082790,1026016 EM DEBORAH MENDES DE MORAES,Rio de Janeiro,Municipal,253.37,260.78,4.84,5.1,0.981335
+33082812,0918076 EM DR JAIR TAVARES DE OLIVEIRA,Rio de Janeiro,Municipal,272.25,271.03,5.32,5.7,0.988357
+33082820,0918032 EM DOUTOR NELCY NORONHA,Rio de Janeiro,Municipal,259.52,265.44,5.03,5.3,0.969378
+33082839,0918074 EM EMBAIXADOR ARAUJO CASTRO,Rio de Janeiro,Municipal,280.1,284.16,5.28,6.1,1.0
+33082847,1026008 EM ENGENHEIRO GASTAO RANGEL,Rio de Janeiro,Municipal,258.05,265.37,4.79,5.4,1.0
+33082898,0918042 EM FERNANDO BARATA RIBEIRO,Rio de Janeiro,Municipal,251.43,255.48,4.84,5.0,0.979397
+33082928,0918077 EM GASTAO PENALVA,Rio de Janeiro,Municipal,250.14,250.86,5.06,5.0,0.997227
+33082944,0918033 EM PROFESSOR GILBERTO BENTO DA SILVA,Rio de Janeiro,Municipal,263.31,261.37,4.85,5.4,1.0
+33083002,0918034 EM JESUS SOARES PEREIRA,Rio de Janeiro,Municipal,264.95,263.68,5.18,5.3,0.96546
+33083126,0918075 EM MINISTRO ALCIDES CARNEIRO,Rio de Janeiro,Municipal,272.23,278.1,5.09,5.8,1.0
+33083134,1026002 EM MONTEIRO LOBATO,Rio de Janeiro,Municipal,258.87,254.7,4.83,5.2,0.996233
+33083142,1026005 EM NARCISA AMALIA,Rio de Janeiro,Municipal,251.5,259.69,5.07,5.2,0.99699
+33083177,0918007 EM PRESIDENTE ANTONIO CARLOS,Rio de Janeiro,Municipal,262.73,264.26,4.79,5.4,1.0
+33083223,0918083 EM PROFESSOR CASTRO REBELLO,Rio de Janeiro,Municipal,253.93,262.93,4.89,5.2,0.992623
+33083290,0918036 EM PROFESSOR PAULO SILVA,Rio de Janeiro,Municipal,272.36,266.8,5.11,5.5,0.979966
+33083304,1026012 EM PROFESSOR VIEIRA FAZENDA,Rio de Janeiro,Municipal,265.9,263.53,5.06,5.5,0.997735
+33083312,0918069 EM PROFESSORA JUREMA PECANHA GIRAUD,Rio de Janeiro,Municipal,237.89,249.26,4.93,4.7,0.983469
+33083320,1026007 EM PROFESSORA LEOCADIA TORRES,Rio de Janeiro,Municipal,252.17,253.49,4.91,5.1,0.993969
+33083380,0918020 EM ROSARIA TROTTA,Rio de Janeiro,Municipal,259.63,260.47,5.15,5.0,0.938069
+33083398,0918027 EM RUBENS DE FARIAS NEVES,Rio de Janeiro,Municipal,254.42,259.45,4.81,5.1,0.973874
+33083444,0918048 EM TEODORO SAMPAIO,Rio de Janeiro,Municipal,252.99,256.54,4.92,5.1,0.9937
+33083479,0918013 EM VENEZUELA,Rio de Janeiro,Municipal,265.38,264.01,4.9,5.3,0.971037
+33083487,0918045 EM VISCONDE DO RIO BRANCO,Rio de Janeiro,Municipal,265.04,259.81,5.06,5.4,0.988403
+33083495,0918070 EM VON MARTIUS,Rio de Janeiro,Municipal,276.88,274.93,5.4,5.9,1.0
+33084122,1019201 CIEP MINISTRO MARCOS FREIRE,Rio de Janeiro,Municipal,252.52,257.58,4.86,5.1,0.987884
+33084572,1019054 EM ADALGIZA NERI,Rio de Janeiro,Municipal,245.25,253.5,4.9,5.0,1.0
+33084580,1019016 EM ALDEBARA,Rio de Janeiro,Municipal,238.15,235.82,4.42,4.6,1.0
+33084599,1019007 EM ANDRE VIDAL DE NEGREIROS,Rio de Janeiro,Municipal,242.6,246.26,4.94,4.7,0.986338
+33084602,1019013 EM BENTO DO AMARAL COUTINHO,Rio de Janeiro,Municipal,259.26,261.21,5.06,5.2,0.967558
+33084610,1019014 EM CORONEL BERTHIER,Rio de Janeiro,Municipal,260.36,265.67,5.2,5.4,0.992219
+33084629,1019036 EM DOUTOR JOSE ANTONIO CIRAUDO,Rio de Janeiro,Municipal,258.26,272.58,5.02,5.5,0.992188
+33084637,1019008 EM EDUARDO RABELO,Rio de Janeiro,Municipal,246.76,253.4,4.92,5.0,0.996245
+33084645,1019053 EM EMILIANO GALDINO,Rio de Janeiro,Municipal,245.73,247.37,4.99,4.9,1.0
+33084688,1019019 EM FERNANDO DE AZEVEDO,Rio de Janeiro,Municipal,259.42,265.54,4.94,5.3,0.979436
+33084696,1019037 EM FRANCISCO CALDEIRA DE ALVARENGA,Rio de Janeiro,Municipal,256.54,261.75,4.87,5.2,0.972395
+33084726,1019040 EM GANDHI,Rio de Janeiro,Municipal,255.8,257.36,5.03,5.2,0.995478
+33084742,1019035 EM IPEG,Rio de Janeiro,Municipal,257.45,262.62,4.7,5.3,1.0
+33084769,1019047 EM JOAQUIM DA SILVA GOMES,Rio de Janeiro,Municipal,260.53,264.12,5.12,5.3,0.971909
+33084777,1019058 EM JORNALISTA CARLOS CASTELO BRANCO,Rio de Janeiro,Municipal,274.48,278.35,5.13,5.8,0.991959
+33084807,1019052 EM LIBERDADE,Rio de Janeiro,Municipal,248.97,250.27,5.08,5.0,1.0
+33084831,1019031 EM MARECHAL PEDRO CAVALCANTI,Rio de Janeiro,Municipal,240.13,248.26,4.66,4.6,0.955185
+33084939,1019015 EM PRINCESA ISABEL,Rio de Janeiro,Municipal,250.42,249.4,4.82,5.0,1.0
+33085021,1019021 EM PROFESSORA SILVIA DE ARAUJO TOLEDO,Rio de Janeiro,Municipal,236.22,232.07,4.33,4.5,1.0
+33085064,1019005 EM REPUBLICA ARABE DA SIRIA,Rio de Janeiro,Municipal,262.76,269.43,4.9,5.5,1.0
+33085102,1019055 EM SINDICALISTA CHICO MENDES,Rio de Janeiro,Municipal,238.33,242.88,4.83,4.6,0.984635
+33085447,COL BRIGADEIRO NEWTON BRAGA,Rio de Janeiro,Federal,302.29,287.19,5.93,6.3,0.967086
+33085951,1120501 EM ANISIO TEIXEIRA,Rio de Janeiro,Municipal,281.06,277.91,5.06,5.4,0.898123
+33085978,1120020 EM BELMIRO MEDEIROS,Rio de Janeiro,Municipal,262.93,276.72,4.96,5.2,0.910929
+33085986,1120012 EM BRIGADEIRO EDUARDO GOMES,Rio de Janeiro,Municipal,260.86,267.45,5.03,5.5,1.0
+33086028,1120031 EM CONJUNTO PRAIA DA BANDEIRA,Rio de Janeiro,Municipal,259.68,275.24,4.9,5.5,0.978979
+33086044,1120001 EM CUBA,Rio de Janeiro,Municipal,246.19,257.81,4.88,5.0,0.983851
+33086052,1120005 EM DUNSHEE DE ABRANCHES,Rio de Janeiro,Municipal,261.79,263.94,4.68,5.4,0.994408
+33086060,1120021 EM GURGEL DO AMARAL,Rio de Janeiro,Municipal,250.93,264.26,4.53,5.1,0.979836
+33086087,1120004 EM JORNALISTA ORLANDO DANTAS,Rio de Janeiro,Municipal,254.5,260.9,4.82,5.2,0.994149
+33086095,1120015 EM LEONEL AZEVEDO,Rio de Janeiro,Municipal,265.29,263.67,4.78,5.5,1.0
+33086150,1120029 EM PROFESSORA LAVINIA DE OLIVEIRA ESCRAGNOLLE DORIA,Rio de Janeiro,Municipal,251.21,262.6,4.76,5.1,0.979441
+33086168,1120019 EM RODRIGO OTAVIO,Rio de Janeiro,Municipal,270.64,278.5,5.05,5.8,0.991719
+33086206,1120030 EM TENENTE ANTONIO JOAO,Rio de Janeiro,Municipal,286.33,273.57,5.1,5.5,0.924855
+33086435,0121001 EM JOAQUIM MANUEL DE MACEDO,Rio de Janeiro,Municipal,269.61,290.72,4.94,5.7,0.944633
+33086834,0625014 EM ALBERTO JOSE SAMPAIO,Rio de Janeiro,Municipal,253.73,264.05,4.84,5.2,0.98255
+33086850,0622007 EM ALEXANDRE FARAH,Rio de Janeiro,Municipal,272.75,274.82,4.95,5.8,0.99447
+33086877,0622006 EM ANTENOR NASCENTES,Rio de Janeiro,Municipal,250.26,257.02,5.02,5.1,0.988974
+33086915,0622018 EM BADEN POWELL,Rio de Janeiro,Municipal,289.57,278.5,4.89,6.1,0.991678
+33086923,0622014 EM BELGICA,Rio de Janeiro,Municipal,253.89,247.24,4.69,5.0,0.992457
+33086940,0625030 EM TELEMACO GONCALVES MAIA,Rio de Janeiro,Municipal,245.62,256.45,4.9,5.0,0.996973
+33086974,0622009 EM COELHO NETO,Rio de Janeiro,Municipal,270.8,277.51,5.06,5.8,0.995657
+33086982,0625018 EM COMANDANTE ARNALDO VARELLA,Rio de Janeiro,Municipal,244.89,253.73,4.7,4.7,0.936405
+33086990,0622005 EM CYRO MONTEIRO,Rio de Janeiro,Municipal,259.14,259.04,5.02,5.1,0.969279
+33087008,0625028 EM DEPUTADO HILTON GAMA,Rio de Janeiro,Municipal,256.08,261.09,4.94,5.3,0.995743
+33087016,0622019 EM EMILIO CARLOS,Rio de Janeiro,Municipal,262.88,267.57,4.76,5.4,0.987313
+33087032,0625019 EM ESCULTOR LEAO VELLOSO,Rio de Janeiro,Municipal,238.85,237.83,4.9,4.3,0.921994
+33087059,0625013 EM FERNANDO RODRIGUES DA SILVEIRA,Rio de Janeiro,Municipal,239.89,246.17,4.52,4.8,0.997227
+33087148,0625031 EM LEVY MIRANDA,Rio de Janeiro,Municipal,265.83,258.5,4.86,5.0,0.923932
+33087172,0833001 EM MADRE BENEDITA,Rio de Janeiro,Municipal,255.03,259.12,4.65,5.1,0.973397
+33087199,0622024 EM MARIO PIRAGIBE,Rio de Janeiro,Municipal,250.13,251.37,4.78,4.9,0.979137
+33087342,0622022 EM ROSE KLABIN,Rio de Janeiro,Municipal,249.31,261.98,4.83,5.1,0.977904
+33087350,0515013 EM SILVIO ROMERO,Rio de Janeiro,Municipal,266.72,266.32,4.7,5.4,0.974978
+33087504,0123002 EM SANTA CATARINA,Rio de Janeiro,Municipal,274.3,281.48,5.07,5.7,0.969119
+33087814,0724008 EM DOM PEDRO I,Rio de Janeiro,Municipal,256.09,270.29,4.83,5.2,0.954785
+33087822,0724010 EM FREDERICO TROTTA,Rio de Janeiro,Municipal,280.71,282.22,4.98,5.9,0.97794
+33087881,0724006 EM PROFESSOR ALBERT EINSTEIN,Rio de Janeiro,Municipal,293.88,296.76,5.07,6.5,1.0
+33087938,0724004 EM RODRIGUES ALVES,Rio de Janeiro,Municipal,305.33,299.88,4.96,6.8,1.0
+33087946,0724015 EM SERGIO BUARQUE DE HOLANDA,Rio de Janeiro,Municipal,261.07,270.87,4.72,5.4,0.983424
+33087989,0724013 EM PROFESSORA ZULEIKA NUNES DE ALENCAR,Rio de Janeiro,Municipal,268.37,275.9,4.94,5.5,0.963351
+33088225,0625027 EM ANDREA FONTES PEIXOTO,Rio de Janeiro,Municipal,235.53,252.96,4.67,4.4,0.912429
+33088233,0625005 EM CHARLES ANDERSON WEAVER,Rio de Janeiro,Municipal,256.73,250.75,4.61,5.1,1.0
+33088276,0625003 EM MONTE CASTELO,Rio de Janeiro,Municipal,258.42,264.93,4.72,5.3,0.974935
+33094543,0716211 CIEP COMPOSITOR DONGA,Rio de Janeiro,Municipal,254.83,261.28,4.95,4.6,0.882068
+33094560,0716210 CIEP DR JOAQUIM PIMENTA,Rio de Janeiro,Municipal,259.78,270.01,4.81,5.4,0.979845
+33118809,E E ENSINO FUNDAMENTAL REPUBLICA,Rio de Janeiro,Estadual,279.08,284.09,5.32,5.8,0.956864
+33124361,COLEGIO MILITAR DO RIO DE JANEIRO,Rio de Janeiro,Federal,333.27,312.2,6.25,7.2,0.964414
+33126203,E E DE ENS FUND VISCONDE DE MAUA,Rio de Janeiro,Estadual,297.19,299.71,5.66,6.6,0.996973
+33139814,0918084 EM PROFESSOR ALFREDO DE PIRES FLORES,Rio de Janeiro,Municipal,251.96,257.32,4.95,5.2,1.0
+33140120,1019060 EM MANOEL PORTO FILHO,Rio de Janeiro,Municipal,248.17,248.74,4.91,4.9,0.989915
+33143978,1019062 EM PROFESSORA ZELIA CAROLINA DA SILVA PINHO,Rio de Janeiro,Municipal,270.87,282.66,5.02,5.8,0.98015
+33146268,0716073 EM ROBERTO BURLE MARX,Rio de Janeiro,Municipal,314.05,305.92,5.81,6.6,0.944775
+33154554,1026021 EM PROFESSORA MYRTHES WENZEL,Rio de Janeiro,Municipal,249.17,258.11,4.83,5.1,0.986924
+33154597,0102007 EM ORLANDO VILLAS BOAS,Rio de Janeiro,Municipal,271.93,279.56,4.77,5.8,0.993962
+33161062,0817132 EM RAPHAEL ALMEIDA MAGALHAES,Rio de Janeiro,Municipal,258.71,263.83,4.98,5.3,0.987235
+33163677,0123004 EM JUAN ANTONIO SAMARANCH,Rio de Janeiro,Municipal,273.43,278.7,5.06,5.9,0.997735
+33163707,0227005 EM ANDRE URANI,Rio de Janeiro,Municipal,283.44,294.39,4.7,6.1,0.965939
+33163758,0918094 EM PAULO RENATO SOUZA,Rio de Janeiro,Municipal,265.22,268.52,4.77,5.6,1.0
+33164312,1026026 EM DOUTOR SOCRATES,Rio de Janeiro,Municipal,280.47,287.39,5.28,6.1,1.0
+33167354,0101011 EM FELIX MIELLI VENERANDO,Rio de Janeiro,Municipal,288.66,292.22,4.82,6.2,0.974505
+33167494,0625041 EM JORNALISTA E ESCRITOR DANIEL PIZA,Rio de Janeiro,Municipal,241.09,242.92,4.34,4.5,0.958911
+33167621,1019075 EM ROBERTO CIVITA,Rio de Janeiro,Municipal,256.8,258.66,4.71,5.3,1.0
+33173974,1019076 EM EULALIA RODRIGUES DE OLIVEIRA VIEIRA,Rio de Janeiro,Municipal,253.5,253.2,5.06,5.1,0.990132
+33175772,1120032 EM NELSON PRUDENCIO,Rio de Janeiro,Municipal,282.99,291.36,5.08,6.2,1.0
+33176060,0430016 EM OLIMPIADAS RIO 2016,Rio de Janeiro,Municipal,240.75,245.41,4.51,4.6,0.973649
+33176116,1026029 EM PROFESSOR ARI MARQUES PONTES,Rio de Janeiro,Municipal,260.69,262.75,5.04,5.4,0.994973
+33176124,1026028 EM PROFESSOR JORGE LUIZ ITABORAI DE ALMEIDA,Rio de Janeiro,Municipal,263.75,258.74,5.12,5.3,0.994195
+33176175,1019079 EM EMILINHA BORBA,Rio de Janeiro,Municipal,236.62,241.88,4.79,4.6,0.998498
+33176191,1019080 EM PROFESSOR NEEMIAS RODRIGUES DE MELLO,Rio de Janeiro,Municipal,247.31,249.9,4.85,4.9,0.983484
+33176345,0918098 EM MIGUEL DE OLIVEIRA,Rio de Janeiro,Municipal,249.19,247.85,4.62,4.9,0.980652
+33176868,0716080 EM ALEKSANDER HENRYK LAKS,Rio de Janeiro,Municipal,242.51,252.18,4.7,4.4,0.899448
+33179166,0918103 EM MEDALHISTA OLIMPICO DIEGO HYPOLITO,Rio de Janeiro,Municipal,251.74,246.37,4.85,4.9,0.987406
+33179174,0918104 EM MEDALHISTA OLIMPICA MAYRA AGUIAR DA SILVA,Rio de Janeiro,Municipal,236.74,239.62,4.73,4.6,1.0
+33179182,0918105 EM MEDALHISTA OLIMPICO DOUGLAS CORREIA DE SOUZA,Rio de Janeiro,Municipal,254.88,257.25,5.09,5.1,0.98144
+33179395,0430019 EM ESCRITOR MILLOR FERNANDES,Rio de Janeiro,Municipal,262.02,270.58,4.52,5.4,0.972092
+33179476,1019085 EM MEDALHISTA OLIMPICO THIAGO BRAZ DA SILVA,Rio de Janeiro,Municipal,253.73,259.96,4.91,5.2,1.0
+33179557,1026030 EM MEDALHISTA OLIMPICA BARBARA SEIXAS DE FREITAS,Rio de Janeiro,Municipal,260.45,266.83,5.2,5.3,0.97219
+33179654,0918097 EM CELIA MARIA DE OLIVEIRA CAMARGO,Rio de Janeiro,Municipal,243.01,245.43,5.04,4.8,0.997744
+33186383,SEGUNDO COLEGIO DA POLICIA MILITAR DO ESTADO DO RIO DE JANEIRO,Rio de Janeiro,Estadual,334.73,317.39,6.07,7.3,0.964324
+33187649,0107017 EM NEUMA GONCALVES DA SILVA - DONA NEUMA,Rio de Janeiro,Municipal,242.34,235.63,4.61,4.5,0.973004
+33189501,0312043 EM CIVICO MILITAR CARIOCA,Rio de Janeiro,Municipal,269.12,266.05,5.36,5.5,0.980487
+33195765,1019086 ESCOLA MUNICIPAL ARMANDO KLABIN,Rio de Janeiro,Municipal,239.55,235.12,4.74,4.3,0.938399
+33228000,1026024 EM TATIANA CHAGAS MEMORIA,Rio de Janeiro,Municipal,246.8,255.0,4.65,4.6,0.907345
+33228400,0724028 EM FREI GASPAR,Rio de Janeiro,Municipal,263.9,274.87,5.1,5.2,0.920411
+33024162,E E M CORREGIO DE CASTRO,Santa Maria Madalena,Municipal,239.78,243.53,4.88,4.5,0.956473
+33103550,CIEP BRIZOLAO 273 - GRACIANO CARIELLO FILHO,Santa Maria Madalena,Municipal,269.39,271.33,5.14,4.9,0.857105
+33007462,E M PROFESSORA SARAH FARIA BRAZ,Santo Antônio de Pádua,Municipal,256.52,256.94,4.99,5.1,0.972388
+33007888,C M DR LEMANT DECNOP,Santo Antônio de Pádua,Municipal,269.21,264.86,4.87,5.4,0.961291
+33008019,ESCOLA MUNICIPAL JOAO MAURICIO BRUM,Santo Antônio de Pádua,Municipal,268.73,262.35,5.06,4.6,0.84243
+33008027,E M PEDRO BAPTISTA DE SOUZA,Santo Antônio de Pádua,Municipal,289.19,280.37,5.26,5.9,0.962111
+33097542,CIEP BRIZOLAO 469 EM PROFª ANAIDE PANARO CALDAS,Santo Antônio de Pádua,Municipal,246.22,259.72,4.99,5.0,0.971724
+33139164,ESCOLA MUNICIPAL ESCOLA VIVA PROFESSORA EDY BELLOTI,Santo Antônio de Pádua,Municipal,259.98,278.19,4.98,5.1,0.897739
+33183775,CE SUBTENENTE PM CLAUDIO HENTZY FERREIRA,Santo Antônio de Pádua,Estadual,273.58,286.85,5.3,6.0,1.0
+33013675,E M MANOELINA DE S RODRIGUES,São Francisco de Itabapoana,Municipal,251.54,238.59,4.99,4.3,0.885728
+33013810,E M AVENTINA MARIA FERREIRA,São Francisco de Itabapoana,Municipal,232.1,239.67,4.85,4.3,0.939338
+33013829,E M DOMINGOS SANTOS,São Francisco de Itabapoana,Municipal,222.01,224.07,4.95,3.3,0.801067
+33013870,E M MANOEL GOMES DA SILVA LEMOS,São Francisco de Itabapoana,Municipal,248.92,255.06,4.76,4.5,0.885867
+33013896,E M MIGUEL NUNES BARBOSA,São Francisco de Itabapoana,Municipal,189.8,200.47,4.64,3.0,0.933668
+33013993,E M JOAO BATISTA DE ALMEIDA,São Francisco de Itabapoana,Municipal,235.26,236.37,5.05,3.8,0.845
+33014108,E M DIRCEU DIAS DA SILVA,São Francisco de Itabapoana,Municipal,250.59,261.17,4.98,4.9,0.93747
+33014205,E M DECIO MACHADO,São Francisco de Itabapoana,Municipal,246.34,236.21,4.86,4.5,0.945348
+33014523,E M ESTELITA DE ARAUJO CRESPO,São Francisco de Itabapoana,Municipal,238.41,242.47,4.85,4.1,0.869181
+33173893,ESCOLA MODELO MUNICIPAL HERVAL LUIZ DOS SANTOS BATISTA,São Francisco de Itabapoana,Municipal,254.48,262.23,4.83,4.5,0.850432
+33012407,CE MONTESE,São Fidélis,Estadual,221.54,212.36,4.63,3.4,0.86152
+33012458,CE BARAO DE MACAUBAS,São Fidélis,Estadual,244.36,258.0,5.05,4.4,0.880611
+33012857,E M PROF ROMUALDO,São Fidélis,Municipal,277.18,270.64,4.67,5.0,0.85762
+33012989,E M ALBERTINO NASCIMENTO,São Fidélis,Municipal,240.58,261.46,5.19,3.9,0.771404
+33013020,E M FRANCISCO HILARIAO,São Fidélis,Municipal,224.51,253.23,4.82,4.0,0.873646
+33013160,CE ELVIDIO COSTA,São Fidélis,Estadual,257.64,263.88,5.32,5.1,0.957896
+33013322,CE GERAQUE COLET,São Fidélis,Estadual,215.2,244.33,5.26,4.1,0.944948
+33013373,E M VITALINO VALENTE,São Fidélis,Municipal,264.97,271.55,5.03,5.1,0.913131
+33088870,CIEP 430 CARLOS MARIGHELLA,São Gonçalo,Estadual,224.21,240.82,4.42,2.9,0.653642
+33088900,CIEP 249 PASTOR WALDEMAR ZARRO,São Gonçalo,Estadual,224.36,237.83,4.88,3.4,0.778981
+33088926,CIEP 240 PROFESSOR HAROLDO TEIXEIRA VALLADAO,São Gonçalo,Estadual,246.66,240.57,4.63,3.5,0.736868
+33088950,CIEP 052 PROFESSORA ROMANDA GOUVEIA GONCALVES,São Gonçalo,Estadual,225.44,228.36,5.07,3.1,0.727464
+33089051,CE DOUTOR ADINO XAVIER,São Gonçalo,Estadual,240.83,251.11,5.09,4.1,0.849513
+33089337,EE CAPITAO BELARMINO DE MATTOS,São Gonçalo,Estadual,237.38,241.33,4.71,3.5,0.748183
+33089370,EE CRUZEIRO DO SUL,São Gonçalo,Estadual,246.93,252.74,5.01,4.4,0.876626
+33089396,CE LAURO CORREA,São Gonçalo,Estadual,244.66,248.56,4.95,4.3,0.886902
+33089558,COLEGIO MUNICIPAL AMARAL PEIXOTO,São Gonçalo,Municipal,254.91,258.25,4.78,3.4,0.653609
+33090181,CIEP BRIZOLAO 438 -MUNICIPALIZADO RUBENS MAURICIO DA SILVA ABREU,São Gonçalo,Municipal,230.01,232.92,4.87,3.3,0.752134
+33090270,CE AMANDA VELASCO,São Gonçalo,Estadual,213.3,225.0,4.94,3.3,0.818866
+33090300,CE AUGUSTO CEZARIO DIAZ ANDRE,São Gonçalo,Estadual,233.28,235.47,5.03,3.8,0.850415
+33090351,CE DOUTOR RODOLPHO SIQUEIRA,São Gonçalo,Estadual,232.59,241.14,5.07,3.8,0.837316
+33090378,CE ELIZA MARIA DUTRA,São Gonçalo,Estadual,229.3,230.33,4.91,3.6,0.836367
+33090394,EE FREDERICO OZANAM,São Gonçalo,Estadual,223.43,242.45,5.17,4.1,0.935364
+33090440,CE PROFESSOR FRANCISCO DE PAULA ACHILLES,São Gonçalo,Estadual,221.47,228.26,4.73,3.4,0.809699
+33090459,CE PROFESSORA ODYSSEA SILVEIRA DE SIQUEIRA,São Gonçalo,Estadual,207.02,222.11,4.88,3.0,0.778647
+33090556,ESCOLA MUNICIPAL RAUL VEIGA,São Gonçalo,Municipal,248.95,264.79,4.77,4.2,0.811668
+33090653,CIEP 121 PROFESSOR JOADELIO CODECO,São Gonçalo,Estadual,250.18,260.13,5.0,4.4,0.846599
+33090661,CIEP BRIZOLAO 051 MUNICIPALIZADO ANITA GARIBALDI,São Gonçalo,Municipal,227.5,239.09,4.54,3.6,0.818526
+33090726,CE TRASILBO FILGUEIRAS,São Gonçalo,Estadual,202.89,212.78,4.95,3.0,0.842959
+33090831,CE DOM ANTONIO DE ALMEIDA MORAES JUNIOR,São Gonçalo,Estadual,223.89,228.09,5.04,3.9,0.931905
+33090840,CE DOUTOR ARMANDO SA COUTO,São Gonçalo,Estadual,227.6,219.29,4.89,3.1,0.765428
+33090866,ESCOLA ESTADUAL MUNICIPALIZADA GUAXINDIBA,São Gonçalo,Municipal,244.92,247.69,4.65,3.9,0.807879
+33090874,EE LEONOR FRANCO MOREIRA,São Gonçalo,Estadual,246.5,250.2,5.13,4.4,0.890591
+33090882,CE MAUA,São Gonçalo,Estadual,233.5,242.8,5.09,4.2,0.906602
+33090912,COLEGIO MUNICIPAL IRENE BARBOSA ORNELLAS,São Gonçalo,Municipal,229.9,253.6,4.77,4.5,0.959182
+33091196,CE SANTOS DIAS,São Gonçalo,Estadual,243.65,246.7,4.86,3.6,0.735591
+33091218,COLEGIO MUNICIPAL ERNANI FARIA,São Gonçalo,Municipal,247.6,254.18,4.66,3.6,0.707912
+33091382,CE CORONEL FRANCISCO LIMA,São Gonçalo,Estadual,219.93,226.47,5.05,3.9,0.942225
+33091447,CE MELCHIADES PICANCO,São Gonçalo,Estadual,246.35,256.13,4.86,4.3,0.848798
+33091854,EE CONEGO GOULART,São Gonçalo,Estadual,237.83,255.56,5.23,4.5,0.912515
+33091900,CE PROFESSORA LUIZA HONORIA DO PRADO,São Gonçalo,Estadual,222.5,229.23,5.06,2.6,0.630844
+33096970,CIEP 309 ZUZU ANGEL BRASILCOLOMBIA,São Gonçalo,Estadual,226.11,242.05,4.66,3.4,0.75454
+33103879,CIEP 413 ADAO PEREIRA NUNES BRASIL MEXICO,São Gonçalo,Estadual,260.91,273.71,5.23,5.3,0.946622
+33103933,CIEP BRIZOLAO 414 - MUNICIPALIZADO TARSO DE CASTRO,São Gonçalo,Municipal,249.51,261.28,4.95,4.5,0.863982
+33114366,CE MARIO TAMBORINDEGUY,São Gonçalo,Estadual,221.35,214.34,4.77,3.5,0.893346
+33117314,ESCOLA MUNICIPAL DARCY RIBEIRO,São Gonçalo,Municipal,251.88,270.31,4.89,4.2,0.783011
+33129770,ESCOLA MUNICIPAL JOAO CABRAL DE MELO NETO,São Gonçalo,Municipal,275.2,274.82,4.91,5.2,0.893858
+33129789,ESCOLA MUNICIPAL ANISIO SPINOLA TEIXEIRA,São Gonçalo,Municipal,226.28,231.42,4.77,3.2,0.739964
+33138397,ESCOLA MUNICIPAL CELIA PEREIRA DA ROSA,São Gonçalo,Municipal,247.32,261.47,4.79,4.4,0.846338
+33157944,ESCOLA MUNICIPAL PASTOR RICARDO PARISE,São Gonçalo,Municipal,231.9,229.95,4.81,3.3,0.766227
+33013578,ESCOLA MUNICIPAL AMARO DE SOUZA PAES,São João da Barra,Municipal,255.51,270.3,4.75,4.6,0.845129
+33013756,ESCOLA MUNICIPAL JOAO FLAVIO BATISTA,São João da Barra,Municipal,262.06,252.73,4.81,5.1,0.967164
+33014582,ESCOLA ESTADUAL MUNICIPALIZADA LUIZ GOMES DA SILVA NETO,São João da Barra,Municipal,251.97,253.59,4.94,4.9,0.959478
+33014663,ESCOLA MUNICIPAL LUIZ DELIO MENDONCA,São João da Barra,Municipal,262.22,266.95,5.01,4.7,0.851645
+33014680,ESCOLA MUNICIPAL MANOEL ALVES RANGEL,São João da Barra,Municipal,267.32,261.14,4.64,4.9,0.903384
+33139725,ESCOLA MUNICIPAL DOMINGOS FERNANDES DA COSTA,São João da Barra,Municipal,247.78,245.27,5.19,4.4,0.910212
+33181489,ESCOLA MUNICIPAL DR NEWTON ALVES,São João da Barra,Municipal,247.44,241.65,4.97,4.3,0.890768
+33186863,CENTRO MUNICIPAL DE EDUCACAO AVANCADA,São João da Barra,Municipal,275.0,268.37,4.89,5.0,0.876037
+33191450,CENTRO MUNICIPAL DE EDUCACAO AVANCADA II,São João da Barra,Municipal,262.03,274.06,5.08,4.5,0.795533
+33047979,CIEP 398 MARIO LIMA,São João de Meriti,Estadual,240.27,238.87,4.85,3.9,0.839332
+33092150,CIEP 180 PRESIDENTE JOAO GOULART,São João de Meriti,Municipal,239.86,247.51,4.77,4.6,0.967422
+33092168,CIEP 016 PROFESSORA LUCILENE DE SOUZA PECLAT,São João de Meriti,Estadual,223.27,232.39,4.66,3.4,0.802504
+33092265,CE RUBENS FARRULLA,São João de Meriti,Estadual,237.29,244.98,4.74,4.1,0.867911
+33092443,CE DOUTOR ANIBAL VIRIATO DE AZEVEDO,São João de Meriti,Estadual,240.0,236.74,4.9,4.0,0.875406
+33092451,CE DOUTOR OSCAR PIMENTA SOARES,São João de Meriti,Estadual,221.42,232.5,4.89,4.2,0.988844
+33092460,CE JOSE DO PATROCINIO,São João de Meriti,Estadual,241.29,251.58,4.87,4.4,0.905609
+33092508,EE PROFESSORA ODYLA DO COUTO,São João de Meriti,Estadual,239.6,230.73,5.01,3.6,0.790154
+33092516,CE PROFESSORA SANDRA MARIA SANTOS DE SOUSA,São João de Meriti,Estadual,227.59,232.98,4.7,3.7,0.853276
+33092605,E M DR GETULIO MOURA,São João de Meriti,Municipal,224.45,229.97,4.6,3.5,0.834742
+33092680,E M MILTON RODRIGUES PEREIRA,São João de Meriti,Municipal,227.33,233.49,4.53,4.0,0.912405
+33092974,ESCOLA MUNICIPAL PROFESSOR JANSEN PEREIRA DE MELO,São João de Meriti,Municipal,237.28,244.44,5.03,4.2,0.894412
+33093016,CIEP 029 JOSUE DE CASTRO,São João de Meriti,Estadual,212.11,217.65,4.63,2.9,0.752224
+33093024,CIEP 030 MARINHEIRO JOAO CANDIDO,São João de Meriti,Estadual,232.21,232.46,4.97,3.9,0.875386
+33093032,CIEP BRIZOLAO 132 MUNICIPALIZADO SAO JOAO BOSCO,São João de Meriti,Municipal,236.61,243.05,4.76,4.2,0.911808
+33093091,CE CASEMIRO MEIRELLES,São João de Meriti,Estadual,237.56,249.55,4.93,3.7,0.781805
+33093156,CE AGOSTINHO PORTO,São João de Meriti,Estadual,223.81,234.74,4.89,3.9,0.908942
+33093199,CE GOVERNADOR ROBERTO SILVEIRA,São João de Meriti,Estadual,229.86,248.29,4.99,4.2,0.905622
+33093202,EE PRACA DA BANDEIRA,São João de Meriti,Estadual,244.77,244.35,5.01,4.3,0.898513
+33093210,EE PROFESSOR ALFREDO MAURICIO BRUM,São João de Meriti,Estadual,243.82,248.89,4.9,4.6,0.932751
+33093326,E M UNIDADE INTEGRADA DE 1 GRAU,São João de Meriti,Municipal,238.17,241.91,4.73,4.1,0.876616
+33093466,CE PROFESSORA ALZIRA DOS SANTOS DA SILVA,São João de Meriti,Estadual,215.43,227.54,4.87,3.8,0.929175
+33093482,EE SAO FRANCISCO DE ASSIS,São João de Meriti,Estadual,245.74,262.88,4.95,4.8,0.942165
+33093504,CE VISCONDE DE CAIRU,São João de Meriti,Estadual,217.04,223.52,4.72,3.7,0.931629
+33093547,E M FRANCISCO AGOSTINHO DA COSTA,São João de Meriti,Municipal,235.83,245.59,4.79,4.0,0.854518
+33104298,CIEP 399 JEAN BAPTISTE DEBRET,São João de Meriti,Estadual,219.22,228.49,4.74,3.0,0.715044
+33104328,EE VILAR DOS TELES,São João de Meriti,Estadual,209.62,216.01,4.69,3.3,0.866279
+33104352,CIEP 170 GREGORIO BEZERRA,São João de Meriti,Estadual,229.81,242.43,4.62,3.5,0.778179
+33104379,CIEP 175 JOSE LINS DO REGO,São João de Meriti,Estadual,229.06,232.19,4.91,4.0,0.913645
+33145768,ESCOLA MUNICIPAL CARLOS TEIXEIRA,São João de Meriti,Municipal,232.69,243.22,4.84,4.3,0.934454
+33005664,CE MARIA LENY VIEIRA FERREIRA SILVA,São José de Ubá,Estadual,263.25,264.17,4.96,5.1,0.931965
+33042071,E M SANTA ISABEL,São José do Vale do Rio Preto,Municipal,250.05,257.37,5.23,4.5,0.881093
+33042144,E M CARDEAL DOM SEBASTIAO LEME,São José do Vale do Rio Preto,Municipal,257.18,259.03,4.88,4.4,0.840937
+33042225,E M JOSE AFFONSO DE PAULA,São José do Vale do Rio Preto,Municipal,257.42,280.82,5.19,5.0,0.879125
+33145571,ESC MUL PREFEITO BIANOR MARTINS ESTEVES,São José do Vale do Rio Preto,Municipal,260.14,267.37,5.42,4.6,0.845631
+33028206,EMZ LUCINDA FRANCISCONE MEDEIROS - MUNICIPALIZADA 2012,São Pedro da Aldeia,Municipal,281.41,290.41,5.17,5.1,0.82055
+33028273,E M CAP COSTA,São Pedro da Aldeia,Municipal,258.61,267.34,4.63,4.8,0.877922
+33028338,E M FRANCISCO PAES DE CARVALHO FILHO,São Pedro da Aldeia,Municipal,262.54,267.83,4.87,4.5,0.815553
+33028389,ESCOLA MUNICIPAL LUIZA TERRA DE ANDRADE,São Pedro da Aldeia,Municipal,264.73,271.53,5.07,5.1,0.907631
+33028435,E MZ PAINEIRA,São Pedro da Aldeia,Municipal,249.05,244.5,5.12,4.2,0.868621
+33028460,E MZ RETIRO,São Pedro da Aldeia,Municipal,248.24,289.1,4.71,5.4,0.961947
+33028508,E M VIDAL DE NEGREIROS,São Pedro da Aldeia,Municipal,253.06,244.82,4.66,4.4,0.883598
+33028532,ESC MUN VINHATEIRO,São Pedro da Aldeia,Municipal,247.08,238.81,4.83,3.1,0.64745
+33028540,CE NOBU YAMAGATA,São Pedro da Aldeia,Estadual,229.19,243.02,5.12,3.7,0.825923
+33102473,E M PROF MARIA DA GLORIA DOS S MOTTA,São Pedro da Aldeia,Municipal,263.99,275.93,4.82,5.2,0.919364
+33163090,ESCOLA MUNICIPAL PROFESSORA MIRIAM ALVES DE MACEDO GUIMARAES,São Pedro da Aldeia,Municipal,274.52,274.75,5.47,4.9,0.83866
+33024480,CE JOSE CARDOSO DE MORAES,São Sebastião do Alto,Estadual,254.04,259.78,4.72,4.6,0.881617
+33024537,CE JANUARIO DE TOLEDO PIZZA,São Sebastião do Alto,Estadual,267.27,276.42,5.57,4.6,0.799789
+33093989,CIEP 274 MARIA AMELIA DAFLON FERRO,São Sebastião do Alto,Estadual,238.0,240.77,5.08,3.3,0.711435
+33017786,CE MAURICIO DE ABREU,Sapucaia,Estadual,264.56,259.81,5.22,4.5,0.836019
+33017832,E M DRª MARIA DE LOURDES SALOMAO,Sapucaia,Municipal,252.16,234.28,4.87,3.9,0.811094
+33017921,CEMA - PROFª CARMEM RESENDE MOREIRA PACHECO,Sapucaia,Municipal,266.03,275.51,5.14,4.8,0.846089
+33018162,CEMP PROF DEZILMA MARQUES DE SOUZA,Sapucaia,Municipal,276.82,270.78,4.92,5.5,0.941278
+33519285,EM PAULINO FERNANDES,Sapucaia,Municipal,257.56,261.28,4.96,5.0,0.949743
+33028788,ESCOLA MUNICIPAL JOSE BANDEIRA,Saquarema,Municipal,260.6,249.78,5.02,4.7,0.898957
+33028834,COLEGIO MUNICIPAL GUSTAVO CAMPOS DA SILVEIRA,Saquarema,Municipal,257.29,263.27,4.94,5.2,0.980676
+33028869,CENTRO MUNICIPAL DE EDUCACAO PADRE MANUEL,Saquarema,Municipal,268.86,279.46,5.33,5.0,0.86841
+33028907,ESCOLA MUNICIPALIZADA PAULO LUIZ BARROSO OLIVEIRA,Saquarema,Municipal,258.93,255.61,4.89,5.0,0.960398
+33028915,ESCOLA MUNICIPALIZADA ELCIRA DE OLIVEIRA COUTINHO,Saquarema,Municipal,252.14,255.11,4.79,4.7,0.91428
+33028940,ESCOLA MUNICIPALIZADA VEREADOR IVAN DA SILVA MELO,Saquarema,Municipal,274.01,271.0,5.21,5.4,0.933575
+33029229,ESCOLA MUNICIPAL ISMENIA DE BARROS BARROSO,Saquarema,Municipal,280.82,281.84,5.04,5.4,0.896882
+33104140,ESCOLA MUNICIPAL EDILSON VIGNOLI MARINS,Saquarema,Municipal,270.03,268.3,5.09,5.2,0.927004
+33126593,ESCOLA MUNICIPAL LUCIANA SANTANA COUTINHO,Saquarema,Municipal,272.33,279.68,5.28,5.7,0.97453
+33154775,ESCOLA MUNICIPAL JARDIM IPITANGAS,Saquarema,Municipal,260.81,260.46,4.84,5.3,0.985331
+33192871,CENTRO MUNICIPAL DE EDUCACAO JURANDIR DA SILVA MELO,Saquarema,Municipal,264.17,269.67,4.88,4.6,0.831122
+33439230,CENTRO MUNICIPAL DE EDUCACAO MENALDO CARLOS DE MAGALHAES,Saquarema,Municipal,270.48,275.62,5.04,5.4,0.933567
+33045410,CAIC PAULO DACORSO FILHO,Seropédica,Municipal,237.6,236.75,5.28,4.4,0.965262
+33045593,ESCOLA MUNICIPAL BANANAL,Seropédica,Municipal,231.56,233.43,4.88,4.1,0.934763
+33045674,E M PANARO FIGUEIRA,Seropédica,Municipal,244.57,256.06,5.02,4.1,0.826623
+33045682,E M PASTOR GERSON FERREIRA COSTA,Seropédica,Municipal,227.34,244.7,4.97,4.1,0.908162
+33045755,ESCOLA MUNICIPAL GILSON SILVA,Seropédica,Municipal,208.07,214.32,4.83,3.6,0.9642
+33120188,ESCOLA MUNICIPAL RONALD CALLEGARIO,Seropédica,Municipal,232.56,233.38,5.15,4.0,0.892652
+33139180,E M MANOEL DE ARAUJO DANTAS,Seropédica,Municipal,240.06,243.87,5.12,4.3,0.908561
+33145679,E M VALTAIR GABI,Seropédica,Municipal,242.38,242.46,5.01,4.1,0.87028
+33025827,E M IMBAU,Silva Jardim,Municipal,262.29,263.17,5.17,4.4,0.80315
+33150419,E M OMAR FARIA ALFRADIQUE,Silva Jardim,Municipal,229.15,235.43,4.72,3.6,0.819043
+33150427,CENTRO INTEGRADO EDUCACIONAL ADAIL MARIA TINOCO,Silva Jardim,Municipal,248.7,250.84,4.94,4.0,0.80944
+33023310,CIEP 283 MARIA AMELIA PACHECO,Sumidouro,Estadual,278.54,272.94,5.05,5.2,0.888066
+33023573,E E M CAMPINAS II,Sumidouro,Municipal,289.62,272.98,4.9,5.3,0.880537
+33023603,E E M DONA MARIANA,Sumidouro,Municipal,261.89,271.53,4.75,4.4,0.784349
+33145954,ESCOLA MUNICIPAL CAROLINA NUNES DE ALMEIDA,Sumidouro,Municipal,267.27,260.23,5.07,4.6,0.851363
+33052263,E M MANOEL JOAO GONCALVES,Tanguá,Municipal,221.14,235.15,5.01,4.0,0.932284
+33052310,E M ERNESTINA FERREIRA MUNIZ,Tanguá,Municipal,227.17,236.02,5.0,3.6,0.819042
+33052379,E M PROF DEARINA SILVA MACHADO,Tanguá,Municipal,237.18,240.06,4.89,3.9,0.844217
+33052395,E M VEREADOR MANOEL NOVIS DA SILVA,Tanguá,Municipal,244.13,249.69,4.58,3.7,0.74908
+33052417,E M VEREADOR ANTONIO DUARTE LOPES,Tanguá,Municipal,266.81,265.57,4.98,4.7,0.847737
+33158681,ESCOLA MUNICIPAL IASMIM GONZAGA ARANTES,Tanguá,Municipal,243.29,247.29,4.97,3.7,0.773374
+33042403,CENTRO EDUC BEATRIZ SILVA,Teresópolis,Municipal,231.58,240.3,5.12,4.3,0.938934
+33042420,CENTRO EDUC N S DE FATIMA,Teresópolis,Municipal,273.02,272.22,5.24,5.3,0.916714
+33042438,CENTRO EDUC ROGER MALHARDES,Teresópolis,Municipal,244.69,257.44,5.1,4.1,0.820269
+33042454,CENTRO EDUCACIONAL ROSE DALMASO,Teresópolis,Municipal,260.92,263.45,5.23,5.2,0.952896
+33042683,CE FANY NISKIER,Teresópolis,Estadual,240.59,248.37,5.35,3.9,0.81769
+33043043,E M SAKURA,Teresópolis,Municipal,240.07,247.11,5.08,4.6,0.960208
+33043353,E M ALCINO FRANCISCO DA SILVA,Teresópolis,Municipal,264.3,262.56,5.1,4.9,0.89671
+33043426,E M NADIR VEIGA CASTANHEIRA,Teresópolis,Municipal,246.18,239.12,5.19,4.4,0.915061
+33097712,E M PROF MARIANA LEITE GUIMARAES,Teresópolis,Municipal,238.84,252.64,5.21,4.8,0.982371
+33024650,CE MARIA MARINA PINTO SILVA,Trajano de Moraes,Estadual,256.65,253.78,5.15,4.9,0.951562
+33024910,E M MARIA MENDONCA,Trajano de Moraes,Municipal,283.19,296.46,5.23,5.3,0.830519
+33024952,CE JOAO DE MORAES MARTINS,Trajano de Moraes,Estadual,241.05,250.68,4.76,3.9,0.807941
+33025010,EE HONESTALDA DE MORAES MARTINS,Trajano de Moraes,Estadual,238.48,265.38,4.62,4.8,0.941176
+33100608,CIEP 279 PROFESSORA GUIOMAR GONCALVES NEVES,Trajano de Moraes,Estadual,224.46,227.99,4.99,4.2,1.0
+33149984,E M DOUTOR ELIAS,Trajano de Moraes,Municipal,259.15,263.46,4.36,5.2,0.971506
+33018278,CIEP 427 - PREFEITO ALBERTO LAVINAS,Três Rios,Municipal,235.12,248.31,4.73,4.6,0.968141
+33018340,CE MOACYR PADILHA,Três Rios,Estadual,232.86,236.79,5.01,3.8,0.843215
+33018359,CE PROFESSOR KOPKE,Três Rios,Estadual,241.51,244.93,4.95,4.3,0.911177
+33018430,CE URBANO CARLOS DE ALMEIDA,Três Rios,Estadual,242.67,247.46,5.02,4.4,0.905561
+33018456,E M AMERICO SILVA,Três Rios,Municipal,269.82,273.15,5.15,5.4,0.937863
+33018510,E M JOAQUIM TIBURCIO JUNQUEIRA,Três Rios,Municipal,244.66,262.09,5.04,4.9,0.96261
+33018588,E M MODESTA SOLA,Três Rios,Municipal,236.52,243.52,4.66,4.2,0.904462
+33018618,E M SANTA LUZIA,Três Rios,Municipal,243.25,235.55,5.15,4.2,0.90021
+33018669,E M ALCINA DE ALMEIDA,Três Rios,Municipal,262.58,254.66,5.03,5.2,0.982861
+33018715,E E M GUILHERMINA GUINLE,Três Rios,Municipal,264.26,262.91,5.12,5.4,0.99311
+33155143,E M LUTHER KING,Três Rios,Municipal,268.74,252.97,5.0,4.8,0.898347
+33035466,CE THEODORICO FONSECA,Valença,Estadual,246.92,248.22,4.88,4.6,0.9385
+33035644,CE CORONEL BENJAMIN GUIMARAES,Valença,Estadual,262.28,277.44,5.16,5.5,0.967999
+33035652,EM DAURA SILVA BARBOSA,Valença,Municipal,239.03,238.81,5.02,4.1,0.87814
+33035725,ESCOLA MUNICIPAL MARIETA LOPES IELPO,Valença,Municipal,260.3,271.03,4.97,5.0,0.913006
+33035857,E M MARCOS ESTEVES,Valença,Municipal,257.46,264.67,5.03,4.9,0.913757
+33035873,ESCOLA MUNICIPAL NOSSA SENHORA APARECIDA,Valença,Municipal,248.52,265.24,5.14,5.0,0.963907
+33035890,E M PRES TANCREDO DE ALMEIDA NEVES,Valença,Municipal,256.46,251.09,4.81,4.1,0.795013
+33035903,E M PROF MARIA DA GLORIA GIFFONI,Valença,Municipal,255.21,263.8,4.96,4.7,0.887623
+33036004,CE BARAO DE JUPARANA,Valença,Estadual,265.21,264.22,5.12,4.9,0.899556
+33036128,E M MARIA MEDIANEIRA,Valença,Municipal,211.61,212.84,4.85,3.2,0.848918
+33036209,CE ARNOR SILVESTRE VIEIRA,Valença,Estadual,281.47,278.43,5.25,4.8,0.805157
+33036519,CE DOUTOR GUILHERME MILWARD,Valença,Estadual,256.28,229.67,4.55,3.8,0.803735
+33004447,CIEP DOUTOR MIGUEL COUTO FILHO,Varre-Sai,Estadual,231.86,228.63,4.61,3.7,0.856119
+33004552,E M ELIDIO VALENTIM DE MORAES,Varre-Sai,Municipal,276.6,274.89,4.66,5.7,0.968805
+33039585,CE ANTONIO DE JESUS GOMES,Vassouras,Estadual,268.24,281.91,5.12,4.9,0.831403
+33039593,CE CENTENARIO,Vassouras,Estadual,259.48,255.14,5.0,4.1,0.786012
+33039690,E M DEP JOSE BENTO MARTINS BARBOSA,Vassouras,Municipal,275.82,263.9,4.87,5.3,0.943925
+33039917,E M SAO SEBASTIAO DOS FERREIROS,Vassouras,Municipal,244.27,241.13,4.84,4.7,0.985386
+33039941,E M ABEL JOSE MACHADO,Vassouras,Municipal,235.84,243.15,4.81,4.5,0.970388
+33093601,CIEP 297 PADRE SALESIO SCHIMID,Vassouras,Estadual,274.71,277.09,5.21,5.9,1.0
+33097224,IE THIAGO COSTA,Vassouras,Estadual,244.9,257.37,5.19,4.0,0.802943
+33110514,E M PREFEITO PEDRO IVO DA COSTA,Vassouras,Municipal,235.34,224.19,5.02,4.1,0.945624
+33176604,E M PREFEITO SEVERINO ANANIAS DIAS,Vassouras,Municipal,214.42,216.88,4.81,3.2,0.822737
+33032726,ESCOLA MUNICIPAL RUBENS MACHADO,Volta Redonda,Municipal,262.6,253.61,5.06,4.5,0.857518
+33032750,ESCOLA MUNICIPAL WALMIR DE FREITAS MONTEIRO,Volta Redonda,Municipal,271.7,282.25,5.0,5.5,0.927995
+33032769,E M WANDIR DE CARVALHO,Volta Redonda,Municipal,277.43,269.06,5.2,5.4,0.930594
+33032840,COLEGIO JOAO XXIII,Volta Redonda,Municipal,269.04,272.89,5.17,4.8,0.836108
+33032866,COLEGIO GETULIO VARGAS,Volta Redonda,Municipal,279.27,286.61,5.59,6.0,0.976851
+33032904,COL PROFª THEMIS DE ALMEIDA VIEIRA,Volta Redonda,Municipal,276.99,275.78,5.35,5.5,0.929451
+33032912,COLEGIO PROFESSORA DELCE HORTA DELGADO,Volta Redonda,Municipal,275.76,277.57,5.58,5.7,0.976361
+33033048,E M ESPIRITO SANTO,Volta Redonda,Municipal,268.45,265.51,5.45,5.3,0.956199
+33033471,COL MUN JOSE BOTELHO DE ATHAYDE,Volta Redonda,Municipal,258.16,258.91,5.18,4.9,0.926602
+33033552,E M MATO GROSSO DO SUL,Volta Redonda,Municipal,265.99,267.41,5.32,5.4,0.977456
+33033641,E M PAULO VI,Volta Redonda,Municipal,255.38,252.64,5.21,4.7,0.909226
+33033676,E M PREF JOSE JUAREZ ANTUNES,Volta Redonda,Municipal,275.9,278.72,5.3,5.6,0.948236
+33033730,E M PROFª MARIZINHA FELIX TEIXEIRA,Volta Redonda,Municipal,258.22,263.19,4.93,4.9,0.921807
+33033773,E M TOCANTINS,Volta Redonda,Municipal,301.69,306.19,5.61,6.5,0.963242
+33094160,E M NILTON PENNA BOTELHO,Volta Redonda,Municipal,253.14,254.6,5.24,4.8,0.942778
+33097321,E M PROF MARIA ROSA RODRIGUES,Volta Redonda,Municipal,265.89,259.94,5.85,5.3,0.972384
+33097330,E M DR JIULIO CARUSO,Volta Redonda,Municipal,276.62,277.36,5.48,5.7,0.964488
+33097348,E M DR JOAO PAULO PIO DE ABREU,Volta Redonda,Municipal,286.33,289.52,5.57,5.9,0.949445`;
+
+const elCodigo = document.getElementById('codigo');
+const elStatus = document.getElementById('status');
+const elSaida  = document.getElementById('saida');
+const elGraf   = document.getElementById('graficos');
+const btnRodar = document.getElementById('rodar');
+const btnRest  = document.getElementById('restaurar');
+const btnBaixar = document.getElementById('baixar');
+
+elCodigo.value = CODIGO_INICIAL;
+btnRest.addEventListener('click', () => { elCodigo.value = CODIGO_INICIAL; });
+btnBaixar.addEventListener('click', () => {
+  const blob = new Blob([DADOS_CSV], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'base_escolas_rj.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+let webR, shelter;
+
+async function iniciar() {
+  try {
+    const { WebR } = await import('https://webr.r-wasm.org/latest/webr.mjs');
+    webR = new WebR();
+    await webR.init();
+    await webR.FS.writeFile('/home/web_user/base_escolas_rj.csv',
+                            new TextEncoder().encode(DADOS_CSV));
+    await webR.evalRVoid('setwd("/home/web_user")');
+    shelter = await new webR.Shelter();
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+    btnRodar.disabled = false;
+  } catch (e) {
+    elStatus.textContent = 'falha ao carregar o R: ' + e.message +
+      ' — verifique sua conexão e recarregue a página.';
+    elStatus.className = 'erro';
+  }
+}
+
+async function rodar() {
+  btnRodar.disabled = true;
+  elStatus.textContent = 'executando…';
+  elStatus.className = '';
+  elSaida.textContent = '';
+  elGraf.innerHTML = '';
+  try {
+    const captura = await shelter.captureR(elCodigo.value, {
+      withAutoprint: true,
+      captureStreams: true,
+      captureConditions: true,
+      captureGraphics: { width: 680, height: 470, bg: 'white', pointsize: 14 }
+    });
+    let texto = '';
+    for (const linha of captura.output) {
+      if (linha.type === 'stdout') texto += linha.data + '\n';
+      else if (linha.type === 'stderr') texto += linha.data + '\n';
+      else if (linha.type === 'error' || linha.type === 'warning' ||
+               linha.type === 'message') {
+        const msg = (linha.data && linha.data.message) ? linha.data.message : '';
+        if (msg) texto += '[' + linha.type + '] ' + msg + '\n';
+      }
+    }
+    elSaida.textContent = texto || '(sem saída de texto)';
+    for (const img of captura.images) {
+      const cv = document.createElement('canvas');
+      cv.width = img.width; cv.height = img.height;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      elGraf.appendChild(cv);
+    }
+    elStatus.textContent = 'pronto! Aperte Rodar.';
+    elStatus.className = 'pronto';
+  } catch (e) {
+    elSaida.innerHTML = '<span class="err">Erro do R: ' +
+      String(e.message).replace(/</g, '&lt;') + '</span>';
+    elStatus.textContent = 'erro na execução — corrija o código e rode de novo.';
+    elStatus.className = 'erro';
+  } finally {
+    if (shelter) await shelter.purge();
+    btnRodar.disabled = false;
+  }
+}
+
+btnRodar.addEventListener('click', rodar);
+iniciar();
+</script>
+</body>
+</html>
