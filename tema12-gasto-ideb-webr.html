@@ -195,17 +195,33 @@ cor(dados$gasto_mil, dados$pib_mil)
 # m3 <- lm(ideb ~ gasto_mil + I(gasto_mil^2), data = dados)
 # summary(m3)
 #
-# Agora responda, por escrito, olhando a saida (sao quatro perguntas
-# curtas - as respostas viram um paragrafo do seu parecer):
+# VEJA A DIFERENCA NO GRAFICO - e a parte que mais ajuda a entender.
+# Descomente as cinco linhas abaixo: elas desenham a reta do m1 (em
+# vermelho) e a curva do m3 (em verde) sobre os mesmos pontos.
+# plot(dados$gasto_mil, dados$ideb, pch = 16, col = "#9aa5b1",
+#      main = "Reta e curva sobre os mesmos dados",
+#      xlab = "Gasto por aluno (R$ mil por ano, 2024)",
+#      ylab = "IDEB 2025 - anos iniciais")
+# abline(m1, col = "red", lwd = 2)
+# gx <- seq(min(dados$gasto_mil), max(dados$gasto_mil), length.out = 200)
+# lines(gx, predict(m3, newdata = data.frame(gasto_mil = gx)),
+#       col = "darkgreen", lwd = 2)
+# legend("bottomright", c("m1: reta", "m3: curva"), lwd = 2,
+#        col = c("red", "darkgreen"), bty = "n")
+#
+# (O m2 nao entra neste grafico: ele tem DUAS variaveis explicativas, e
+# duas nao cabem num grafico de dois eixos. Por isso o m2 se le na
+# tabela de coeficientes, e nao numa figura.)
+#
+# Agora responda, por escrito, olhando a saida e o grafico (tres
+# perguntas curtas - as respostas viram um paragrafo do parecer):
 # (a) O coeficiente do termo ao quadrado, I(gasto_mil^2), deu positivo
 #     ou negativo? E ele e estatisticamente distinguivel de zero?
-# (b) Se o efeito de cada mil reais MUDA conforme o municipio ja gasta
-#     muito ou pouco, ele esta crescendo ou encolhendo? Por que voce
-#     conclui isso a partir do sinal que viu em (a)?
+# (b) Olhando o grafico: onde a curva verde e a reta vermelha mais
+#     discordam? O que isso diz sobre o ganho de mil reais a mais num
+#     municipio que ja gasta muito, comparado a um que gasta pouco?
 # (c) Volte a tabela de quartis do PASSO 3. Ela conta a mesma historia
-#     que o m3, ou uma historia diferente?
-# (d) Compare o R-quadrado do m1 com o do m3. Qual dos dois descreve
-#     melhor ESTES dados - e isso significa que ele e "mais correto"?
+#     que a curva verde, ou uma historia diferente?
 #
 # Se travar em (b), nao precisa de formula: pense em quanto o IDEB
 # subiu do 1o para o 2o quartil de gasto, e quanto subiu do 3o para o
