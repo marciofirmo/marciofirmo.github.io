@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Laboratório do Teorema Central do Limite — R no navegador</title>
-<meta name="description" content="Por que uma pesquisa com 2 mil pessoas erra por poucos pontos percentuais num país de 150 milhões? Sorteie amostras de uma população com qualquer formato e veja as médias formarem um sino. Simulação com R rodando no navegador, inclusive no celular.">
+<meta name="description" content="O Teorema Central do Limite em linguagem simples, com uma simulação para ver o sino aparecer: sorteie amostras de uma população com qualquer formato e veja as médias se concentrarem. R rodando no navegador, inclusive no celular.">
 <style>
   :root { color-scheme: light; --azul:#1a4f8b; --cinza:#f4f5f7; --borda:#d8dce2; --verde:#157347; --verm:#b02a37; }
   * { box-sizing: border-box; }
@@ -17,8 +17,8 @@
   .chamada { border-left: 5px solid var(--azul); background: #eef3fa; padding: 12px 14px;
              margin: 14px 0; font-size: 1.02rem; border-radius: 0 10px 10px 0; }
   .chamada b { color: var(--azul); }
-  .box { background: var(--cinza); border: 1px solid var(--borda);
-         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
+  .chamada p { margin: 0; } .chamada p + p { margin-top: 8px; }
+  .nota { font-size: .92rem; color: #5a6573; margin: 8px 0; }
   .roteiro { background: #fff; border: 2px solid var(--azul); border-radius: 10px;
              padding: 12px; margin: 12px 0; }
   .roteiro h2 { margin-top: 0; }
@@ -67,7 +67,7 @@
   .card .big { font-size: 1.7rem; font-weight: 800; font-family: ui-monospace, Consolas, monospace; }
   .card.centro { border-color: var(--verde); } .card.centro h3 { color: var(--verde); }
   .card.espalha { border-color: var(--azul); } .card.espalha h3 { color: var(--azul); }
-  .card .nota { font-size: .8rem; color: #5a6573; }
+  .card .nota { font-size: .8rem; color: #5a6573; margin: 0; }
   #verifica { font-size: .92rem; margin-top: 8px; }
   #verifica .passo { background: #eef3fa; border-left: 4px solid var(--azul); padding: 8px 10px;
                      margin: 8px 0; border-radius: 0 8px 8px 0; }
@@ -79,6 +79,8 @@
   details { margin-top: 12px; font-size: .88rem; }
   details pre { background: #10151c; color: #d7e3f0; border-radius: 10px; padding: 12px;
                 font-size: .8rem; overflow-x: auto; white-space: pre-wrap; }
+  .box { background: var(--cinza); border: 1px solid var(--borda);
+         border-radius: 10px; padding: 12px; margin: 12px 0; font-size: .92rem; }
   footer { color: #5a6573; font-size: .85rem; margin-top: 24px;
            border-top: 1px solid var(--borda); padding-top: 12px; }
   @media (max-width: 640px) { .cards { grid-template-columns: 1fr; } }
@@ -87,70 +89,48 @@
 <body>
 
 <h1>Laboratório do Teorema Central do Limite</h1>
-<p class="sub">Estatística — UERJ. Esta página é uma simulação que roda no navegador, inclusive no celular.</p>
+<p class="sub">Estatística — UERJ. Esta página roda no navegador, inclusive no celular.</p>
 
 <div class="chamada">
-  <b>Uma pesquisa eleitoral ouve 2 mil pessoas num país de 150 milhões de eleitores e erra
-  quase sempre por poucos pontos percentuais.</b> Como isso é possível, se ela ouviu uma
-  pessoa em cada 75 mil? A resposta é um resultado da estatística chamado Teorema Central do
-  Limite. Se a mesma pesquisa fosse repetida muitas vezes, as porcentagens que ela encontraria
-  formariam um desenho em forma de sino em torno do valor verdadeiro, e a largura desse sino,
-  que dá para calcular antes de sair a campo, é o erro que a pesquisa pode cometer. Isso vale
-  para quase qualquer formato de população. Nesta página você sorteia as pesquisas e vê o sino
-  aparecer em quatro cliques.
+  <p><b>Um dos resultados mais importantes da estatística é o Teorema Central do Limite.</b>
+  Em linguagem simples: sorteie uma amostra de qualquer população e calcule a média. Se a
+  amostra for grande, essa média cai perto da média da população, e o erro que ela comete segue
+  um padrão conhecido: o sino da curva normal, que fica mais estreito quanto maior a amostra.
+  O formato da população não importa. É por isso que uma pesquisa com 2 mil pessoas acerta a
+  faixa do voto de 150 milhões de eleitores.</p>
+  <p>Nesta página você pode simular e ver como isso acontece.</p>
 </div>
 
-<div class="box">
-  <b>Como a simulação funciona.</b> Ela sorteia amostras de tamanho <b>n</b> da população
-  escolhida e calcula a média de cada uma. Você escolhe o tamanho de cada amostra e quantas
-  amostras sortear. O gráfico de cima mostra a população; o de baixo mostra as médias das
-  amostras, com a curva normal prevista pela teoria desenhada por cima. Quando você sorteia até
-  20 amostras, um gráfico do meio mostra a última amostra sorteada.
-  <br><br>
-  Nesta página, uma <b>amostra</b> é um conjunto de n valores sorteados da população. Na
-  pesquisa eleitoral, uma amostra é uma pesquisa com n pessoas ouvidas, e a média dela é a
-  fração de pessoas que dizem votar no candidato (0,2 quer dizer 20%). Na vida real, o instituto
-  faz uma pesquisa só; sortear muitas é um exercício para ver o que essa única pesquisa poderia
-  ter dado.
-  <br><br>
-  O nome do teorema: "limite" porque o sino aparece no limite, quando n cresce; "central" porque
-  é um resultado central da estatística.
-</div>
+<p class="nota">A simulação sorteia muitas amostras de tamanho <b>n</b> da população escolhida,
+calcula a média de cada uma e mostra como essas médias se distribuem. Na vida real a pesquisa é
+uma só; repetir o sorteio é o jeito de ver o que ela poderia ter dado.</p>
 
-<p>Estado do R (o programa de estatística que faz as contas desta página):
-  <span id="status">carregando no navegador… leva de 10 a 30 segundos</span></p>
+<p>R (o programa que faz as contas): <span id="status">carregando… leva de 10 a 30 segundos</span></p>
 
 <div class="roteiro">
-  <h2>Roteiro: veja o teorema em quatro cliques</h2>
-  <p style="margin:0 0 8px; font-size:.92rem">O roteiro usa a população que estiver escolhida
-  abaixo. Quando a página abre, a população escolhida é a pesquisa eleitoral. Ao clicar num
-  passo, a página rola até o resultado.</p>
+  <h2>Roteiro: quatro cliques</h2>
+  <p class="nota" style="margin-top:0">O roteiro começa com a pesquisa eleitoral; você pode trocar a
+  população abaixo. Ao clicar, a página rola até o resultado.</p>
   <div class="passos" id="passos"></div>
-  <p class="compara">Depois, veja o que cada controle faz: <button id="cmp1" disabled>n = 1</button>
-    (1.000 amostras de um valor só) e <button id="cmp10k" disabled>10.000 amostras</button> (de 30,
-    como no passo 3). Só o n muda a largura e o formato do sino. O número de amostras só deixa o
-    desenho mais nítido.</p>
+  <p class="compara">Depois, veja o oposto: <button id="cmp1" disabled>n = 1</button>, 1.000 amostras
+    de um valor só. Com um valor só não há amostra, e sem amostra não há sino.</p>
 </div>
 
 <h2>1. Escolha a população</h2>
-<p style="margin:0 0 6px; font-size:.92rem">Aqui, <b>população</b> é o conjunto de todos os
-valores que poderiam ser sorteados: os votos dos 150 milhões de eleitores, por exemplo. Cada
-botão abaixo é uma população com um formato diferente.</p>
+<p class="nota" style="margin-top:0">Aqui, <b>população</b> é o conjunto de todos os valores que
+poderiam ser sorteados: os votos dos 150 milhões de eleitores, por exemplo.</p>
 <div class="cenarios" id="cenarios"></div>
 
-<h2>2. Escolha o tamanho de cada amostra</h2>
-<div class="ctl"><b>n</b> = quantos valores entram em cada amostra. <span id="unidade_n"></span></div>
+<h2>2. Escolha o tamanho da amostra</h2>
+<div class="ctl"><b>n</b> = quantos valores entram em cada amostra. <span id="unidade_n"></span>
+  A simulação sorteia 1.000 amostras desse tamanho.</div>
 <div class="opcoes" id="ns"></div>
-
-<h2>3. Escolha quantas amostras sortear</h2>
-<div class="ctl">Cada amostra produz uma média. <span id="unidade_k"></span></div>
-<div class="opcoes" id="ks"></div>
 
 <div class="previsao" id="previsao"></div>
 
 <div class="botoes">
   <button id="rodar" disabled>&#9654; Rodar</button>
-  <span style="font-size:.9rem; color:#5a6573">Cada clique faz um sorteio novo.</span>
+  <span class="nota" style="margin:0">Cada clique faz um sorteio novo.</span>
 </div>
 <div id="aviso"></div>
 
@@ -158,10 +138,10 @@ botão abaixo é uma população com um formato diferente.</p>
   <div class="cards" id="cards">
     <div class="card centro"><h3 id="lbl_centro">CENTRO DAS MÉDIAS</h3>
       <div class="big" id="res_centro">—</div>
-      <div class="nota" id="nota_centro"></div></div>
-    <div class="card espalha"><h3 id="lbl_desvio">ERRO-PADRÃO OBSERVADO</h3>
+      <p class="nota" id="nota_centro"></p></div>
+    <div class="card espalha"><h3 id="lbl_desvio">LARGURA DO SINO (ERRO-PADRÃO)</h3>
       <div class="big" id="res_desvio">—</div>
-      <div class="nota" id="nota_desvio"></div></div>
+      <p class="nota" id="nota_desvio"></p></div>
   </div>
   <div id="verifica"></div>
   <div id="graficos"></div>
@@ -205,50 +185,49 @@ botão abaixo é uma população com um formato diferente.</p>
 // faixa do eixo, e as palavras que a página usa para falar dela.
 const POPS = [
   { id: "pesq", nome: "Pesquisa eleitoral",
-    desc: "Cada pessoa ouvida vota no candidato (vale 1) ou não vota (vale 0). Na população, 20% votam nele. Só existem dois valores, e a média de uma amostra é a fração de pessoas que dizem votar.",
+    desc: "Cada pessoa vale 1 (vota no candidato) ou 0 (não vota). Na população, 20% votam. A média de uma amostra é a fração que diz votar.",
     r: "rbinom(m, 1, 0.2)", mu: 0.2, sd: 0.4, assim: true, discreta: true, pontos: true,
     limR: "c(-0.25, 1.25)", breaksPop: "c(-0.25, 0.25, 0.75, 1.25)",
     eixoR: `axis(1, at = c(0, 1), labels = c("nao vota (0)", "vota (1)"))`,
-    sigmaExpl: " (para uma população de zeros e uns com 20% de uns, σ = √(0,2 × 0,8))",
+    sigmaExpl: " (σ = √(0,2 × 0,8))",
     unidN: "Na pesquisa eleitoral, n é quantas pessoas são ouvidas.",
-    unidK: "Na pesquisa eleitoral, o número de amostras é o número de pesquisas diferentes que são feitas.",
     valor: "pessoas",
-    oque: "as respostas das 30 pessoas ouvidas",
-    meio: "o gráfico do meio mostra as respostas das 30 pessoas desta amostra: a barra da esquerda é quem não vota, a da direita é quem vota. A linha azul é a média, a fração que vota." },
+    oque: "as 30 respostas",
+    meio: "o gráfico do meio mostra as 30 respostas: à esquerda quem não vota, à direita quem vota. A linha azul é a média, a fração que vota." },
   { id: "unif", nome: "Uniforme entre 0 e 1",
-    desc: "Todo valor entre 0 e 1 tem a mesma chance de sair. O desenho é achatado, sem pico nenhum, e não se parece em nada com uma normal.",
+    desc: "Todo valor entre 0 e 1 tem a mesma chance de sair. O desenho é achatado, sem pico.",
     r: "runif(m, 0, 1)", mu: 0.5, sd: Math.sqrt(1/12), assim: false, discreta: false, pontos: false,
-    sigmaExpl: "", unidN: "", unidK: "", valor: "valores",
-    oque: "os 30 valores sorteados",
-    meio: "o gráfico do meio mostra os 30 valores desta amostra, com a média marcada em azul." },
+    sigmaExpl: "", unidN: "", valor: "valores",
+    oque: "os 30 valores",
+    meio: "o gráfico do meio mostra os 30 valores sorteados, com a média em azul." },
   { id: "exp", nome: "Tempo de espera (exponencial)",
-    desc: "É o tempo até o próximo ônibus passar, por exemplo: há muitas esperas curtas e algumas muito longas. O desenho é muito assimétrico, com uma cauda longa à direita. Para as médias dela ficarem parecidas com uma normal, é preciso um n maior do que nas outras populações.",
+    desc: "É o tempo até o próximo ônibus passar: há muitas esperas curtas e algumas muito longas. O desenho é muito assimétrico.",
     r: "rexp(m, 1)", mu: 1, sd: 1, assim: true, discreta: false, pontos: false,
-    sigmaExpl: "", unidN: "", unidK: "", valor: "valores",
-    oque: "os 30 valores sorteados",
-    meio: "o gráfico do meio mostra os 30 valores desta amostra, com a média marcada em azul." },
+    sigmaExpl: "", unidN: "", valor: "valores",
+    oque: "os 30 valores",
+    meio: "o gráfico do meio mostra os 30 valores sorteados, com a média em azul." },
   { id: "bimod", nome: "Dois picos",
-    desc: "É a mistura de duas normais afastadas uma da outra, como as alturas de dois grupos muito diferentes juntos no mesmo gráfico. É o oposto de um sino.",
+    desc: "É a mistura de dois grupos bem diferentes, como as alturas de crianças e adultos juntas. É o oposto de um sino.",
     r: "ifelse(rbinom(m, 1, 0.5) == 1, rnorm(m, -2, 0.7), rnorm(m, 2, 0.7))",
     mu: 0, sd: Math.sqrt(0.49 + 4), assim: false, discreta: false, pontos: false,
-    sigmaExpl: "", unidN: "", unidK: "", valor: "valores",
-    oque: "os 30 valores sorteados",
-    meio: "o gráfico do meio mostra os 30 valores desta amostra, com a média marcada em azul." },
-  { id: "norm", nome: "Normal com média 10 e desvio-padrão 3",
-    desc: "É o caso fácil: a população já tem o formato de sino, e as médias saem com formato de sino para qualquer n.",
+    sigmaExpl: "", unidN: "", valor: "valores",
+    oque: "os 30 valores",
+    meio: "o gráfico do meio mostra os 30 valores sorteados, com a média em azul." },
+  { id: "norm", nome: "Normal (média 10, desvio-padrão 3)",
+    desc: "É o caso fácil: a população já é um sino.",
     r: "rnorm(m, 10, 3)", mu: 10, sd: 3, assim: false, discreta: false, pontos: false,
-    sigmaExpl: "", unidN: "", unidK: "", valor: "valores",
-    oque: "os 30 valores sorteados",
-    meio: "o gráfico do meio mostra os 30 valores desta amostra, com a média marcada em azul." },
+    sigmaExpl: "", unidN: "", valor: "valores",
+    oque: "os 30 valores",
+    meio: "o gráfico do meio mostra os 30 valores sorteados, com a média em azul." },
   { id: "cauchy", nome: "Cauchy, o contraexemplo",
-    desc: "É uma população de valores extremos tão frequentes que o desvio-padrão dela não existe como número: quanto maior a amostra, maior o desvio-padrão calculado, sem limite. O teorema exige um desvio-padrão finito. Aqui a condição não vale: as médias não formam sino, e o desenho delas não fica mais estreito, por maior que seja n.",
+    desc: "Os valores extremos são tão frequentes que o desvio-padrão não existe como número. O teorema exige um desvio-padrão finito, então aqui ele não vale: as médias não formam sino e o desenho não estreita.",
     r: "rcauchy(m)", mu: null, sd: null, iqr: 2, assim: false, discreta: false, pontos: false,
-    sigmaExpl: "", unidN: "", unidK: "", valor: "valores",
-    oque: "os 30 valores sorteados",
-    meio: "o gráfico do meio mostra os 30 valores desta amostra, com a média marcada em azul." },
+    sigmaExpl: "", unidN: "", valor: "valores",
+    oque: "os 30 valores",
+    meio: "o gráfico do meio mostra os 30 valores sorteados, com a média em azul." },
 ];
 const NS = [1, 5, 30, 100, 500, 2000];
-const KS = [1, 5, 20, 100, 1000, 10000];
+const K_PADRAO = 1000;
 
 const $ = id => document.getElementById(id);
 const fmt = x => {
@@ -269,34 +248,35 @@ const tolerancia = K => {
 // Os quatro passos do roteiro. Os textos mudam com a população escolhida.
 const PASSOS = [
   { n: 30, K: 1,
-    titulo: (p) => `Passo 1 — sorteie 1 amostra de 30 ${p.valor}`,
-    texto: (p) => `Você vê ${p.oque} e a média dessa amostra. Essa média vira um ponto no gráfico de baixo.`,
-    depois: (p) => `Passo 1: ${p.meio} O gráfico de baixo tem um ponto só, que é essa média. Vá ao passo 2.` },
+    titulo: (p) => `Passo 1 — 1 amostra de 30 ${p.valor}`,
+    texto: (p) => `Veja ${p.oque} e a média delas, que aparece como um ponto no gráfico de baixo.`,
+    depois: (p) => `Passo 1: ${p.meio} O gráfico de baixo tem um ponto só, que é essa média.` },
   { n: 30, K: 20,
-    titulo: (p) => `Passo 2 — sorteie 20 amostras de 30 ${p.valor}`,
-    texto: () => `Cada amostra dá uma média. Vinte amostras dão vinte pontos, que já se juntam perto da média da população.`,
-    depois: () => `Passo 2: cada ponto azul do gráfico de baixo é a média de uma amostra de 30. Os pontos se juntam perto da linha vermelha tracejada, que é a média da população. Vá ao passo 3.` },
+    titulo: (p) => `Passo 2 — 20 amostras de 30 ${p.valor}`,
+    texto: () => `Vinte médias viram vinte pontos, que se juntam perto da média da população.`,
+    depois: () => `Passo 2: cada ponto azul é a média de uma amostra. A linha vermelha tracejada é a média da população.` },
   { n: 30, K: 1000,
-    titulo: (p) => `Passo 3 — sorteie 1.000 amostras de 30 ${p.valor}`,
-    texto: () => `Mil pontos viram um histograma com formato de sino. A curva vermelha é a normal que a teoria previu, antes de sortear.`,
-    depois: (p) => `Passo 3: as 1.000 médias formam o histograma azul, e ele encaixa na curva vermelha, que a teoria previu antes do sorteio. Isso é o teorema: o formato e a largura do sino eram previsíveis.` +
-      (p.mu === null ? ` Vá ao passo 4.` :
-       p.pontos ? ` Mas a largura aqui é ${fmt(ep(p, 30))}, ou seja, ${fmtPts(ep(p, 30))} pontos percentuais: uma pesquisa de 30 pessoas erra muito. Vá ao passo 4.` :
-       ` Vá ao passo 4 para ver o que acontece quando n cresce.`) },
+    titulo: (p) => `Passo 3 — 1.000 amostras de 30 ${p.valor}`,
+    texto: () => `O sino aparece e encaixa na curva que a teoria previu antes do sorteio.`,
+    depois: (p) => `Passo 3: isso é o teorema. O formato e a largura do sino eram previsíveis.` +
+      (p.mu === null ? `` :
+       p.pontos ? ` Mas a largura aqui é ${fmt(ep(p, 30))}, ou seja, ${fmtPts(ep(p, 30))} pontos percentuais: uma pesquisa de 30 pessoas erra muito.` :
+       ``) +
+      ` Sortear mais amostras só deixaria o desenho mais liso; a largura só muda com n.` },
   { n: 2000, K: 1000,
-    titulo: (p) => p.pontos ? `Passo 4 — sorteie 1.000 amostras de 2.000 pessoas: a pesquisa de verdade`
-                            : `Passo 4 — sorteie 1.000 amostras de 2.000 ${p.valor}`,
-    texto: (p) => p.pontos ? `Com 2.000 pessoas em cada pesquisa, o sino fica muito mais estreito. A largura dele é o erro que a pesquisa pode cometer.`
-                           : `Com 2.000 valores em cada amostra, o sino fica muito mais estreito.`,
+    titulo: (p) => p.pontos ? `Passo 4 — 1.000 amostras de 2.000 pessoas: a pesquisa de verdade`
+                            : `Passo 4 — 1.000 amostras de 2.000 ${p.valor}`,
+    texto: (p) => p.pontos ? `O sino fica estreito. A largura dele é o erro que a pesquisa pode cometer.`
+                           : `O sino fica muito mais estreito.`,
     depois: (p) => p.mu === null
-      ? `Passo 4: com n = 2.000, o desenho das médias tem a mesma largura de antes. Nesta população o teorema não vale, e aumentar n não ajuda.`
+      ? `Passo 4: com n = 2.000, o desenho tem a mesma largura de antes. Nesta população o teorema não vale, e aumentar n não ajuda.`
       : p.pontos
-      ? `Passo 4: o erro-padrão caiu para ${fmt(ep(p, 2000))}, ou seja, ${fmtPts(ep(p, 2000))} ponto percentual. Em 95 de cada 100 pesquisas, o resultado fica a menos de duas larguras do valor verdadeiro: menos de 2 pontos. É por isso que uma pesquisa com 2 mil pessoas erra quase sempre por poucos pontos percentuais. Na escala do gráfico 1 o sino virou um risco; aperte "Ampliar o eixo horizontal" para ver o formato.`
-      : `Passo 4: o erro-padrão caiu para ${fmt(ep(p, 2000))}, que é σ ÷ √2000. Em 95 de cada 100 amostras, a média fica a menos de duas larguras da média da população. Na escala do gráfico 1 o sino virou um risco; aperte "Ampliar o eixo horizontal" para ver o formato.` },
+      ? `Passo 4: a largura caiu para ${fmt(ep(p, 2000))}, ou seja, ${fmtPts(ep(p, 2000))} ponto percentual. Em 95 de cada 100 pesquisas, o resultado fica a menos de duas larguras do valor verdadeiro: menos de 2 pontos. Na escala do gráfico 1 o sino virou um traço fino; aperte "Ampliar o eixo horizontal" para ver o formato.`
+      : `Passo 4: a largura caiu para ${fmt(ep(p, 2000))}, que é σ ÷ √2000. Na escala do gráfico 1 o sino virou um traço fino; aperte "Ampliar o eixo horizontal" para ver o formato.` },
 ];
 
 let popAtual = POPS[0];
-let n = 30, K = 1000;
+let n = 30, K = K_PADRAO;
 let seed = Math.floor(Math.random() * 100000);
 let passoAtual = null;      // índice do passo do roteiro em execução, ou null
 let rodou = false;          // já existe um resultado na tela?
@@ -388,9 +368,7 @@ desenha_medias(zl, paste0("3b. AS MESMAS ", K, " MEDIAS, COM O EIXO HORIZONTAL A
 function atualizaPainel() {
   const temTeoria = popAtual.mu !== null;
   $("unidade_n").textContent = popAtual.unidN;
-  $("unidade_k").textContent = popAtual.unidK;
   document.querySelectorAll("#ns button").forEach(b => b.classList.toggle("ativo", parseInt(b.dataset.v) === n));
-  document.querySelectorAll("#ks button").forEach(b => b.classList.toggle("ativo", parseInt(b.dataset.v) === K));
   document.querySelectorAll("#passos button").forEach((b, i) => {
     b.innerHTML = `<b>${PASSOS[i].titulo(popAtual)}</b><br>${PASSOS[i].texto(popAtual)}`;
     b.classList.toggle("ativo", passoAtual === i && PASSOS[i].n === n && PASSOS[i].K === K);
@@ -398,34 +376,28 @@ function atualizaPainel() {
 
   if (temTeoria) {
     const e = ep(popAtual, n);
-    let t = `<b>O que a teoria prevê, antes de rodar.</b> A teoria diz que as médias se concentram em torno ` +
-      `da média da população, μ, com desvio-padrão igual ao desvio-padrão da população dividido pela raiz ` +
-      `de n, σ ÷ √n. Esse número se chama <i>erro-padrão</i> e é a largura do sino. A teoria diz também ` +
-      `que o desenho formado pelas médias se aproxima do sino da normal conforme n cresce, qualquer que ` +
-      `seja o formato da população, desde que ela tenha desvio-padrão finito.<br>` +
-      `Para esta população e este n: μ = <b>${fmt(popAtual.mu)}</b>; σ = ${fmt(popAtual.sd)}${popAtual.sigmaExpl}; ` +
-      `erro-padrão = ${fmt(popAtual.sd)} ÷ √${n} = <b>${fmt(e)}</b>` +
+    let t = `<b>O que a teoria prevê:</b> as médias formam um sino centrado na média da população, ` +
+      `μ = <b>${fmt(popAtual.mu)}</b>, com largura (erro-padrão) igual ao desvio-padrão da população dividido ` +
+      `pela raiz de n: σ ÷ √n = ${fmt(popAtual.sd)}${popAtual.sigmaExpl} ÷ √${n} = <b>${fmt(e)}</b>` +
       (popAtual.pontos ? `, ou seja, ${fmtPts(e)} pontos percentuais.` : `.`);
-    if (n === 1) t += ` Com n = 1, cada "média" é um único valor sorteado: as médias têm exatamente o ` +
-      `formato da população, e o teorema não aparece. Escolha um n maior.`;
-    if (K === 1) t += ` Com uma amostra só, você vê uma média só. O sino só aparece com muitas amostras.`;
+    if (n === 1) t += ` Com n = 1, cada "média" é um único valor sorteado: as médias têm o formato da ` +
+      `população, e o teorema não aparece.`;
     $("previsao").innerHTML = t;
   } else {
     $("previsao").innerHTML =
-      `<b>O que a teoria prevê:</b> a teoria não prevê sino nenhum. A média de n valores Cauchy tem ` +
-      `<b>exatamente a mesma distribuição</b> de um único valor. O intervalo interquartil das médias ` +
-      `(a distância entre o primeiro e o terceiro quartil) fica em <b>≈ ${fmt(popAtual.iqr)}</b> ` +
-      `para qualquer n: ele não estreita quando n cresce.`;
+      `<b>O que a teoria prevê:</b> as médias não formam sino. A média de n valores Cauchy tem exatamente a mesma ` +
+      `distribuição de um único valor. A largura, medida pelo intervalo interquartil (a distância entre ` +
+      `o primeiro e o terceiro quartil), fica em <b>≈ ${fmt(popAtual.iqr)}</b> para qualquer n.`;
   }
 
   $("lbl_centro").textContent = temTeoria ? "CENTRO DAS MÉDIAS" : "MEDIANA DAS MÉDIAS";
   $("nota_centro").textContent = temTeoria
-    ? `É a média das ${fmtInt(K)} médias. Deve ficar perto de μ = ${fmt(popAtual.mu)}.`
-    : `É a mediana das ${fmtInt(K)} médias. Aqui a média das médias muda muito de uma rodada para outra, e a mediana não muda.`;
-  $("lbl_desvio").textContent = temTeoria ? "ERRO-PADRÃO OBSERVADO" : "IQR DAS MÉDIAS";
+    ? `Média das ${fmtInt(K)} médias. Previsto: μ = ${fmt(popAtual.mu)}.`
+    : `Mediana das ${fmtInt(K)} médias. Aqui a média das médias muda muito de uma rodada para outra; a mediana muda pouco.`;
+  $("lbl_desvio").textContent = temTeoria ? "LARGURA DO SINO (ERRO-PADRÃO)" : "LARGURA (INTERVALO INTERQUARTIL)";
   $("nota_desvio").textContent = temTeoria
-    ? `É o desvio-padrão das ${fmtInt(K)} médias, ou seja, a largura do sino. Deve ficar perto de ${fmt(ep(popAtual, n))}.`
-    : `IQR é o intervalo interquartil das médias. Essa medida de dispersão continua fazendo sentido quando o desvio-padrão não existe.`;
+    ? `Desvio-padrão das ${fmtInt(K)} médias. Previsto: ${fmt(ep(popAtual, n))}.`
+    : `Intervalo interquartil das médias. Previsto: ${fmt(popAtual.iqr)}, para qualquer n.`;
 
   $("codigoview").textContent = codigoR();
 }
@@ -442,7 +414,7 @@ POPS.forEach((p, i) => {
   const b = document.createElement("button");
   b.innerHTML = `<b>${i + 1}. ${p.nome}</b> <span class="tag">(escolhida)</span><br>${p.desc}`;
   b.addEventListener("click", () => {
-    popAtual = p; passoAtual = null;
+    popAtual = p; passoAtual = null; K = K_PADRAO;
     document.querySelectorAll(".cenarios button").forEach(x => x.classList.remove("ativo"));
     b.classList.add("ativo");
     atualizaPainel(); marcaDesatualizado();
@@ -453,14 +425,8 @@ POPS.forEach((p, i) => {
 NS.forEach(v => {
   const b = document.createElement("button");
   b.textContent = fmtInt(v); b.dataset.v = v;
-  b.addEventListener("click", () => { n = v; passoAtual = null; atualizaPainel(); marcaDesatualizado(); });
+  b.addEventListener("click", () => { n = v; passoAtual = null; K = K_PADRAO; atualizaPainel(); marcaDesatualizado(); });
   $("ns").appendChild(b);
-});
-KS.forEach(v => {
-  const b = document.createElement("button");
-  b.textContent = fmtInt(v); b.dataset.v = v;
-  b.addEventListener("click", () => { K = v; passoAtual = null; atualizaPainel(); marcaDesatualizado(); });
-  $("ks").appendChild(b);
 });
 PASSOS.forEach((p, i) => {
   const b = document.createElement("button");
@@ -468,20 +434,16 @@ PASSOS.forEach((p, i) => {
   b.addEventListener("click", () => { n = p.n; K = p.K; passoAtual = i; atualizaPainel(); rodar(p.depois(popAtual)); });
   $("passos").appendChild(b);
 });
-$("cmp1").addEventListener("click", () => { n = 1; K = 1000; passoAtual = null; atualizaPainel();
-  rodar(`Comparação com n = 1: cada "média" é um único valor, e o gráfico de baixo tem o mesmo formato da população. A curva vermelha não encaixa, e o sino não existe.`); });
-$("cmp10k").addEventListener("click", () => { n = 30; K = 10000; passoAtual = null; atualizaPainel();
-  rodar(popAtual.mu === null
-    ? `Comparação com 10.000 amostras de 30: o desenho ficou mais liso e continua com a mesma largura. O número de amostras não muda a largura.`
-    : `Comparação com 10.000 amostras de 30: a largura é a mesma do passo 3 (perto de ${fmt(ep(popAtual, 30))}), e o desenho só ficou mais liso. O número de amostras não muda a largura; só o n muda.`); });
-$("rodar").addEventListener("click", () => { passoAtual = null; atualizaPainel(); rodar(null); });
+$("cmp1").addEventListener("click", () => { n = 1; K = K_PADRAO; passoAtual = null; atualizaPainel();
+  rodar(`Com n = 1: cada "média" é um único valor, e o gráfico de baixo tem o formato da população. A curva vermelha não encaixa; o sino não existe.`); });
+$("rodar").addEventListener("click", () => { passoAtual = null; K = K_PADRAO; atualizaPainel(); rodar(null); });
 
 // ---------- webR ----------
 let webR, shelter;
 async function iniciar() {
   const inicio = Date.now();
   const relogio = setInterval(() => {
-    $("status").textContent = `carregando no navegador… ${Math.round((Date.now() - inicio) / 1000)} s (leva de 10 a 30 segundos)`;
+    $("status").textContent = `carregando… ${Math.round((Date.now() - inicio) / 1000)} s (leva de 10 a 30 segundos)`;
   }, 1000);
   try {
     const { WebR } = await import("https://webr.r-wasm.org/latest/webr.mjs");
@@ -489,13 +451,13 @@ async function iniciar() {
     await webR.init();
     shelter = await new webR.Shelter();
     clearInterval(relogio);
-    $("status").textContent = "pronto. Comece pelo roteiro, ou escolha os controles e aperte Rodar.";
+    $("status").textContent = "pronto. Comece pelo roteiro.";
     $("status").className = "pronto";
     $("rodar").disabled = false;
     document.querySelectorAll("#passos button, .compara button").forEach(b => b.disabled = false);
   } catch (e) {
     clearInterval(relogio);
-    $("status").textContent = "o R não carregou: " + e.message + ". Verifique a conexão e recarregue a página.";
+    $("status").textContent = "não carregou: " + e.message + ". Verifique a conexão e recarregue a página.";
     $("status").className = "erro";
   }
 }
@@ -544,42 +506,32 @@ async function rodar(mensagemPasso) {
     if (mensagemPasso) texto += `<div class="passo">${mensagemPasso}</div>`;
     if (res) {
       if (poucas) {
-        texto += `Cada ponto azul do gráfico de baixo é a média de uma amostra` +
-          (K === 1 ? `; aqui há uma só, e ela vale <b>${fmt(res.ultima)}</b>.` : `; aqui há ${K}.`) +
-          ` A média e a largura das médias só fazem sentido com muitas amostras, por isso os cartões ` +
-          `de números não aparecem. Sorteie mais amostras para ver o formato das médias aparecer.`;
+        texto += (K === 1
+          ? `A média desta amostra foi <b>${fmt(res.ultima)}</b>. Com uma amostra só não há sino para ver; siga para o passo 2.`
+          : `Cada ponto azul é a média de uma amostra; aqui há ${K}. Siga para o passo 3.`);
       } else if (temTeoria) {
         const e = ep(popAtual, n);
         $("res_centro").textContent = fmt(res.media);
         $("res_desvio").textContent = fmt(res.sd);
-        texto += `<b>Teoria e simulação:</b> a teoria previu que o centro das médias ficaria em ${fmt(popAtual.mu)}, ` +
-          `e a simulação observou <b>${fmt(res.media)}</b>. A teoria previu um erro-padrão de ${fmt(e)}, e a ` +
-          `simulação observou <b>${fmt(res.sd)}</b>. Os números observados nunca batem exatamente com os ` +
-          `previstos, porque cada sorteio é diferente. Com ${fmtInt(K)} amostras, a diferença entre o erro-padrão ` +
-          `observado e o previsto fica quase sempre abaixo de ${tolerancia(K)}%. Aperte Rodar de novo e veja os ` +
-          `números mudarem um pouco.`;
+        texto += `<b>Previsto e observado:</b> centro ${fmt(popAtual.mu)} → <b>${fmt(res.media)}</b>; largura ` +
+          `${fmt(e)} → <b>${fmt(res.sd)}</b>. A diferença é o acaso do sorteio; com ${fmtInt(K)} amostras, ela fica ` +
+          `quase sempre abaixo de ${tolerancia(K)}% do valor previsto. `;
         if (K < 100) {
-          texto += `<br><b>O que olhar no gráfico:</b> com menos de 100 amostras, o gráfico de baixo mostra ` +
-            `cada média como um ponto. O sino só aparece com muitas amostras.`;
+          texto += `Com menos de 100 amostras, o gráfico mostra cada média como um ponto.`;
         } else {
-          texto += `<br><b>O que olhar no gráfico:</b> o teorema aparece quando o histograma azul encaixa na ` +
-            `curva vermelha. `;
-          if (n === 1) texto += `Com n = 1 o teorema não aparece: cada "média" é um único valor, e as médias ` +
-            `têm exatamente o formato da população. Escolha um n maior.`;
-          else if (n < 10 && popAtual.assim) texto += `Com n pequeno, o desenho das médias ainda guarda a ` +
-            `assimetria da população.`;
-          else if (n < 10) texto += `Com n pequeno, o desenho das médias ainda guarda traços do formato da população.`;
-          else texto += `Para reduzir o erro-padrão pela metade, é preciso multiplicar n por 4, porque o ` +
-            `erro-padrão é σ dividido por √n.`;
+          texto += `<b>No gráfico:</b> o teorema aparece quando o histograma azul encaixa na curva vermelha. `;
+          if (n === 1) texto += `Com n = 1 ele não aparece: as médias têm o formato da população.`;
+          else if (n < 10 && popAtual.assim) texto += `Com n pequeno, o desenho ainda guarda a assimetria da população.`;
+          else if (n < 10) texto += `Com n pequeno, o desenho ainda guarda traços do formato da população.`;
+          else texto += `Para reduzir a largura pela metade, é preciso multiplicar n por 4.`;
         }
       } else {
         $("res_centro").textContent = fmt(res.mediana);
         $("res_desvio").textContent = fmt(res.iqr);
-        texto += `<b>As médias não se concentram quando n cresce:</b> o intervalo interquartil das médias ficou em ` +
-          `<b>${fmt(res.iqr)}</b>, contra os ${fmt(popAtual.iqr)} que a teoria previu, e não muda com o n, porque a ` +
-          `média de n valores Cauchy tem a mesma distribuição de um único valor. O desvio-padrão das médias nesta ` +
-          `rodada foi ${fmt(res.sd)}, mas ele muda muito de um sorteio para outro: aperte Rodar de novo e ` +
-          `verá outro valor. Sem desvio-padrão finito, é o intervalo interquartil que descreve a dispersão.`;
+        texto += `<b>As médias não se concentram quando n cresce:</b> o intervalo interquartil ficou em ` +
+          `<b>${fmt(res.iqr)}</b>, contra os ${fmt(popAtual.iqr)} que a teoria previu, e não muda com o n. ` +
+          `O desvio-padrão das médias nesta rodada foi ${fmt(res.sd)}, mas ele muda muito de um sorteio para ` +
+          `outro: aperte Rodar de novo e verá outro valor.`;
       }
     }
     $("verifica").innerHTML = texto;
