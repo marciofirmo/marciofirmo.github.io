@@ -1,128 +1,21 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Laboratórios interativos — estatística e econometria no navegador</title>
-<meta name="description" content="Simulações interativas de estatística e econometria que rodam o R no navegador de qualquer aparelho, inclusive no celular. Uso livre para ensino, sob CC BY-NC 4.0.">
-<link rel="stylesheet" href="../curso.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratórios interativos — mudou de endereço</title>
+<meta http-equiv="refresh" content="0; url=https://quasenormal.github.io/">
+<link rel="canonical" href="https://quasenormal.github.io/">
+<meta name="robots" content="noindex">
+<style>
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; max-width: 600px;
+         margin: 3rem auto; padding: 0 1rem; color: #1c2430; line-height: 1.5; }
+  a { color: #1a4f8b; }
+</style>
 </head>
 <body>
-<div class="wrap">
-<div class="voltar"><a href="../">&larr; Marcio Gold Firmo</a></div>
-
-<h1>Laboratórios interativos</h1>
-<p class="codigo">estatística e econometria · R no navegador · acesso aberto</p>
-
-<p>Simulações em que você controla os parâmetros de um mundo e vê o que a estatística
-encontra nele. Rodam o <b>R de verdade dentro do navegador</b> — a mesma função
-<code>lm()</code>, com a mesma saída, usada na prática profissional e acadêmica.</p>
-
-<p><b>Funcionam no celular.</b> Não precisa instalar nada, não precisa de licença, não
-precisa de laboratório de informática: é abrir o link e mexer.</p>
-
-<div class="aviso">
-O primeiro acesso baixa o R (cerca de 11 MB) e leva de 10 a 30 segundos; depois disso,
-fica rápido. Em sala ou oficina, vale abrir com o Wi-Fi ligado.
-</div>
-
-<h2 id="estatistica">Estatística</h2>
-<p class="secao-nota">Para disciplinas introdutórias de estatística e métodos quantitativos.</p>
-
-<div class="item">
-  <div class="tit">Laboratório das medidas-resumo</div>
-  <div class="desc">Média, mediana, desvio-padrão e boxplot sobre a mesma amostra: quando
-  coincidem, quando discordam, e o que um único valor extremo faz com cada um deles.</div>
-  <div class="baixar"><a href="../laboratorio-descritiva-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Revisão estatística interativa</div>
-  <div class="desc">Lei dos grandes números, correlação e correlação parcial, construídas
-  na mão. Escolha o tamanho da amostra e veja os estimadores assentarem; treine o olho
-  para reconhecer uma correlação de 0,3 e uma de 0,8.</div>
-  <div class="baixar"><a href="../revisao-estatistica-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Laboratório do teorema central do limite</div>
-  <div class="desc">A população tem o formato que você escolher — uniforme, exponencial,
-  bimodal, só zeros e uns. A distribuição das médias amostrais tende à normal mesmo assim,
-  e o erro-padrão encolhe com a raiz de n. Inclui o contraexemplo em que o teorema falha.</div>
-  <div class="baixar"><a href="../laboratorio-tcl-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Laboratório dos testes de hipótese</div>
-  <div class="desc">Dois mil pesquisadores testam a mesma hipótese num mundo cuja verdade
-  você conhece. Quando não há efeito, 5% rejeitam mesmo assim — e os p-valores saem
-  uniformes. Quando há, a proporção que detecta é o poder, e o resto é erro tipo II.</div>
-  <div class="baixar"><a href="../laboratorio-hipoteses-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Laboratório dos intervalos de confiança</div>
-  <div class="desc">Cem pesquisas amostrais do mesmo mundo, cada uma com seu intervalo.
-  Quantas capturam a média verdadeira? O que muda quando você mexe no nível de confiança,
-  no tamanho da amostra e na dispersão da população.</div>
-  <div class="baixar"><a href="../laboratorio-intervalos-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<h2 id="econometria">Econometria e inferência causal</h2>
-<p class="secao-nota">Para econometria, avaliação de impacto e métodos de pesquisa.</p>
-
-<div class="item">
-  <div class="tit">Laboratório do MQO — a reta que minimiza os quadrados</div>
-  <div class="desc">Ponha a reta onde quiser e veja cada resíduo virar um quadrado desenhado
-  na tela: o método é a busca pela menor soma dessas áreas. Inclui o que o R² é — e o que
-  ele não é.</div>
-  <div class="baixar"><a href="../laboratorio-mqo-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Laboratório do viés de variável omitida</div>
-  <div class="desc">Seis cenários mostrando quando e por que a variável omitida distorce a
-  estimativa. Você escolhe o mundo; a regressão mostra o que encontra — estimando certo e
-  estimando errado, lado a lado.</div>
-  <div class="baixar"><a href="../laboratorio-vies-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<div class="item">
-  <div class="tit">Laboratório das seis ferramentas — inferência causal</div>
-  <div class="desc">Sorteio, controles, painel com efeitos fixos, variáveis instrumentais,
-  regressão descontínua e diferenças em diferenças. Em cada aba: o mundo em equações, a
-  hipótese de identificação, os microdados — e o método ingênuo errando enquanto a técnica
-  conserta.</div>
-  <div class="baixar"><a href="../laboratorio-tentativas-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<h2 id="matematica">Matemática para economia</h2>
-
-<div class="item">
-  <div class="tit">Laboratório das curvas de nível</div>
-  <div class="desc">Uma função z = f(x, y) é uma superfície; a curva de nível é o corte
-  horizontal projetado no plano. Veja superfície e mapa lado a lado — e depois receba só o
-  mapa e tente estimar a superfície antes de revelar.</div>
-  <div class="baixar"><a href="../laboratorio-curvas-nivel-webr.html">Abrir &rarr;</a></div>
-</div>
-
-<h2>Para quem ensina</h2>
-
-<p>O material é de uso livre em sala, sob
-<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">CC BY-NC 4.0</a>:
-basta enviar o link para a turma, e cada aluno abre no próprio aparelho. Adaptações são
-permitidas, com indicação do que foi alterado.</p>
-
-<p>Dúvidas, sugestões de novos laboratórios e relatos de uso em sala são bem-vindos —
-o material está em revisão contínua, e esta página guarda sempre a versão mais recente.
-Contato: marciogoldfirmo [at] gmail [dot] com.</p>
-
-<hr>
-<footer>© Marcio Gold Firmo · Uso livre para ensino, sob
-<a href="https://creativecommons.org/licenses/by-nc/4.0/deed.pt-br">CC BY-NC 4.0</a>
-— cite a autoria; uso comercial não autorizado.
-<a href="https://github.com/marciofirmo/marciofirmo.github.io/blob/main/LICENSE">Detalhes</a>.
-</footer>
-</div>
+<p>A página dos laboratórios mudou de endereço: agora faz parte do <b>Quase Normal</b>, o site do projeto de
+extensão da UERJ.</p>
+<p><a href="https://quasenormal.github.io/">Abrir no endereço novo</a></p>
 </body>
 </html>
