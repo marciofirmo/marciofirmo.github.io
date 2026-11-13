@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Avaliações possíveis do Plano Brasil Soberano 1</title>
+<style>
+  html { -webkit-text-size-adjust: 100%; } body { margin: 0; }
+  /* Layout: ferramenta de duas colunas. À esquerda, as bases de dados com três estados;
+     à direita, o que cada uma das três avaliações consegue entregar com o que foi marcado. */
+  :root {
+    --bg: #f3f6f4; --surface: #ffffff; --ink: #16211c; --muted: #586861; --line: #d3dbd6;
+    --accent: #0f6b5c; --accent-soft: #dcefe9;
+    --ok: #1c7447; --ok-bg: #e0f1e7; --part: #865700; --part-bg: #f6ebcf; --no: #a5322b; --no-bg: #f6e1de;
+    --font-text: "Inter", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    --font-head: "Space Grotesk", "Inter", system-ui, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101613; --surface: #19221e; --ink: #e5ece8; --muted: #9baba4; --line: #2b3732;
+      --accent: #5fc8b3; --accent-soft: #173a33;
+      --ok: #71d49d; --ok-bg: #173a2b; --part: #e7be5e; --part-bg: #3b3013; --no: #f08b81; --no-bg: #41211e;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101613; --surface: #19221e; --ink: #e5ece8; --muted: #9baba4; --line: #2b3732;
+    --accent: #5fc8b3; --accent-soft: #173a33;
+    --ok: #71d49d; --ok-bg: #173a2b; --part: #e7be5e; --part-bg: #3b3013; --no: #f08b81; --no-bg: #41211e;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-text); font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1440px; margin: 0 auto; padding-block: 24px 64px;
+          padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1, h2, h3 { font-family: var(--font-head); text-wrap: balance; margin: 0; }
+  h1 { font-size: 26px; line-height: 1.2; }
+  h2 { font-size: 18px; }
+  h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-family: var(--font-text); font-weight: 600; }
+  p { margin: 0; }
+  .lead { color: var(--muted); max-width: 72ch; margin-top: 8px; }
+  .summary { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .chip { display: flex; align-items: baseline; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+  .chip b { font-family: var(--font-head); font-variant-numeric: tabular-nums; }
+  .cols { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 28px; margin-top: 28px; align-items: start; }
+  @media (max-width: 960px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+  .panel .sub { color: var(--muted); font-size: 14px; }
+  .group { display: flex; flex-direction: column; gap: 0; }
+  .group h3 { padding: 10px 0 4px; }
+  .item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; padding: 12px 0; border-top: 1px solid var(--line); align-items: start; }
+  @media (max-width: 520px) { .item { grid-template-columns: minmax(0, 1fr); } }
+  .item .label { font-weight: 600; }
+  .item .serve { font-size: 14px; margin-top: 2px; }
+  .item .nota { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--bg); }
+  .seg label { position: relative; padding: 6px 10px; font-size: 13px; cursor: pointer; border-right: 1px solid var(--line); white-space: nowrap; user-select: none; }
+  .seg label:last-child { border-right: none; }
+  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .seg label.v-temos:has(input:checked) { background: var(--ok-bg); color: var(--ok); font-weight: 700; }
+  .seg label.v-nao:has(input:checked) { background: var(--no-bg); color: var(--no); font-weight: 700; }
+  .seg label.v-nsei:has(input:checked) { background: var(--part-bg); color: var(--part); font-weight: 700; }
+  .comp { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 14px; padding: 11px 0; border-top: 1px solid var(--line); }
+  @media (max-width: 520px) { .comp { grid-template-columns: minmax(0, 1fr); } }
+  .comp .name { font-weight: 600; }
+  .comp .txt { font-size: 14px; color: var(--ink); }
+  .comp .falta { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .tag { display: inline-block; align-self: start; justify-self: start; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .t-ok { background: var(--ok-bg); color: var(--ok); } .t-part { background: var(--part-bg); color: var(--part); } .t-no { background: var(--no-bg); color: var(--no); }
+  .note { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 10px; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 460px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px; border: 1px solid var(--line); }
+  th { font-weight: 600; background: var(--accent-soft); }
+  td small { color: var(--muted); display: block; margin-top: 2px; }
+  .cal { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end; }
+  .cal label { display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: var(--muted); }
+  .cal input, .cal select { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }
+  .cal input[type=number] { width: 70px; }
+  .cal input:focus-visible, .cal select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .fact .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .fact .v { font-family: var(--font-head); font-size: 19px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .fact .d { font-size: 13px; color: var(--muted); }
+  ul.pend { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+  button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; cursor: pointer; }
+  .foot { color: var(--muted); font-size: 13px; margin-top: 28px; max-width: 90ch; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Avaliações possíveis do Plano Brasil Soberano 1</h1>
+  <p class="lead">Três avaliações estão em discussão para a primeira fase do programa (crédito contratado de setembro a dezembro de 2025): uma simulação macroeconômica do choque das tarifas, uma avaliação de impacto do crédito e uma avaliação de focalização. Marque à esquerda o que existe de dados. À direita aparece o que cada avaliação consegue entregar. As marcações ficam guardadas só no seu navegador.</p>
+  <div class="summary" id="summary"></div>
+
+  <div class="cols">
+    <div class="col">
+      <section class="panel">
+        <header><h2>Dados</h2><button id="reset" type="button">Voltar ao padrão</button></header>
+        <p class="sub">O padrão marca como “temos” o que é público ou já confirmado, e como “não sei” o que falta confirmar.</p>
+        <div id="items"></div>
+      </section>
+
+      <section class="panel">
+        <header><h2>O que falta confirmar</h2></header>
+        <ul class="pend" id="pendentes"></ul>
+      </section>
+    </div>
+
+    <div class="col">
+      <div id="produtos" class="col"></div>
+
+      <section class="panel">
+        <header><h2>Prazo e alcance dos dados de emprego</h2></header>
+        <div class="cal">
+          <label for="assin">Assinatura do contrato<input type="date" id="assin" value="2027-03-01"></label>
+          <label for="prazo">Prazo total<select id="prazo"><option value="12">12 meses</option><option value="15">15 meses</option><option value="18">18 meses</option></select></label>
+          <label for="mesP">Entrega do produto principal no mês<input type="number" id="mesP" min="6" max="18" value="10"></label>
+          <label for="corte">Meses entre o corte dos dados e a entrega<input type="number" id="corte" min="1" max="6" value="2"></label>
+          <label for="lag">Defasagem da RAIS mensal, em meses<input type="number" id="lag" min="1" max="12" value="5"></label>
+        </div>
+        <div class="facts" id="prazos"></div>
+        <p class="note">Os desembolsos da fase 1 se concentraram de outubro a dezembro de 2025; os meses são contados a partir de dezembro de 2025. A cláusula de emprego compara a média do 5º ao 16º mês após a contratação com a média de julho de 2024 a junho de 2025.</p>
+      </section>
+
+      <section class="panel">
+        <header><h2>Quatro grupos de exportadoras aos Estados Unidos</h2></header>
+        <p class="sub">A tarifa foi definida por produto, e a elegibilidade ao crédito também. Isso separa as empresas em grupos que servem de comparação entre si.</p>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th></th><th>Produto na tabela do programa</th><th>Produto fora da tabela</th></tr></thead>
+            <tbody>
+              <tr><th>Atingida por tarifa nova</th>
+                  <td>Podia pedir o crédito.<small>Lista 1, com 9.075 códigos; Lista 2, com 702 códigos de isenção parcial, mediante autodeclaração.</small></td>
+                  <td>Não podia pedir o crédito.<small>Aço, alumínio, cobre e veículos, tarifados por outra medida.</small></td></tr>
+              <tr><th>Não atingida</th>
+                  <td>Não ocorre.</td>
+                  <td>Não podia pedir o crédito.<small>Produtos isentos, como aviões, suco de laranja, celulose e petróleo.</small></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">No período-base da regra (julho de 2024 a junho de 2025), o Brasil exportou US$ 41,2 bilhões aos Estados Unidos: 50% em produtos da Lista 1, 14% em produtos com parte dos códigos na tabela, 16% em aço, alumínio, cobre e veículos, e 20% em produtos isentos. O grupo de aço, alumínio, cobre e veículos foi delimitado por capítulo da nomenclatura e é uma aproximação. Fontes: Comex Stat e tabela da Portaria Conjunta MDIC/MF 4/2025.</p>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">Elegibilidade na fase 1: empresa com ao menos 5% do faturamento bruto vindo de exportações aos Estados Unidos de produtos da tabela, entre julho de 2024 e junho de 2025; o piso passou a 1% em 11 de novembro de 2025 e, acima de 20%, as condições eram mais favoráveis (Portarias Conjuntas MF/MDIC 17/2025 e 21/2025). Execução: 1.386 operações aprovadas, R$ 19,6 bilhões (BNDES, relatório de execução, julho de 2026).</p>
+</div>
+
+<script>
+const GRUPOS = [
+  { nome: 'Do próprio programa', itens: [
+    { id: 'op', def: 'temos', label: 'Operações da fase 1 por empresa', serve: 'Quem recebeu o crédito, quando, em que linha, por qual banco, com que valor e porte.', nota: 'Base interna. Os dados abertos do BNDES trazem 591 das 1.386 operações da fase 1 (extração de 11/11/2026).' },
+    { id: 'rob', def: 'nsei', label: 'Receita operacional bruta exata de cada empresa', serve: 'Distância de cada empresa até o corte de R$ 300 milhões.', nota: 'O porte consta de todas as operações e já indica o lado do corte.' },
+  ]},
+  { nome: 'Emprego e atividade', itens: [
+    { id: 'rais', def: 'temos', label: 'RAIS mensal de todas as empresas', serve: 'Emprego e massa salarial mês a mês, por CNPJ; sobrevivência; replicação da regra da cláusula de emprego.', nota: 'Registro de vínculos formais de emprego do Ministério do Trabalho. Carregada até cerca de meados de 2026; mês a confirmar.' },
+    { id: 'clausula', def: 'nsei', label: 'Resultado oficial da apuração da cláusula de emprego', serve: 'Confere a replicação e identifica quem perdeu o benefício da taxa.', nota: 'Para contratos do fim de 2025, o 16º mês cai entre fevereiro e abril de 2027.' },
+    { id: 'fat', def: 'nsei', label: 'Faturamento presumido, de apoiadas e não apoiadas', serve: 'Resultado de atividade produtiva, um dos três objetivos específicos do programa.', nota: 'Estimativa feita por modelo interno do banco, citada na análise ex-ante do programa.' },
+  ]},
+  { nome: 'Exposição à tarifa', itens: [
+    { id: 'comex', def: 'temos', label: 'Exportações por município, produto e país', serve: 'Mede quanto cada município e setor vendia aos Estados Unidos em produto tarifado.', nota: 'Comex Stat, do MDIC. Público e mensal. Não identifica a empresa.' },
+    { id: 'lista', def: 'temos', label: 'Tabela oficial de produtos de 2025', serve: 'Diz que produtos contavam para a elegibilidade e quais ficaram de fora.', nota: 'Portaria Conjunta MDIC/MF 4/2025. A tabela saiu do site do MDIC; há cópia arquivada das versões de setembro e outubro de 2025.' },
+    { id: 'exp', def: 'nao', label: 'Exportações de cada empresa, com destino e produto', serve: 'Único dado que mostra se as apoiadas mantiveram ou redirecionaram as vendas.', nota: 'O BNDES não dispõe desse dado. Só viria de pedido ao MDIC ou à Receita Federal.' },
+  ]},
+  { nome: 'Elegibilidade e demanda', itens: [
+    { id: 'eleg', def: 'nsei', label: 'Consulta de elegibilidade com o percentual de cada empresa', serve: 'Permite comparar empresas logo acima e logo abaixo dos cortes de 1%, 5% e 20%.', nota: 'A consulta usa dados informados pela Receita Federal. Falta saber se o percentual ficou gravado ou só o resultado.' },
+    { id: 'negados', def: 'nsei', label: 'Pedidos de crédito não aprovados, com o motivo', serve: 'Empresas que quiseram o crédito e não tiveram; separa quem não quis de quem não conseguiu.', nota: 'Falta saber se há registro nas operações diretas e nas feitas por bancos.' },
+  ]},
+  { nome: 'Custo e crédito', itens: [
+    { id: 'custo', def: 'nsei', label: 'Custo do subsídio por linha', serve: 'Lado de custo da avaliação: diferença entre a remuneração paga ao fundo e o custo de oportunidade dos recursos.', nota: 'A remuneração por linha está na Resolução CMN 5.242/2025.' },
+    { id: 'perdas', def: 'nsei', label: 'Atrasos, perdas e garantias honradas por operação', serve: 'Perdas esperadas e observadas.', nota: 'Nas operações indiretas, o risco de crédito costuma ser do banco repassador. Falta saber que informação de atraso chega ao BNDES.' },
+    { id: 'scr', def: 'nsei', label: 'Crédito da empresa em todos os bancos', serve: 'Mostra se o crédito do programa substituiu crédito que a empresa obteria de qualquer forma.', nota: 'Sistema de Informações de Crédito, do Banco Central.' },
+  ]},
+  { nome: 'Para a simulação', itens: [
+    { id: 'mip', def: 'temos', label: 'Matriz de insumo-produto e elasticidades de comércio', serve: 'Traduz a queda de exportação em queda de produção e emprego nos setores e em seus fornecedores.', nota: 'Matriz do IBGE. Elasticidade do comércio à tarifa de Boehm, Levchenko e Pandalai-Nayar (2023): −0,76 no primeiro ano e cerca de −2 no longo prazo.' },
+  ]},
+];
+const ITENS = GRUPOS.flatMap(g => g.itens);
+const NOME = Object.fromEntries(ITENS.map(i => [i.id, i.label]));
+const KEY = 'pbs1-avaliacoes-v1';
+let state = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { state = {}; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+const val = id => state[id] || ITENS.find(i => i.id === id).def;
+const has = id => val(id) === 'temos';
+const falta = ids => ids.filter(id => !has(id)).map(id => NOME[id]);
+const R = (status, txt, need) => ({ status, txt, falta: need && need.length ? 'Falta: ' + need.join('; ') + '.' : '' });
+
+const PRODUTOS = [
+  { id: 'macro', nome: 'Simulação macroeconômica do choque',
+    sub: 'Quanto as tarifas reduziriam exportações, produção e emprego, por setor e região, em modelo de equilíbrio geral ou de insumo-produto.',
+    comps: [
+      { nome: 'Tamanho do choque por setor e região', f: () => {
+          const n = falta(['comex', 'lista', 'mip']);
+          return n.length ? R('no', 'Não dá para calibrar o choque.', n) : R('ok', 'Queda simulada de exportações, produção e emprego, a partir da tarifa por produto e das vendas aos Estados Unidos no período-base.'); } },
+      { nome: 'Cenário com redirecionamento a outros mercados', f: () => {
+          const n = falta(['comex', 'mip']);
+          return n.length ? R('no', 'Sem base para o cenário.', n) : R('ok', 'Confronta a simulação com as exportações observadas para outros destinos depois de agosto de 2025.'); } },
+      { nome: 'Cenário com o crédito do programa', f: () => {
+          const n = falta(['op', 'mip']);
+          return n.length ? R('no', 'Sem base para o cenário.', n) : R('ok', 'Distribui o crédito desembolsado por setor e região e simula o efeito sobre produção e emprego.'); } },
+    ],
+    nota: 'Dá a ordem de grandeza do choque e um cenário de referência. Não mede o efeito causal do crédito.' },
+
+  { id: 'impacto', nome: 'Avaliação de impacto do crédito',
+    sub: 'O que aconteceu com as empresas apoiadas que não teria acontecido sem o crédito, e a que custo.',
+    comps: [
+      { nome: 'Emprego, massa salarial e sobrevivência', f: () => {
+          const n = falta(['op', 'rais']);
+          return n.length ? R('no', 'Sem resultado de emprego por empresa.', n) : R('ok', 'Comparação mês a mês, antes e depois do desembolso de cada empresa, com o período anterior a julho de 2025 como referência.'); } },
+      { nome: 'Grupo de comparação', f: () => {
+          const n = falta(['op', 'rais', 'comex', 'lista']);
+          if (n.length) return R('no', 'Sem grupo de comparação.', n);
+          let t = 'Empresas não apoiadas do mesmo setor e porte, em municípios e setores que exportavam produto tarifado. Inclui o contraste com setores atingidos fora da tabela e com exportadores de produtos isentos.';
+          if (has('negados')) t += ' Mais as empresas que pediram o crédito e não contrataram.';
+          if (has('eleg')) return R('ok', t + ' Mais a comparação entre empresas logo acima e logo abaixo dos cortes de 1%, 5% e 20%, entre as que consultaram a elegibilidade. É a comparação mais confiável.');
+          return R('part', t + ' A exposição é medida pelo município e setor, não pela empresa.', falta(['eleg'])); } },
+      { nome: 'Cláusula de emprego', f: () => {
+          const n = falta(['op', 'rais']);
+          if (n.length) return R('no', 'Sem base para verificar a cláusula.', n);
+          return has('clausula') ? R('ok', 'Regra replicada com a RAIS mensal e conferida com a apuração oficial.') : R('ok', 'Regra replicada com a RAIS mensal: média do 5º ao 16º mês contra a média do período-base.'); } },
+      { nome: 'Atividade produtiva', f: () => {
+          const n = falta(['op', 'fat']);
+          return n.length ? R('no', 'Sem medida de atividade além do emprego.', n) : R('ok', 'Variação do faturamento presumido de apoiadas e não apoiadas.'); } },
+      { nome: 'Exportações das apoiadas', f: () => {
+          if (has('exp') && has('op')) return R('ok', 'Exportação total, aos Estados Unidos e a outros destinos, por empresa.');
+          const n = falta(['comex']);
+          return n.length ? R('no', 'Sem dado de exportação.', n.concat(falta(['exp']))) : R('part', 'Só no agregado por município e produto. Não mostra se foram as apoiadas que mantiveram ou redirecionaram as vendas.', falta(['exp'])); } },
+      { nome: 'Custo do programa e valor social', f: () => {
+          const c = has('custo'), p = has('perdas'), s = has('scr');
+          const sub = s ? ' Desconta o crédito que as empresas obteriam de qualquer forma.' : ' Sem o registro de crédito do Banco Central, não se mede quanto do crédito substituiu crédito privado.';
+          if (c && p) return R(s ? 'ok' : 'part', 'Custo do subsídio e perdas por operação, comparados ao valor dos empregos preservados.' + sub, falta(['scr']));
+          if (c || p) return R('part', (c ? 'Custo do subsídio disponível; faltam as perdas.' : 'Perdas disponíveis; falta o custo do subsídio.') + sub, falta(['custo', 'perdas', 'scr']));
+          return R('no', 'Sem lado de custo, a avaliação mede efeito, não valor.', falta(['custo', 'perdas', 'scr'])); } },
+    ],
+    nota: 'O choque das tarifas atinge apoiadas e não apoiadas. A avaliação mede a diferença entre elas, não o efeito da tarifa.' },
+
+  { id: 'foco', nome: 'Avaliação de focalização',
+    sub: 'Se o crédito chegou às empresas atingidas, quem ficou de fora e quem entrou sem ter sido muito atingido.',
+    comps: [
+      { nome: 'Universo de empresas atingidas', f: () => {
+          if (has('exp')) return R('ok', 'Por empresa, para todas as exportadoras, com o peso das vendas tarifadas no faturamento.');
+          const n = falta(['rais', 'comex', 'lista']);
+          if (n.length) return R('no', 'Sem base para contar as atingidas.', n);
+          if (has('eleg')) return R('part', 'Por município e setor, para todas; por empresa, com o percentual exportado, entre as que consultaram a elegibilidade.', falta(['exp']));
+          return R('part', 'Por município e setor: número de empresas e de empregos em setores que exportavam produto tarifado.', falta(['eleg', 'exp'])); } },
+      { nome: 'Cobertura', f: () => {
+          const n = falta(['op', 'rais', 'comex', 'lista']);
+          if (n.length) return R('no', 'Sem base para medir a cobertura.', n);
+          return R(has('exp') ? 'ok' : 'part', 'Fração das atingidas que foi apoiada, em número de empresas, emprego e exportação tarifada.' + (has('exp') ? '' : ' Medida por município e setor.'), falta(['exp'])); } },
+      { nome: 'Apoio a empresas pouco atingidas', f: () => {
+          if (has('eleg') && has('op')) return R('ok', 'Distribuição das apoiadas pelo percentual do faturamento exportado aos Estados Unidos.');
+          const n = falta(['op', 'comex', 'lista']);
+          return n.length ? R('no', 'Sem base.', n.concat(falta(['eleg']))) : R('part', 'Aproximado pelo setor e município de cada apoiada.', falta(['eleg'])); } },
+      { nome: 'Atingidas fora do alcance da regra', f: () => {
+          const n = falta(['rais', 'comex', 'lista']);
+          return n.length ? R('no', 'Sem base.', n) : R('ok', 'Empresas e empregos em aço, alumínio, cobre e veículos, tarifados por outra medida e fora da tabela do programa.'); } },
+      { nome: 'Concentração e tempo de atendimento', f: () => {
+          const n = falta(['op']);
+          return n.length ? R('no', 'Sem as operações.', n) : R('ok', 'Por porte, banco, estado, linha e mês de contratação.'); } },
+      { nome: 'Demanda não atendida', f: () => {
+          return has('negados') ? R('ok', 'Quem pediu e não foi aprovado, por motivo, porte e banco.') : R('no', 'Sem os pedidos não aprovados, não se separa quem não quis o crédito de quem não conseguiu.', falta(['negados'])); } },
+    ],
+    nota: 'Há duas formas de definir o alvo: pela regra (produto na tabela e percentual mínimo) ou pela intensidade do dano. As duas dão respostas diferentes para empresas de aço e veículos, e para empresas elegíveis pouco expostas.' },
+];
+const ROT = { ok: 'Dá para fazer', part: 'Parcial', no: 'Não dá' };
+
+function renderItens() {
+  const box = document.getElementById('items'); box.innerHTML = '';
+  GRUPOS.forEach(g => {
+    const d = document.createElement('div'); d.className = 'group';
+    d.innerHTML = '<h3>' + g.nome + '</h3>' + g.itens.map(it => {
+      const v = val(it.id);
+      const op = (k, t) => '<label class="v-' + k + '"><input type="radio" id="r-' + it.id + '-' + k + '" name="' + it.id + '" value="' + k + '"' + (v === k ? ' checked' : '') + '>' + t + '</label>';
+      return '<div class="item"><div><div class="label">' + it.label + '</div><div class="serve">' + it.serve + '</div><div class="nota">' + it.nota + '</div></div>' +
+             '<div class="seg" role="radiogroup" aria-label="' + it.label + '">' + op('temos', 'Temos') + op('nao', 'Não temos') + op('nsei', 'Não sei') + '</div></div>';
+    }).join('');
+    box.appendChild(d);
+  });
+  box.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', e => { state[e.target.name] = e.target.value; save(); calcular(); }));
+}
+
+function addMeses(d, n) { const x = new Date(d.getTime()); x.setMonth(x.getMonth() + n); return x; }
+function mesAno(d) { return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }); }
+function entreMeses(a, b) { return (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth()); }
+
+function calcular() {
+  // três avaliações
+  const sum = [];
+  document.getElementById('produtos').innerHTML = PRODUTOS.map(p => {
+    const rs = p.comps.map(c => ({ nome: c.nome, r: c.f() }));
+    const ok = rs.filter(x => x.r.status === 'ok').length, part = rs.filter(x => x.r.status === 'part').length;
+    sum.push('<span class="chip"><span>' + p.nome + '</span><b>' + ok + ' de ' + rs.length + '</b><span>' + (part ? '+ ' + part + (part > 1 ? ' parciais' : ' parcial') : '') + '</span></span>');
+    return '<section class="panel"><header><h2>' + p.nome + '</h2></header><p class="sub">' + p.sub + '</p><div>' +
+      rs.map(x => '<div class="comp"><span class="tag t-' + x.r.status + '">' + ROT[x.r.status] + '</span><div><div class="name">' + x.nome + '</div><div class="txt">' + x.r.txt + '</div>' + (x.r.falta ? '<div class="falta">' + x.r.falta + '</div>' : '') + '</div></div>').join('') +
+      '</div><p class="note">' + p.nota + '</p></section>';
+  }).join('');
+  document.getElementById('summary').innerHTML = sum.join('');
+
+  // prazos
+  const g = id => document.getElementById(id);
+  const assin = g('assin').value ? new Date(g('assin').value + 'T00:00:00') : new Date('2027-03-01T00:00:00');
+  const prazo = +g('prazo').value, mesP = +g('mesP').value, corte = +g('corte').value, lag = +g('lag').value;
+  const dCorte = addMeses(assin, mesP - corte), dProd = addMeses(assin, mesP), dFim = addMeses(assin, prazo);
+  const dEmp = addMeses(dCorte, -lag), meses = entreMeses(new Date('2025-12-01T00:00:00'), dEmp);
+  const fatos = [
+    ['Corte dos dados', mesAno(dCorte), ''],
+    ['Produto principal', mesAno(dProd), ''],
+    ['Relatório final', mesAno(dFim), ''],
+    ['Emprego observado até', has('rais') ? mesAno(dEmp) : 'sem RAIS mensal', has('rais') ? meses + ' meses após o desembolso' : ''],
+    ['Cláusula de emprego', has('rais') ? (meses >= 16 ? 'janela completa' : 'janela incompleta') : 'sem base', has('rais') ? (meses >= 16 ? 'para todos os contratos de 2025' : 'faltam ' + (16 - meses) + ' meses para os contratos de dezembro') : ''],
+  ];
+  g('prazos').innerHTML = fatos.map(f => '<div class="fact"><div class="k">' + f[0] + '</div><div class="v">' + f[1] + '</div><div class="d">' + f[2] + '</div></div>').join('');
+
+  // pendências
+  const pend = ITENS.filter(i => val(i.id) === 'nsei').map(i => '<li><b>' + i.label + '.</b> ' + i.nota + '</li>');
+  g('pendentes').innerHTML = pend.length ? pend.join('') : '<li>Nada marcado como “não sei”.</li>';
+}
+
+['assin', 'prazo', 'mesP', 'corte', 'lag'].forEach(id => {
+  const el = document.getElementById(id);
+  if (state['_' + id] !== undefined) el.value = state['_' + id];
+  el.addEventListener('change', () => { state['_' + id] = el.value; save(); calcular(); });
+});
+document.getElementById('reset').addEventListener('click', () => {
+  state = {}; save();
+  document.getElementById('assin').value = '2027-03-01'; document.getElementById('prazo').value = '12';
+  document.getElementById('mesP').value = '10'; document.getElementById('corte').value = '2'; document.getElementById('lag').value = '5';
+  renderItens(); calcular();
+});
+renderItens(); calcular();
+</script>
+</body>
+</html>
